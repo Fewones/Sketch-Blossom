@@ -25,7 +25,7 @@ public class CombatManager : MonoBehaviour
 
     [Header("Combat Settings")]
     public float turnDelay = 1f;
-    public float drawingTimeLimit = 15f;
+    public float drawingTimeLimit = 5f;
 
     private enum BattleState
     {
@@ -79,7 +79,7 @@ public class CombatManager : MonoBehaviour
     private IEnumerator BattleSequence()
     {
         currentState = BattleState.Start;
-        
+
         if (actionText != null)
         {
             actionText.text = "Battle Start!";
@@ -92,7 +92,7 @@ public class CombatManager : MonoBehaviour
         {
             // Player Turn
             yield return StartCoroutine(PlayerTurnSequence());
-            
+
             if (!enemyUnit.IsAlive())
             {
                 currentState = BattleState.Victory;
@@ -103,7 +103,7 @@ public class CombatManager : MonoBehaviour
 
             // Enemy Turn
             yield return StartCoroutine(EnemyTurnSequence());
-            
+
             if (!playerUnit.IsAlive())
             {
                 currentState = BattleState.Defeat;
@@ -120,7 +120,7 @@ public class CombatManager : MonoBehaviour
     private IEnumerator PlayerTurnSequence()
     {
         currentState = BattleState.PlayerTurn;
-        
+
         if (turnIndicatorText != null)
         {
             turnIndicatorText.text = "YOUR TURN";
@@ -170,7 +170,7 @@ public class CombatManager : MonoBehaviour
 
         // Calculate and execute attack
         int damage = CalculateAttackDamage();
-        
+
         if (actionText != null)
         {
             actionText.text = $"You attack for {damage} damage!";
@@ -201,7 +201,7 @@ public class CombatManager : MonoBehaviour
     private IEnumerator EnemyTurnSequence()
     {
         currentState = BattleState.EnemyTurn;
-        
+
         if (turnIndicatorText != null)
         {
             turnIndicatorText.text = "ENEMY TURN";
@@ -217,7 +217,7 @@ public class CombatManager : MonoBehaviour
 
         // Enemy attacks with base attack stat + random variance
         int damage = enemyUnit.attack + Random.Range(-2, 3);
-        
+
         if (actionText != null)
         {
             actionText.text = $"Enemy attacks for {damage} damage!";
@@ -276,30 +276,30 @@ public class CombatManager : MonoBehaviour
         }
 
         int strokeCount = drawingCanvas.currentStrokeCount;
-        
+
         // Base damage from unit stats
         int baseDamage = playerUnit.attack;
-        
+
         // Bonus damage from drawing complexity
         // More strokes = more damage, but with diminishing returns
         float drawingMultiplier = 1f + (Mathf.Sqrt(strokeCount) * 0.3f);
-        
+
         int totalDamage = Mathf.RoundToInt(baseDamage * drawingMultiplier);
-        
+
         // Add small random variance
         totalDamage += Random.Range(-2, 3);
-        
+
         Debug.Log($"Attack calculated: {strokeCount} strokes, {baseDamage} base → {totalDamage} total damage");
-        
+
         return Mathf.Max(1, totalDamage);
     }
 
     private void OnAttackButtonPressed()
     {
         if (currentState != BattleState.PlayerTurn) return;
-        
+
         attackSubmitted = true;
-        
+
         if (attackButton != null)
         {
             attackButton.interactable = false;
