@@ -54,9 +54,10 @@ public class CombatManager : MonoBehaviour
             nextEncounterButton.onClick.AddListener(OnNextEncounter);
         }
 
-        // Setup attack button
+        // Setup attack button - Clear any existing listeners first!
         if (attackButton != null)
         {
+            attackButton.onClick.RemoveAllListeners(); // Remove DrawingCanvas listener
             attackButton.onClick.AddListener(OnAttackButtonPressed);
             attackButton.interactable = false;
         }
@@ -121,6 +122,8 @@ public class CombatManager : MonoBehaviour
     {
         currentState = BattleState.PlayerTurn;
 
+        Debug.Log("=== PLAYER TURN START ===");
+
         if (turnIndicatorText != null)
         {
             turnIndicatorText.text = "YOUR TURN";
@@ -177,6 +180,9 @@ public class CombatManager : MonoBehaviour
         }
 
         yield return StartCoroutine(playerUnit.AttackAnimation(enemyUnit, damage));
+
+        // Wait 2 seconds to show the damage result
+        yield return new WaitForSeconds(2f);
     }
 
     private IEnumerator MonitorDrawingForButton()
@@ -202,6 +208,8 @@ public class CombatManager : MonoBehaviour
     {
         currentState = BattleState.EnemyTurn;
 
+        Debug.Log("=== ENEMY TURN START ===");
+
         if (turnIndicatorText != null)
         {
             turnIndicatorText.text = "ENEMY TURN";
@@ -224,6 +232,9 @@ public class CombatManager : MonoBehaviour
         }
 
         yield return StartCoroutine(enemyUnit.AttackAnimation(playerUnit, damage));
+
+        // Wait 2 seconds to show the damage result
+        yield return new WaitForSeconds(2f);
     }
 
     private IEnumerator BattleEndSequence()
@@ -296,9 +307,16 @@ public class CombatManager : MonoBehaviour
 
     private void OnAttackButtonPressed()
     {
-        if (currentState != BattleState.PlayerTurn) return;
+        Debug.Log($"✅ Attack button pressed! Current state: {currentState}");
+
+        if (currentState != BattleState.PlayerTurn)
+        {
+            Debug.LogWarning("Attack button pressed but not player turn!");
+            return;
+        }
 
         attackSubmitted = true;
+        Debug.Log("Attack submitted - proceeding with attack!");
 
         if (attackButton != null)
         {

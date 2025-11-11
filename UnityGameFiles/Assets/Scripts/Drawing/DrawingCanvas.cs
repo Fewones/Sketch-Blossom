@@ -18,7 +18,6 @@ public class DrawingCanvas : MonoBehaviour
     [Header("Drawing Area")]
     public RectTransform drawingArea;
 
-    // CHANGED: Made these public
     public int currentStrokeCount = 0;
     public List<LineRenderer> allStrokes = new List<LineRenderer>();
 
@@ -29,7 +28,7 @@ public class DrawingCanvas : MonoBehaviour
 
     void Start()
     {
-        Debug.LogError("=== DRAWINGCANVAS START ===");
+        Debug.Log("=== DRAWINGCANVAS START ===");
 
         mainCamera = Camera.main;
 
@@ -50,6 +49,7 @@ public class DrawingCanvas : MonoBehaviour
 
         UpdateStrokeUI();
 
+        // Only setup finish button if it exists (for DrawingScene)
         if (finishButton != null)
         {
             finishButton.onClick.AddListener(OnFinishDrawing);
@@ -70,10 +70,8 @@ public class DrawingCanvas : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Vector2 mousePos = Input.mousePosition;
-            Debug.Log("MOUSE DOWN at: " + mousePos);
 
             bool inside = IsInsideDrawingArea(mousePos);
-            Debug.Log("Inside drawing area: " + inside);
 
             if (inside)
             {
@@ -94,13 +92,15 @@ public class DrawingCanvas : MonoBehaviour
         // Mouse/Touch Up
         if (Input.GetMouseButtonUp(0) && isDrawing)
         {
-            Debug.Log("MOUSE UP - Ending stroke");
             EndStroke();
         }
     }
 
     bool IsInsideDrawingArea(Vector2 screenPos)
     {
+        if (drawingArea == null || mainCamera == null)
+            return false;
+
         // Simple bounds check
         Vector3[] corners = new Vector3[4];
         drawingArea.GetWorldCorners(corners);
@@ -112,18 +112,20 @@ public class DrawingCanvas : MonoBehaviour
         bool inside = screenPos.x >= min.x && screenPos.x <= max.x &&
                       screenPos.y >= min.y && screenPos.y <= max.y;
 
-        Debug.Log($"Screen pos: {screenPos}, Min: {min}, Max: {max}, Inside: {inside}");
-
         return inside;
     }
 
     void StartNewStroke(Vector2 screenPos)
     {
-        Debug.Log("START NEW STROKE!");
-
         if (currentStrokeCount >= maxStrokes)
         {
             Debug.Log("Max strokes reached!");
+            return;
+        }
+
+        if (strokeContainer == null)
+        {
+            Debug.LogError("StrokeContainer is null! Cannot create line.");
             return;
         }
 
@@ -137,6 +139,9 @@ public class DrawingCanvas : MonoBehaviour
 
     void AddPointToStroke(Vector2 screenPos)
     {
+        if (currentLine == null || mainCamera == null)
+            return;
+
         // Convert screen position to world position
         Vector3 worldPos = mainCamera.ScreenToWorldPoint(
             new Vector3(screenPos.x, screenPos.y, 10f));
@@ -172,8 +177,8 @@ public class DrawingCanvas : MonoBehaviour
         allStrokes.Add(currentLine);
         UpdateStrokeUI();
 
-        // Enable finish button after at least 1 stroke
-        if (currentStrokeCount >= 1)
+        // Enable finish button after at least 1 stroke (only if button exists)
+        if (currentStrokeCount >= 1 && finishButton != null)
         {
             finishButton.interactable = true;
         }
@@ -199,11 +204,24 @@ public class DrawingCanvas : MonoBehaviour
 
     void OnFinishDrawing()
     {
-        Debug.Log($"Drawing finished! Total strokes: {currentStrokeCount}");
+        Debug.Log($"DrawingCanvas.OnFinishDrawing called! Total strokes: {currentStrokeCount}");
 
-        // Here you'll call the analyzer later
-        // For now, just show what we have
-        AnalyzeDrawing();
+        // Check which scene we're in - only do analysis in DrawingScene
+        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        Debug.Log($"Current Scene: {currentScene}");
+
+        if (currentScene == "DrawingScene")
+        {
+            // In DrawingScene - analyze and transition
+            AnalyzeDrawing();
+            // DrawingManager will handle scene transition
+        }
+        else
+        {
+            // In battle or other scene - do nothing
+            Debug.Log("Not in DrawingScene - ignoring OnFinishDrawing");
+            // CombatManager handles attack submission
+        }
     }
 
     void AnalyzeDrawing()
@@ -216,6 +234,8 @@ public class DrawingCanvas : MonoBehaviour
 
         foreach (var stroke in allStrokes)
         {
+            if (stroke == null) continue;
+
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
@@ -238,7 +258,9 @@ public class DrawingCanvas : MonoBehaviour
         Debug.Log($"Generated Stats - ATK: {attack}, DEF: {defense}, HP: {hp}");
     }
 
-    // NEW METHOD: Clear canvas for reuse in battle
+    /// <summary>
+    /// Clear all drawing data - used when starting new turn in battle
+    /// </summary>
     public void ClearCanvas()
     {
         Debug.Log("Clearing canvas...");
@@ -268,7 +290,7 @@ public class DrawingCanvas : MonoBehaviour
         // Update UI
         UpdateStrokeUI();
 
-        // Disable finish button
+        // Disable finish button (only if it exists)
         if (finishButton != null)
         {
             finishButton.interactable = false;
