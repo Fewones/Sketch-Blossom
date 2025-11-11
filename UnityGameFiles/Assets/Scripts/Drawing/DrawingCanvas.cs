@@ -18,8 +18,10 @@ public class DrawingCanvas : MonoBehaviour
     [Header("Drawing Area")]
     public RectTransform drawingArea;
 
-    private int currentStrokeCount = 0;
-    private List<LineRenderer> allStrokes = new List<LineRenderer>();
+    // CHANGED: Made these public
+    public int currentStrokeCount = 0;
+    public List<LineRenderer> allStrokes = new List<LineRenderer>();
+
     private LineRenderer currentLine;
     private List<Vector3> currentStrokePoints = new List<Vector3>();
     private bool isDrawing = false;
@@ -27,7 +29,7 @@ public class DrawingCanvas : MonoBehaviour
 
     void Start()
     {
-        Debug.LogError("=== DRAWINGCANVAS START ==="); // ADD THIS
+        Debug.LogError("=== DRAWINGCANVAS START ===");
 
         mainCamera = Camera.main;
 
@@ -47,10 +49,14 @@ public class DrawingCanvas : MonoBehaviour
             Debug.Log("LineRenderer Prefab OK");
 
         UpdateStrokeUI();
-        finishButton.onClick.AddListener(OnFinishDrawing);
-        finishButton.interactable = false;
 
-        Debug.Log("=== DRAWINGCANVAS READY ==="); // ADD THIS
+        if (finishButton != null)
+        {
+            finishButton.onClick.AddListener(OnFinishDrawing);
+            finishButton.interactable = false;
+        }
+
+        Debug.Log("=== DRAWINGCANVAS READY ===");
     }
 
     void Update()
@@ -64,10 +70,10 @@ public class DrawingCanvas : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Vector2 mousePos = Input.mousePosition;
-            Debug.Log("MOUSE DOWN at: " + mousePos); // ADD THIS
+            Debug.Log("MOUSE DOWN at: " + mousePos);
 
             bool inside = IsInsideDrawingArea(mousePos);
-            Debug.Log("Inside drawing area: " + inside); // ADD THIS
+            Debug.Log("Inside drawing area: " + inside);
 
             if (inside)
             {
@@ -88,7 +94,7 @@ public class DrawingCanvas : MonoBehaviour
         // Mouse/Touch Up
         if (Input.GetMouseButtonUp(0) && isDrawing)
         {
-            Debug.Log("MOUSE UP - Ending stroke"); // ADD THIS
+            Debug.Log("MOUSE UP - Ending stroke");
             EndStroke();
         }
     }
@@ -113,7 +119,7 @@ public class DrawingCanvas : MonoBehaviour
 
     void StartNewStroke(Vector2 screenPos)
     {
-        Debug.Log("START NEW STROKE!"); // ADD THIS
+        Debug.Log("START NEW STROKE!");
 
         if (currentStrokeCount >= maxStrokes)
         {
@@ -175,12 +181,19 @@ public class DrawingCanvas : MonoBehaviour
 
     void UpdateStrokeUI()
     {
-        strokeCountText.text = $"Strokes: {currentStrokeCount}/{maxStrokes}";
-
-        // Change color when reaching max
-        if (currentStrokeCount >= maxStrokes)
+        if (strokeCountText != null)
         {
-            strokeCountText.color = Color.red;
+            strokeCountText.text = $"Strokes: {currentStrokeCount}/{maxStrokes}";
+
+            // Change color when reaching max
+            if (currentStrokeCount >= maxStrokes)
+            {
+                strokeCountText.color = Color.red;
+            }
+            else
+            {
+                strokeCountText.color = Color.white;
+            }
         }
     }
 
@@ -223,5 +236,42 @@ public class DrawingCanvas : MonoBehaviour
         int hp = Mathf.Clamp(totalPoints / 2, 10, 50);
 
         Debug.Log($"Generated Stats - ATK: {attack}, DEF: {defense}, HP: {hp}");
+    }
+
+    // NEW METHOD: Clear canvas for reuse in battle
+    public void ClearCanvas()
+    {
+        Debug.Log("Clearing canvas...");
+
+        // Destroy all existing stroke GameObjects
+        foreach (var stroke in allStrokes)
+        {
+            if (stroke != null)
+            {
+                Destroy(stroke.gameObject);
+            }
+        }
+
+        // Clear the current line if still drawing
+        if (currentLine != null)
+        {
+            Destroy(currentLine.gameObject);
+            currentLine = null;
+        }
+
+        // Reset all tracking variables
+        allStrokes.Clear();
+        currentStrokePoints.Clear();
+        currentStrokeCount = 0;
+        isDrawing = false;
+
+        // Update UI
+        UpdateStrokeUI();
+
+        // Disable finish button
+        if (finishButton != null)
+        {
+            finishButton.interactable = false;
+        }
     }
 }
