@@ -1,176 +1,268 @@
-# FINAL GAME IDEA: Sketch Blossum
+# FINAL GAME IDEA: Sketch Blossom
 
-Engine: Unity  
-Platforms: PC/Mac (Steam), Tablet, Mobile  
-Input Methods: Mouse (PC), Touch/Stylus (Tablet/Mobile)  
-Genre: Drawing-Based Deck-Building Roguelike Auto-Battler  
-Theme: Tamed Growth  
+Engine: Unity
+Platforms: PC/Mac (Steam), Tablet, Mobile
+Input Methods: Mouse (PC), Touch/Stylus (Tablet/Mobile)
+Genre: Drawing-Based Battle Game
+Theme: Draw to Fight
+
 ### Team Members
 - Michael Dieterle - Project Lead
 - Sanja Nikolic - ..
 - Stefan - ..
 - Marwa - ..
 
-## Gameplay Loop
+## Core Gameplay Loop (PRIORITY)
 
-### World
+The game emphasizes **real-time drawing combat** where what you draw directly determines what happens in battle.
 
-**1.1**  
-- Navigate 2D World → Choose encounter difficulty (1-3 enemies)
-- Pre-Battle Deck Selection
+### 1. Draw Your Plant
 
-**1.2** 
-- Draw 5 random cards from your deck (max 10)
-- Choose 3 to bring into battle
-- Strategy: Cover type weaknesses
+**Game Start:**
+- Player draws a plant using limited strokes
+- **Intuitive Analysis System**:
+  - Sunflower → Fire Plant (with fire abilities)
+  - Cactus → Grass Plant (with grass abilities)
+  - Water Lily → Water Plant (with water abilities)
+- System automatically detects plant type based on visual characteristics
+- Plant enters battle with type-specific moveset
 
+### 2. Battle System - Draw to Attack
 
-### Auto-Battle Combat
+**Combat Mechanics:**
+- Player must **physically draw** attacks and moves during battle
+- **Detection System**:
+  - Draw a fireball → System recognizes → Fire attack executes
+  - Draw a water splash → System recognizes → Water attack executes
+  - Draw unrecognizable shape → **NO ATTACK HAPPENS**
+- Each plant type has specific movesets that can be drawn:
+  - **Fire Plants**: Fireballs, flame waves, burn effects
+  - **Water Plants**: Water splashes, bubbles, healing waves
+  - **Grass Plants**: Vine whips, leaf storms, root attacks
 
-**2.1**
-- Type triangle (strategy): Water > Fire > Grass > Water (2x or 0.5x Multiplier)
-- Stats: Attack, Defense, HP
-- Permanent death. Lost plants are gone forever (dead)
+**Combat Flow:**
+1. Player draws their move/attack
+2. System analyzes the drawing in real-time
+3. If detected → Move executes with appropriate effects
+4. If not detected → Attack fails, turn wasted
+5. Repeat until battle ends
 
+### 3. Victory & Progression
 
-### Post-Battle: Tame or Wild Growth
+- Defeat enemies using detected moves
+- Progress through encounters
+- (Future: Unlock new movesets, face stronger enemies)
 
-**3.1** For EACH defeated enemy, choose ONE:  
-- 🌱 TAME: Draw new plant (limited strokes) → New card
-- 🌿 WILD GROWTH: Draw additions on existing card → Stats evolve
+## Key Design Pillars
 
+**Drawing Recognition is Core:**
+- Success depends on drawing recognizable moves
+- Intuitive plant-to-type mapping (visual characteristics matter)
+- Real-time feedback on detection
+- Skill-based combat through drawing accuracy
 
-**(3.2)** Strategic Deck Building
+**Type System:**
+- Water > Fire > Grass > Water (type advantage multipliers)
+- Each type has unique moveset to draw from
 
-- Max 10 cards - space is precious
-- Invest in strong plants vs diversify deck?
-- Risk permanent death vs safe progression
+## Development Priority
 
+**PHASE 1 - CORE LOOP (Current Focus):**
+1. Plant drawing & analysis system
+2. Intuitive type detection (sunflower = fire, etc.)
+3. Battle scene with drawing input
+4. Moveset detection system (fireball, water splash, etc.)
+5. Attack execution based on detected drawings
+6. Failure state when drawing not recognized
 
-## Repeat → Reach and defeat boss
-
-If not strong enough you start again from the begining
-
-Key Tension: Every drawing choice matters. Every battle risks losing invested cards.
-
-## Detail Gameplay diagram
+## Detailed Gameplay Diagram
 ```
 ┌─────────────────────────────────────────────────┐
-│         START: Empty Deck (0/10 cards)          │
+│              GAME START                         │
+│           Drawing Canvas Appears                │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  ENCOUNTER 1: Must TAME your first plant        │
-│  → Draw plant (limited strokes)                 │
-│  → System identifies: Water/Fire/Grass          │
-│  → Card created with basic stats                │
-│  → Deck: 1/10 cards                             │
+│  DRAW YOUR PLANT (Limited Strokes)             │
+│  → Player draws a plant freehand                │
+│  → Examples:                                    │
+│     • Sunflower (round petals, stem)           │
+│     • Cactus (spiky, thick body)               │
+│     • Water Lily (floating leaves, water)      │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  NAVIGATE 2D WORLD                              │
-│  → See 3 paths with different difficulties:     │
-│     • Easy (1 enemy, low stats)                 │
-│     • Medium (2 enemies, medium stats)          │
-│     • Hard (3 enemies, high stats)              │
-│  → Choose based on deck strength                │
+│  INTUITIVE PLANT ANALYSIS                      │
+│  → System analyzes drawing characteristics:     │
+│     • Shape recognition (round, spiky, wavy)    │
+│     • Visual patterns (petals, thorns, leaves)  │
+│     • Color/shading (future enhancement)        │
+│  → Automatically assigns type:                  │
+│     • Sunflower → FIRE PLANT 🔥                │
+│     • Cactus → GRASS PLANT 🌱                  │
+│     • Water Lily → WATER PLANT 💧              │
+│  → Plant gets type-specific moveset             │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  PRE-BATTLE                                     │
-│  → Draw 5 random cards from deck                │
-│  → Choose 3 to bring into battle                │
-│  → Strategy: Cover type weaknesses              │
+│  ENTER BATTLE SCENE                            │
+│  → Player's plant appears on battlefield        │
+│  → Enemy plant appears (AI/preset)              │
+│  → Drawing canvas ready for combat              │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  AUTO-BATTLE COMBAT                             │
-│  → Your 3 plants vs Enemy plants                │
-│  → Type advantage: Water>Fire>Grass>Water       │
-│  → Damage = Attack × Type Multiplier - Defense  │
-│  → Plants attack until one side has 0 HP        │
-│  → Dead plants = PERMANENT LOSS                 │
+│  PLAYER'S TURN: Draw Attack/Move               │
+│  → Drawing canvas activates                     │
+│  → Player draws their move (e.g., fireball)     │
+│  → Limited time/strokes per turn                │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  POST-BATTLE REWARDS                            │
-│  → For EACH defeated enemy, choose ONE:         │
+│  REAL-TIME MOVESET DETECTION                   │
+│  → System analyzes drawn shape:                 │
 │                                                  │
-│  🌱 TAME (Add new card):                        │
-│     • Draw new plant (limited strokes)          │
-│     • System identifies type                    │
-│     • Basic stats assigned                      │
-│     • Added to deck (max 10)                    │
+│  ✓ RECOGNIZED:                                  │
+│     • Fireball (circle with flames) → Attack!   │
+│     • Water Splash (wavy lines) → Attack!       │
+│     • Vine Whip (curved line) → Attack!         │
 │                                                  │
-│  🌿 WILD GROWTH (Evolve existing):              │
-│     • Choose plant from deck                    │
-│     • Draw additions (thorns, leaves, etc.)     │
-│     • System analyzes additions                 │
-│     • Stats modified:                           │
-│       - Thorns → +Attack, -Defense              │
-│       - Leaves → +HP, -Attack                   │
-│       - Flowers → Balanced boost                │
+│  ✗ NOT RECOGNIZED:                              │
+│     • Random scribble → NO ATTACK               │
+│     • Incomplete shape → NO ATTACK              │
+│     • Wrong type move → NO ATTACK               │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  STRATEGIC DECISION                             │
-│  → Do I need more cards (variety)?              │
-│  → Or stronger cards (evolution)?               │
-│  → Deck space is limited (10 max)               │
-│  → Dead cards = wasted evolution investment     │
+│  ATTACK EXECUTION                               │
+│  → If detected: Move executes                   │
+│     • Animation plays                           │
+│     • Damage calculated (with type advantage)   │
+│     • Enemy HP reduced                          │
+│  → If not detected: Turn wasted                 │
+│     • Feedback: "Move not recognized!"          │
 └─────────────────┬───────────────────────────────┘
                   │
                   ▼
-        Repeat until Boss Encounter
+┌─────────────────────────────────────────────────┐
+│  ENEMY TURN                                     │
+│  → AI/Preset enemy attacks                      │
+│  → Damage to player's plant                     │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+         Repeat: Draw → Detect → Execute
                   │
                   ▼
 ┌─────────────────────────────────────────────────┐
-│  BOSS FIGHT                                     │
-│  → Multiple tough enemies                       │
-│  → Win = Game Complete                          │
-│  → Lose = Roguelike reset                       │
+│  BATTLE END                                     │
+│  → Player HP = 0 → DEFEAT                       │
+│  → Enemy HP = 0 → VICTORY                       │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│  PROGRESSION (Future Phase)                     │
+│  → Unlock new movesets                          │
+│  → Face stronger enemies                        │
+│  → Draw new plants with new abilities           │
 └─────────────────────────────────────────────────┘
 
 ```
 
 ## 🛠️ **UNITY TECHNICAL ARCHITECTURE**
 
-### **Core Systems to Build**
+### **Core Systems to Build (Priority Order)**
+
 ```
-SketchBloom_Unity/
+SketchBlossom_Unity/
 ├── Assets/
 │   ├── Scripts/
 │   │   ├── Drawing/
-│   │   │   ├── DrawingCanvas.cs          ← Cross-platform input
-│   │   │   ├── StrokeRecorder.cs         ← Track strokes
-│   │   │   ├── PlantAnalyzer.cs          ← Type detection
-│   │   │   └── FeatureDetector.cs        ← Evolution analysis
-│   │   ├── Cards/
-│   │   │   ├── PlantCard.cs              ← Card data structure
-│   │   │   ├── CardGenerator.cs          ← Create from drawing
-│   │   │   └── CardEvolution.cs          ← Apply wild growth
+│   │   │   ├── DrawingCanvas.cs          ← ✅ Cross-platform input handling
+│   │   │   ├── DrawingManager.cs         ← ✅ Manage drawing flow
+│   │   │   ├── StrokeRecorder.cs         ← Track drawing strokes
+│   │   │   ├── PlantAnalyzer.cs          ← 🔥 PRIORITY: Intuitive plant type detection
+│   │   │   └── MovesetDetector.cs        ← 🔥 PRIORITY: Attack/move recognition
+│   │   │
 │   │   ├── Combat/
-│   │   │   ├── BattleManager.cs          ← Auto-battle logic
-│   │   │   ├── TypeAdvantage.cs          ← Water>Fire>Grass
-│   │   │   └── DamageCalculator.cs       ← Attack/Defense
-│   │   ├── Deck/
-│   │   │   ├── DeckManager.cs            ← Max 10 cards
-│   │   │   └── CardSelection.cs          ← Choose 3 for battle
-│   │   └── Progression/
-│   │       ├── EncounterManager.cs       ← World navigation
-│   │       └── RewardScreen.cs           ← Tame vs Wild Growth
+│   │   │   ├── CombatManager.cs          ← 🔥 PRIORITY: Turn-based drawing combat
+│   │   │   ├── MoveExecutor.cs           ← 🔥 PRIORITY: Execute detected moves
+│   │   │   ├── TypeAdvantage.cs          ← Water>Fire>Grass calculations
+│   │   │   ├── DamageCalculator.cs       ← Damage with type multipliers
+│   │   │   └── TurnManager.cs            ← Player/Enemy turn handling
+│   │   │
+│   │   ├── Units/
+│   │   │   ├── BattleUnit.cs             ← ✅ Plant unit in battle (HP, Type, Stats)
+│   │   │   ├── DrawnUnitData.cs          ← ✅ Store drawn plant data
+│   │   │   ├── Moveset.cs                ← Available moves per plant type
+│   │   │   └── MoveData.cs               ← Individual move properties
+│   │   │
+│   │   ├── Recognition/
+│   │   │   ├── ShapeRecognizer.cs        ← 🔥 PRIORITY: Basic shape detection
+│   │   │   ├── PatternMatcher.cs         ← Match drawing to known moves
+│   │   │   ├── FeatureExtractor.cs       ← Extract drawing characteristics
+│   │   │   └── TrainingDataManager.cs    ← (Future: ML training data)
+│   │   │
+│   │   └── UI/
+│   │       ├── BattleUI.cs               ← Battle HUD (HP bars, turn indicator)
+│   │       ├── FeedbackDisplay.cs        ← Show "Move recognized!" or "Failed!"
+│   │       └── DrawingPrompt.cs          ← Show available moves to draw
+│   │
 │   ├── Scenes/
-│   │   ├── MainMenu.scene
-│   │   ├── DrawingScene.scene            ← Where drawing happens
-│   │   ├── BattleScene.scene             ← Auto-battle visualization
-│   │   └── WorldMap.scene                ← 2D navigation
+│   │   ├── MainMenu.scene                ← ✅ Game start
+│   │   ├── DrawingScene.scene            ← ✅ Draw initial plant
+│   │   └── BattleScene.scene             ← 🔥 PRIORITY: Combat with drawing input
+│   │
 │   └── Prefabs/
-│       ├── PlantCard.prefab
-│       └── Enemy.prefab
+│       ├── StrokeLine.prefab             ← ✅ Visual line for drawing
+│       ├── PlantUnit.prefab              ← Player/Enemy plant in battle
+│       └── AttackEffect.prefab           ← VFX for moves (fireball, splash, etc.)
 ```
+
+### **Phase 1 Implementation Checklist**
+
+**1. Drawing System** (Partially Complete ✅)
+- [x] DrawingCanvas.cs - Input handling
+- [x] DrawingManager.cs - Flow management
+- [x] Basic stroke rendering
+- [ ] Enhanced stroke data (velocity, pressure, pattern recognition data)
+
+**2. Plant Recognition System** (🔥 CRITICAL PRIORITY)
+- [ ] PlantAnalyzer.cs - Detect plant type from drawing
+  - Sunflower detection (round petals, center circle)
+  - Cactus detection (vertical shape, spiky edges)
+  - Water Lily detection (floating, wavy/rounded leaves)
+- [ ] Intuitive characteristic mapping system
+- [ ] Visual feedback: Show detected type to player
+
+**3. Battle System Integration** (🔥 CRITICAL PRIORITY)
+- [ ] CombatManager.cs - Core battle loop
+  - Turn management (player → draw → detect → enemy → repeat)
+  - Drawing input during player turn
+  - Win/lose conditions
+  - HP tracking
+- [ ] BattleUI integration with drawing canvas
+
+**4. Moveset Detection System** (🔥 CRITICAL PRIORITY)
+- [ ] MovesetDetector.cs - Recognize attacks from drawings
+  - Fireball (circle with trailing flame shapes)
+  - Water Splash (wavy lines, droplet patterns)
+  - Vine Whip (curved/spiral line patterns)
+- [ ] Real-time analysis during player turn
+- [ ] Success/failure feedback system
+
+**5. Move Execution System** (🔥 CRITICAL PRIORITY)
+- [ ] MoveExecutor.cs - Execute recognized moves
+  - Attack animation system
+  - Damage calculation (attack stat × type multiplier)
+  - Apply damage to enemy unit
+  - Visual effects (fireballs, water splashes, vines)
+- [ ] Handle failed recognition (no attack, wasted turn)
+- [ ] Turn end transition
