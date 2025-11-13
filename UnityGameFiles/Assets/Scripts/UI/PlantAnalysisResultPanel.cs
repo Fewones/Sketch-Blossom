@@ -46,9 +46,9 @@ public class PlantAnalysisResultPanel : MonoBehaviour
     }
 
     /// <summary>
-    /// Show the plant analysis result with full details
+    /// Show the plant analysis result with full details (NEW SYSTEM)
     /// </summary>
-    public void ShowResult(PlantAnalyzer.PlantAnalysisResult result, Color dominantColor, System.Action onContinue = null)
+    public void ShowResult(PlantRecognitionSystem.RecognitionResult result, System.Action onContinue = null)
     {
         if (result == null)
         {
@@ -73,18 +73,18 @@ public class PlantAnalysisResultPanel : MonoBehaviour
         // Set plant type with emoji
         if (plantTypeText != null)
         {
-            string emoji = GetPlantEmoji(result.detectedType);
-            plantTypeText.text = $"{emoji} {result.detectedType} {emoji}";
-            plantTypeText.color = GetPlantColor(result.detectedType);
+            string emoji = GetElementEmoji(result.element);
+            plantTypeText.text = $"{emoji} {result.plantData.displayName} {emoji}";
+            plantTypeText.color = GetElementColor(result.element);
             plantTypeText.fontSize = 48;
         }
 
         // Set element type
         if (elementTypeText != null)
         {
-            string elementEmoji = GetElementEmoji(result.elementType);
-            elementTypeText.text = $"{elementEmoji} {result.elementType} Type {elementEmoji}";
-            elementTypeText.color = GetPlantColor(result.detectedType);
+            string elementEmoji = GetElementEmoji(result.element);
+            elementTypeText.text = $"{elementEmoji} {result.element} Type {elementEmoji}";
+            elementTypeText.color = GetElementColor(result.element);
         }
 
         // Set confidence
@@ -98,23 +98,23 @@ public class PlantAnalysisResultPanel : MonoBehaviour
         // Set color info
         if (colorInfoText != null)
         {
-            string colorName = GetColorName(dominantColor);
+            string colorName = GetColorName(result.dominantColor);
             colorInfoText.text = $"Dominant Color: {colorName}\n" +
-                                 $"Color Match: {GetColorMatchDescription(result.detectedType, dominantColor)}";
+                                 $"Color Match: {GetColorMatchDescription(result.element, result.dominantColor)}";
         }
 
         // Set available moves
         if (movesText != null)
         {
-            string movesList = GetMovesDescription(result.detectedType);
+            string movesList = GetMovesDescription(result.plantType);
             movesText.text = $"<b>Available Moves:</b>\n{movesList}";
         }
 
         Debug.Log($"=== SHOWING PLANT ANALYSIS RESULT ===");
-        Debug.Log($"Plant Type: {result.detectedType}");
-        Debug.Log($"Element: {result.elementType}");
+        Debug.Log($"Plant Type: {result.plantType}");
+        Debug.Log($"Element: {result.element}");
         Debug.Log($"Confidence: {result.confidence:P0}");
-        Debug.Log($"Dominant Color: {dominantColor}");
+        Debug.Log($"Dominant Color: {result.dominantColor}");
 
         // Handle auto-continue or button press
         if (!requireButtonPress)
@@ -149,35 +149,24 @@ public class PlantAnalysisResultPanel : MonoBehaviour
 
     // Helper methods for display
 
-    private string GetPlantEmoji(PlantAnalyzer.PlantType type)
+    private string GetElementEmoji(PlantRecognitionSystem.ElementType element)
     {
-        switch (type)
+        switch (element)
         {
-            case PlantAnalyzer.PlantType.Sunflower: return "🌻";
-            case PlantAnalyzer.PlantType.Cactus: return "🌵";
-            case PlantAnalyzer.PlantType.WaterLily: return "🪷";
+            case PlantRecognitionSystem.ElementType.Fire: return "🔥";
+            case PlantRecognitionSystem.ElementType.Grass: return "🌿";
+            case PlantRecognitionSystem.ElementType.Water: return "💧";
             default: return "❓";
         }
     }
 
-    private string GetElementEmoji(string element)
+    private Color GetElementColor(PlantRecognitionSystem.ElementType element)
     {
         switch (element)
         {
-            case "Fire": return "🔥";
-            case "Grass": return "🌿";
-            case "Water": return "💧";
-            default: return "";
-        }
-    }
-
-    private Color GetPlantColor(PlantAnalyzer.PlantType type)
-    {
-        switch (type)
-        {
-            case PlantAnalyzer.PlantType.Sunflower: return sunflowerColor;
-            case PlantAnalyzer.PlantType.Cactus: return cactusColor;
-            case PlantAnalyzer.PlantType.WaterLily: return waterLilyColor;
+            case PlantRecognitionSystem.ElementType.Fire: return sunflowerColor;
+            case PlantRecognitionSystem.ElementType.Grass: return cactusColor;
+            case PlantRecognitionSystem.ElementType.Water: return waterLilyColor;
             default: return Color.white;
         }
     }
@@ -213,21 +202,21 @@ public class PlantAnalysisResultPanel : MonoBehaviour
             return "Mixed";
     }
 
-    private string GetColorMatchDescription(PlantAnalyzer.PlantType type, Color color)
+    private string GetColorMatchDescription(PlantRecognitionSystem.ElementType element, Color color)
     {
         bool isMatch = false;
 
-        if (type == PlantAnalyzer.PlantType.Sunflower && color.r > color.g && color.r > color.b)
+        if (element == PlantRecognitionSystem.ElementType.Fire && color.r > color.g && color.r > color.b)
             isMatch = true;
-        else if (type == PlantAnalyzer.PlantType.Cactus && color.g > color.r && color.g > color.b)
+        else if (element == PlantRecognitionSystem.ElementType.Grass && color.g > color.r && color.g > color.b)
             isMatch = true;
-        else if (type == PlantAnalyzer.PlantType.WaterLily && color.b > color.r && color.b > color.g)
+        else if (element == PlantRecognitionSystem.ElementType.Water && color.b > color.r && color.b > color.g)
             isMatch = true;
 
         return isMatch ? "✓ Perfect!" : "○ Partial";
     }
 
-    private string GetMovesDescription(PlantAnalyzer.PlantType type)
+    private string GetMovesDescription(PlantRecognitionSystem.PlantType type)
     {
         MoveData[] moves = MoveData.GetMovesForPlant(type);
         string result = "";
@@ -242,14 +231,14 @@ public class PlantAnalysisResultPanel : MonoBehaviour
     }
 
     /// <summary>
-    /// Static helper to show result from anywhere
+    /// Static helper to show result from anywhere (NEW SYSTEM)
     /// </summary>
-    public static void ShowAnalysisResult(PlantAnalyzer.PlantAnalysisResult result, Color dominantColor, System.Action onContinue = null)
+    public static void ShowAnalysisResult(PlantRecognitionSystem.RecognitionResult result, System.Action onContinue = null)
     {
         PlantAnalysisResultPanel panel = FindObjectOfType<PlantAnalysisResultPanel>();
         if (panel != null)
         {
-            panel.ShowResult(result, dominantColor, onContinue);
+            panel.ShowResult(result, onContinue);
         }
         else
         {

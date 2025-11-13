@@ -38,7 +38,7 @@ public class MovesetDetector : MonoBehaviour
     /// Analyze drawing and detect which move was drawn
     /// Only checks moves available to the given plant type
     /// </summary>
-    public MoveDetectionResult DetectMove(List<LineRenderer> strokes, PlantAnalyzer.PlantType plantType)
+    public MoveDetectionResult DetectMove(List<LineRenderer> strokes, PlantRecognitionSystem.PlantType plantType)
     {
         if (strokes == null || strokes.Count == 0)
         {

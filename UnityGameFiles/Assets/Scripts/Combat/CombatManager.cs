@@ -43,8 +43,8 @@ public class CombatManager : MonoBehaviour
 
     private BattleState currentState;
     private bool attackSubmitted = false;
-    private PlantAnalyzer.PlantType playerPlantType;
-    private PlantAnalyzer.PlantType enemyPlantType;
+    private PlantRecognitionSystem.PlantType playerPlantType;
+    private PlantRecognitionSystem.PlantType enemyPlantType;
 
     private void Start()
     {
@@ -77,18 +77,24 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            playerPlantType = PlantAnalyzer.PlantType.Sunflower; // Default
+            playerPlantType = PlantRecognitionSystem.PlantType.Sunflower; // Default
         }
 
         // Initialize enemy (you can randomize this later)
         if (enemyUnit != null)
         {
             // Randomize enemy plant type
-            PlantAnalyzer.PlantType[] plantTypes = new PlantAnalyzer.PlantType[]
+            PlantRecognitionSystem.PlantType[] plantTypes = new PlantRecognitionSystem.PlantType[]
             {
-                PlantAnalyzer.PlantType.Sunflower,
-                PlantAnalyzer.PlantType.Cactus,
-                PlantAnalyzer.PlantType.WaterLily
+                PlantRecognitionSystem.PlantType.Sunflower,
+                PlantRecognitionSystem.PlantType.FireRose,
+                PlantRecognitionSystem.PlantType.FlameTulip,
+                PlantRecognitionSystem.PlantType.Cactus,
+                PlantRecognitionSystem.PlantType.VineFlower,
+                PlantRecognitionSystem.PlantType.GrassSprout,
+                PlantRecognitionSystem.PlantType.WaterLily,
+                PlantRecognitionSystem.PlantType.CoralBloom,
+                PlantRecognitionSystem.PlantType.BubbleFlower
             };
             enemyPlantType = plantTypes[Random.Range(0, plantTypes.Length)];
 
@@ -447,7 +453,7 @@ public class CombatManager : MonoBehaviour
     /// <summary>
     /// Get MoveData for a specific move type
     /// </summary>
-    private MoveData GetMoveData(MoveData.MoveType moveType, PlantAnalyzer.PlantType plantType)
+    private MoveData GetMoveData(MoveData.MoveType moveType, PlantRecognitionSystem.PlantType plantType)
     {
         MoveData[] moves = MoveData.GetMovesForPlant(plantType);
         foreach (var move in moves)

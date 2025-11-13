@@ -59,8 +59,8 @@ public class BattleUnit : MonoBehaviour
         currentHealth = maxHealth;
 
         // Set name based on detected plant type
-        string plantName = data.plantType.ToString();
-        unitName = $"{plantName} ({data.elementType})";
+        string plantName = !string.IsNullOrEmpty(data.plantDisplayName) ? data.plantDisplayName : data.plantType.ToString();
+        unitName = $"{plantName} ({data.element})";
 
         Debug.Log($"Player unit initialized: {unitName}");
         Debug.Log($"Stats: ATK {attack}, DEF {defense}, HP {currentHealth}");

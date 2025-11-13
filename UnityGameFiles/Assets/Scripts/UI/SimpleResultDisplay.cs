@@ -20,9 +20,9 @@ public class SimpleResultDisplay : MonoBehaviour
     }
 
     /// <summary>
-    /// Show analysis result as simple text
+    /// Show analysis result as simple text (NEW SYSTEM)
     /// </summary>
-    public void ShowResult(PlantAnalyzer.PlantAnalysisResult result, Color dominantColor)
+    public void ShowResult(PlantRecognitionSystem.RecognitionResult result)
     {
         if (result == null || resultText == null)
         {
@@ -31,17 +31,17 @@ public class SimpleResultDisplay : MonoBehaviour
         }
 
         // Build result string
-        string colorName = GetColorName(dominantColor);
-        string emoji = GetEmoji(result.detectedType);
+        string colorName = GetColorName(result.dominantColor);
+        string emoji = GetElementEmoji(result.element);
 
-        string resultString = $"<size=36><b>{emoji} {result.detectedType} {emoji}</b></size>\n\n";
-        resultString += $"<color=yellow>Element:</color> <b>{result.elementType}</b>\n";
+        string resultString = $"<size=36><b>{emoji} {result.plantData.displayName} {emoji}</b></size>\n\n";
+        resultString += $"<color=yellow>Element:</color> <b>{result.element}</b>\n";
         resultString += $"<color=yellow>Confidence:</color> {GetStars(result.confidence)} <b>{result.confidence:P0}</b>\n";
         resultString += $"<color=yellow>Dominant Color:</color> {colorName}\n\n";
         resultString += $"<color=cyan><b>Available Moves:</b></color>\n";
 
         // Get moves
-        MoveData[] moves = MoveData.GetMovesForPlant(result.detectedType);
+        MoveData[] moves = MoveData.GetMovesForPlant(result.plantType);
         foreach (var move in moves)
         {
             resultString += $"• {move.moveName} (Power: {move.basePower})\n";
@@ -50,7 +50,7 @@ public class SimpleResultDisplay : MonoBehaviour
         resultText.text = resultString;
         resultText.gameObject.SetActive(true);
 
-        Debug.Log($"[RESULT DISPLAY] Showing: {result.detectedType} ({result.elementType})");
+        Debug.Log($"[RESULT DISPLAY] Showing: {result.plantData.displayName} ({result.element})");
     }
 
     /// <summary>
@@ -64,13 +64,13 @@ public class SimpleResultDisplay : MonoBehaviour
         }
     }
 
-    private string GetEmoji(PlantAnalyzer.PlantType type)
+    private string GetElementEmoji(PlantRecognitionSystem.ElementType element)
     {
-        switch (type)
+        switch (element)
         {
-            case PlantAnalyzer.PlantType.Sunflower: return "🌻";
-            case PlantAnalyzer.PlantType.Cactus: return "🌵";
-            case PlantAnalyzer.PlantType.WaterLily: return "🪷";
+            case PlantRecognitionSystem.ElementType.Fire: return "🔥";
+            case PlantRecognitionSystem.ElementType.Grass: return "🌿";
+            case PlantRecognitionSystem.ElementType.Water: return "💧";
             default: return "❓";
         }
     }
