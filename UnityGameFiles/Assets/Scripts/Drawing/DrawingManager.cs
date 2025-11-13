@@ -9,7 +9,8 @@ using UnityEngine.SceneManagement;
 public class DrawingManager : MonoBehaviour
 {
     [Header("References")]
-    public DrawingCanvas drawingCanvas;
+    public DrawingCanvas drawingCanvas;  // Legacy canvas (keep for backward compatibility)
+    public SimpleDrawingCanvas simpleCanvas;  // New simplified canvas (preferred)
     public PlantRecognitionSystem recognitionSystem;
     public PlantResultPanel plantResultPanel;
 
@@ -38,17 +39,30 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Using existing DrawnUnitData");
         }
 
-        if (drawingCanvas == null)
+        // Try to find SimpleDrawingCanvas first (preferred)
+        if (simpleCanvas == null)
         {
-            drawingCanvas = FindObjectOfType<DrawingCanvas>();
-            if (drawingCanvas != null)
-                Debug.Log("✓ Auto-found DrawingCanvas: " + drawingCanvas.gameObject.name);
-            else
-                Debug.LogError("❌ DrawingCanvas NOT FOUND!");
+            simpleCanvas = FindObjectOfType<SimpleDrawingCanvas>();
+            if (simpleCanvas != null)
+                Debug.Log("✓ Auto-found SimpleDrawingCanvas: " + simpleCanvas.gameObject.name);
         }
         else
         {
-            Debug.Log("✓ DrawingCanvas assigned: " + drawingCanvas.gameObject.name);
+            Debug.Log("✓ SimpleDrawingCanvas assigned: " + simpleCanvas.gameObject.name);
+        }
+
+        // Fall back to legacy DrawingCanvas if SimpleDrawingCanvas not found
+        if (simpleCanvas == null && drawingCanvas == null)
+        {
+            drawingCanvas = FindObjectOfType<DrawingCanvas>();
+            if (drawingCanvas != null)
+                Debug.Log("✓ Auto-found legacy DrawingCanvas: " + drawingCanvas.gameObject.name);
+            else
+                Debug.LogError("❌ No drawing canvas found! Please add SimpleDrawingCanvas or DrawingCanvas to the scene.");
+        }
+        else if (drawingCanvas != null && simpleCanvas == null)
+        {
+            Debug.Log("✓ Using legacy DrawingCanvas: " + drawingCanvas.gameObject.name);
         }
 
         if (recognitionSystem == null)
@@ -91,59 +105,55 @@ public class DrawingManager : MonoBehaviour
         }
 
         // Hook into the existing finish button
-        // Try to find it ourselves if DrawingCanvas hasn't found it yet
-        if (drawingCanvas != null)
-        {
-            if (drawingCanvas.finishButton == null)
-            {
-                Debug.Log("⚠️ DrawingCanvas.finishButton is null, attempting manual search...");
+        // Try to find it in the Canvas hierarchy
+        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Button finishButton = null;
 
-                // Search for FinishButton in the Canvas hierarchy
-                Canvas canvas = FindFirstObjectByType<Canvas>();
-                if (canvas != null)
+        if (canvas != null)
+        {
+            Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
+            if (drawingPanelTransform != null)
+            {
+                Transform buttonTransform = drawingPanelTransform.Find("FinishButton");
+                if (buttonTransform != null)
                 {
-                    Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
-                    if (drawingPanelTransform != null)
+                    finishButton = buttonTransform.GetComponent<Button>();
+                    if (finishButton != null)
                     {
-                        Transform buttonTransform = drawingPanelTransform.Find("FinishButton");
-                        if (buttonTransform != null)
-                        {
-                            drawingCanvas.finishButton = buttonTransform.GetComponent<Button>();
-                            if (drawingCanvas.finishButton != null)
-                            {
-                                Debug.Log("✓ Found and assigned FinishButton manually!");
-                            }
-                        }
-                        else
-                        {
-                            Debug.LogError("❌ FinishButton not found in DrawingPanel!");
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogError("❌ DrawingPanel not found in Canvas!");
+                        Debug.Log("✓ Found FinishButton in DrawingPanel");
                     }
                 }
-            }
-
-            // Now try to hook it up
-            if (drawingCanvas.finishButton != null)
-            {
-                // Remove existing listener and add our own
-                int oldListeners = drawingCanvas.finishButton.onClick.GetPersistentEventCount();
-                drawingCanvas.finishButton.onClick.RemoveAllListeners();
-                drawingCanvas.finishButton.onClick.AddListener(OnFinishDrawing);
-                Debug.Log($"✓ Finish button hooked up (removed {oldListeners} old listeners, added OnFinishDrawing)");
+                else
+                {
+                    Debug.LogWarning("⚠️ FinishButton not found in DrawingPanel!");
+                }
             }
             else
             {
-                Debug.LogError("❌ Cannot hook finish button - finishButton still NULL after manual search!");
-                Debug.LogError("❌ Make sure 'DrawingPanel/FinishButton' exists in your Canvas hierarchy");
+                Debug.LogWarning("⚠️ DrawingPanel not found in Canvas!");
+            }
+        }
+
+        // Hook up the finish button
+        if (finishButton != null)
+        {
+            // Remove existing listeners and add our own
+            int oldListeners = finishButton.onClick.GetPersistentEventCount();
+            finishButton.onClick.RemoveAllListeners();
+            finishButton.onClick.AddListener(OnFinishDrawing);
+            Debug.Log($"✓ Finish button hooked up (removed {oldListeners} old listeners, added OnFinishDrawing)");
+
+            // Also assign it to legacy canvas if it exists
+            if (drawingCanvas != null)
+            {
+                drawingCanvas.finishButton = finishButton;
+                Debug.Log("✓ Assigned finish button to legacy DrawingCanvas");
             }
         }
         else
         {
-            Debug.LogError("❌ Cannot hook finish button - DrawingCanvas is NULL!");
+            Debug.LogError("❌ Cannot hook finish button - FinishButton not found!");
+            Debug.LogError("❌ Make sure 'DrawingPanel/FinishButton' exists in your Canvas hierarchy");
         }
 
         Debug.Log("========== DRAWING MANAGER START COMPLETE ==========\n");
@@ -157,18 +167,32 @@ public class DrawingManager : MonoBehaviour
     {
         Debug.Log("DrawingManager: Finish button pressed!");
 
+        // Determine which canvas system we're using
+        bool usingSimpleCanvas = (simpleCanvas != null);
+        bool usingLegacyCanvas = (drawingCanvas != null);
+
         // End any in-progress stroke first
-        if (drawingCanvas != null)
+        if (usingSimpleCanvas)
         {
-            // Force end current stroke if one is being drawn
+            simpleCanvas.ForceEndStroke();
+            Debug.Log("Using SimpleDrawingCanvas - forced end stroke");
+        }
+        else if (usingLegacyCanvas)
+        {
             drawingCanvas.ForceEndStroke();
+            Debug.Log("Using legacy DrawingCanvas - forced end stroke");
         }
 
         // Hide the drawn strokes so they don't render over the result panel
-        if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
+        if (usingSimpleCanvas && simpleCanvas.strokeContainer != null)
+        {
+            simpleCanvas.strokeContainer.gameObject.SetActive(false);
+            Debug.Log("Hidden SimpleCanvas stroke container to show result panel");
+        }
+        else if (usingLegacyCanvas && drawingCanvas.strokeContainer != null)
         {
             drawingCanvas.strokeContainer.gameObject.SetActive(false);
-            Debug.Log("Hidden stroke container to show result panel");
+            Debug.Log("Hidden legacy canvas stroke container to show result panel");
         }
 
         // Analyze the drawing using the new recognition system
@@ -213,18 +237,32 @@ public class DrawingManager : MonoBehaviour
     {
         Debug.Log("DrawingManager: Redraw requested");
 
+        // Determine which canvas system we're using
+        bool usingSimpleCanvas = (simpleCanvas != null);
+        bool usingLegacyCanvas = (drawingCanvas != null);
+
         // Show the stroke container again
-        if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
+        if (usingSimpleCanvas && simpleCanvas.strokeContainer != null)
+        {
+            simpleCanvas.strokeContainer.gameObject.SetActive(true);
+            Debug.Log("Showed SimpleCanvas stroke container for redrawing");
+        }
+        else if (usingLegacyCanvas && drawingCanvas.strokeContainer != null)
         {
             drawingCanvas.strokeContainer.gameObject.SetActive(true);
-            Debug.Log("Showed stroke container for redrawing");
+            Debug.Log("Showed legacy canvas stroke container for redrawing");
         }
 
         // Clear the canvas
-        if (drawingCanvas != null)
+        if (usingSimpleCanvas)
+        {
+            simpleCanvas.ClearAll();
+            Debug.Log("SimpleCanvas cleared for redrawing");
+        }
+        else if (usingLegacyCanvas)
         {
             drawingCanvas.ClearCanvas();
-            Debug.Log("Canvas cleared for redrawing");
+            Debug.Log("Legacy canvas cleared for redrawing");
         }
 
         // Clear stored results
@@ -240,9 +278,13 @@ public class DrawingManager : MonoBehaviour
     /// </summary>
     private void AnalyzeAndStoreDrawing()
     {
-        if (drawingCanvas == null)
+        // Determine which canvas system we're using
+        bool usingSimpleCanvas = (simpleCanvas != null);
+        bool usingLegacyCanvas = (drawingCanvas != null);
+
+        if (!usingSimpleCanvas && !usingLegacyCanvas)
         {
-            Debug.LogError("DrawingCanvas reference missing!");
+            Debug.LogError("No drawing canvas reference found! Please assign either SimpleDrawingCanvas or DrawingCanvas.");
             return;
         }
 
@@ -254,8 +296,25 @@ public class DrawingManager : MonoBehaviour
 
         Debug.Log("========== ANALYZING DRAWING ==========");
 
-        // Get stroke count
-        int strokeCount = drawingCanvas.allStrokes.Count;
+        // Get strokes and dominant color from appropriate canvas
+        List<LineRenderer> strokes;
+        Color dominantColor;
+
+        if (usingSimpleCanvas)
+        {
+            strokes = simpleCanvas.allStrokes;
+            dominantColor = simpleCanvas.GetDominantColor();
+            Debug.Log($"Using SimpleDrawingCanvas - {strokes.Count} strokes");
+        }
+        else
+        {
+            strokes = drawingCanvas.allStrokes;
+            dominantColor = drawingCanvas.GetDominantColorByCount();
+            Debug.Log($"Using legacy DrawingCanvas - {strokes.Count} strokes");
+        }
+
+        // Validate stroke count
+        int strokeCount = strokes.Count;
         Debug.Log($"Total strokes to analyze: {strokeCount}");
 
         if (strokeCount == 0)
@@ -264,14 +323,12 @@ public class DrawingManager : MonoBehaviour
             return;
         }
 
-        // Get dominant color from drawing
-        Color dominantColor = drawingCanvas.GetDominantColorByCount();
         lastDominantColor = dominantColor;
         Debug.Log($"Dominant drawing color: {dominantColor}");
 
         // Use new recognition system
         PlantRecognitionSystem.RecognitionResult result = recognitionSystem.AnalyzeDrawing(
-            drawingCanvas.allStrokes,
+            strokes,
             dominantColor
         );
 
