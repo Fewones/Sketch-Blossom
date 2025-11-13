@@ -18,9 +18,14 @@ public class CombatManager : MonoBehaviour
     public DrawingCanvas drawingCanvas;
     public Button attackButton;
 
+    [Header("Move Detection System")]
+    public MovesetDetector movesetDetector;
+    public MoveExecutor moveExecutor;
+
     [Header("UI")]
     public TextMeshProUGUI turnIndicatorText;
     public TextMeshProUGUI actionText;
+    public TextMeshProUGUI availableMovesText;
     public Button nextEncounterButton;
 
     [Header("Combat Settings")]
@@ -38,6 +43,8 @@ public class CombatManager : MonoBehaviour
 
     private BattleState currentState;
     private bool attackSubmitted = false;
+    private PlantAnalyzer.PlantType playerPlantType;
+    private PlantAnalyzer.PlantType enemyPlantType;
 
     private void Start()
     {
@@ -66,12 +73,37 @@ public class CombatManager : MonoBehaviour
         if (playerUnit != null && DrawnUnitData.Instance != null)
         {
             playerUnit.InitializeFromDrawing(DrawnUnitData.Instance);
+            playerPlantType = DrawnUnitData.Instance.plantType;
+        }
+        else
+        {
+            playerPlantType = PlantAnalyzer.PlantType.Sunflower; // Default
         }
 
         // Initialize enemy (you can randomize this later)
         if (enemyUnit != null)
         {
-            enemyUnit.InitializeAsEnemy("Wild Plant", 40, 12, 3);
+            // Randomize enemy plant type
+            PlantAnalyzer.PlantType[] plantTypes = new PlantAnalyzer.PlantType[]
+            {
+                PlantAnalyzer.PlantType.Sunflower,
+                PlantAnalyzer.PlantType.Cactus,
+                PlantAnalyzer.PlantType.WaterLily
+            };
+            enemyPlantType = plantTypes[Random.Range(0, plantTypes.Length)];
+
+            string enemyName = $"Wild {enemyPlantType}";
+            enemyUnit.InitializeAsEnemy(enemyName, 40, 12, 3);
+        }
+
+        // Initialize move detection components
+        if (movesetDetector == null)
+        {
+            movesetDetector = gameObject.AddComponent<MovesetDetector>();
+        }
+        if (moveExecutor == null)
+        {
+            moveExecutor = gameObject.AddComponent<MoveExecutor>();
         }
 
         StartCoroutine(BattleSequence());
@@ -135,6 +167,9 @@ public class CombatManager : MonoBehaviour
             actionText.text = "Draw your attack!";
         }
 
+        // Show available moves
+        ShowAvailableMoves();
+
         // Show drawing panel
         if (drawingPanel != null)
         {
@@ -171,18 +206,61 @@ public class CombatManager : MonoBehaviour
             drawingPanel.SetActive(false);
         }
 
-        // Calculate and execute attack
-        int damage = CalculateAttackDamage();
-
-        if (actionText != null)
+        // Hide available moves text
+        if (availableMovesText != null)
         {
-            actionText.text = $"You attack for {damage} damage!";
+            availableMovesText.gameObject.SetActive(false);
         }
 
-        yield return StartCoroutine(playerUnit.AttackAnimation(enemyUnit, damage));
+        // Detect the move from the drawing
+        if (movesetDetector != null && drawingCanvas != null)
+        {
+            var detectionResult = movesetDetector.DetectMove(
+                drawingCanvas.GetAllStrokes(),
+                playerPlantType
+            );
 
-        // Wait 2 seconds to show the damage result
-        yield return new WaitForSeconds(2f);
+            if (detectionResult.wasRecognized)
+            {
+                // Move recognized - execute it!
+                MoveData move = GetMoveData(detectionResult.detectedMove, playerPlantType);
+
+                if (move != null)
+                {
+                    if (actionText != null)
+                    {
+                        actionText.text = $"You used {move.moveName}!";
+                    }
+
+                    yield return StartCoroutine(
+                        moveExecutor.ExecuteMove(move, playerUnit, enemyUnit, playerPlantType, enemyPlantType)
+                    );
+                }
+            }
+            else
+            {
+                // Move not recognized - attack fails!
+                if (actionText != null)
+                {
+                    actionText.text = "Your attack failed!";
+                }
+
+                yield return StartCoroutine(moveExecutor.ExecuteFailedAttack(playerUnit));
+            }
+        }
+        else
+        {
+            // Fallback to basic attack if systems not initialized
+            int damage = CalculateAttackDamage();
+            if (actionText != null)
+            {
+                actionText.text = $"You attack for {damage} damage!";
+            }
+            yield return StartCoroutine(playerUnit.AttackAnimation(enemyUnit, damage));
+        }
+
+        // Wait to show the result
+        yield return new WaitForSeconds(1.5f);
     }
 
     private IEnumerator MonitorDrawingForButton()
@@ -340,5 +418,45 @@ public class CombatManager : MonoBehaviour
         {
             drawingCanvas.ClearCanvas();
         }
+    }
+
+    /// <summary>
+    /// Show available moves for the player's plant type
+    /// </summary>
+    private void ShowAvailableMoves()
+    {
+        if (availableMovesText == null) return;
+
+        MoveData[] moves = MoveData.GetMovesForPlant(playerPlantType);
+        if (moves.Length == 0)
+        {
+            availableMovesText.gameObject.SetActive(false);
+            return;
+        }
+
+        string movesInfo = "Available Moves:\n";
+        foreach (var move in moves)
+        {
+            movesInfo += $"• {move.moveName}\n";
+        }
+
+        availableMovesText.text = movesInfo;
+        availableMovesText.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Get MoveData for a specific move type
+    /// </summary>
+    private MoveData GetMoveData(MoveData.MoveType moveType, PlantAnalyzer.PlantType plantType)
+    {
+        MoveData[] moves = MoveData.GetMovesForPlant(plantType);
+        foreach (var move in moves)
+        {
+            if (move.moveType == moveType)
+            {
+                return move;
+            }
+        }
+        return null;
     }
 }
