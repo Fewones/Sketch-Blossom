@@ -10,14 +10,14 @@ public class DrawingManager : MonoBehaviour
 {
     [Header("References")]
     public DrawingCanvas drawingCanvas;
-    public PlantAnalyzer plantAnalyzer;
-    public PlantResultPanel plantResultPanel; // NEW: Proper result panel
+    public PlantRecognitionSystem recognitionSystem;
+    public PlantResultPanel plantResultPanel;
 
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
 
     private DrawnUnitData unitData;
-    private PlantAnalyzer.PlantAnalysisResult lastPlantResult;
+    private PlantRecognitionSystem.RecognitionResult lastRecognitionResult;
     private Color lastDominantColor;
 
     private void Start()
@@ -51,24 +51,24 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ DrawingCanvas assigned: " + drawingCanvas.gameObject.name);
         }
 
-        if (plantAnalyzer == null)
+        if (recognitionSystem == null)
         {
-            plantAnalyzer = FindObjectOfType<PlantAnalyzer>();
-            if (plantAnalyzer == null)
+            recognitionSystem = FindObjectOfType<PlantRecognitionSystem>();
+            if (recognitionSystem == null)
             {
-                // Create PlantAnalyzer if it doesn't exist
-                GameObject analyzerObj = new GameObject("PlantAnalyzer");
-                plantAnalyzer = analyzerObj.AddComponent<PlantAnalyzer>();
-                Debug.Log("✓ Created new PlantAnalyzer");
+                // Create PlantRecognitionSystem if it doesn't exist
+                GameObject recognitionObj = new GameObject("PlantRecognitionSystem");
+                recognitionSystem = recognitionObj.AddComponent<PlantRecognitionSystem>();
+                Debug.Log("✓ Created new PlantRecognitionSystem");
             }
             else
             {
-                Debug.Log("✓ Auto-found PlantAnalyzer: " + plantAnalyzer.gameObject.name);
+                Debug.Log("✓ Auto-found PlantRecognitionSystem: " + recognitionSystem.gameObject.name);
             }
         }
         else
         {
-            Debug.Log("✓ PlantAnalyzer assigned: " + plantAnalyzer.gameObject.name);
+            Debug.Log("✓ PlantRecognitionSystem assigned: " + recognitionSystem.gameObject.name);
         }
 
         // Auto-find result panel (check inactive too)
@@ -171,20 +171,20 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("Hidden stroke container to show result panel");
         }
 
-        // Analyze the drawing using the existing DrawingCanvas data
+        // Analyze the drawing using the new recognition system
         AnalyzeAndStoreDrawing();
 
         // Show result panel
-        if (plantResultPanel != null && lastPlantResult != null)
+        if (plantResultPanel != null && lastRecognitionResult != null)
         {
             Debug.Log("===== SHOWING RESULT PANEL =====");
-            plantResultPanel.ShowResults(lastPlantResult, lastDominantColor, unitData, LoadBattleScene, OnRedrawRequested);
+            plantResultPanel.ShowResults(lastRecognitionResult, unitData, LoadBattleScene, OnRedrawRequested);
         }
         else
         {
             Debug.LogError("Cannot show results - panel or result is null!");
             Debug.LogError($"Panel: {(plantResultPanel != null ? "OK" : "NULL")}");
-            Debug.LogError($"Result: {(lastPlantResult != null ? "OK" : "NULL")}");
+            Debug.LogError($"Result: {(lastRecognitionResult != null ? "OK" : "NULL")}");
 
             // Try to find the panel
             if (plantResultPanel == null)
@@ -193,7 +193,7 @@ public class DrawingManager : MonoBehaviour
                 if (plantResultPanel != null)
                 {
                     Debug.Log("Found PlantResultPanel via FindFirstObjectByType, retrying...");
-                    plantResultPanel.ShowResults(lastPlantResult, lastDominantColor, unitData, LoadBattleScene, OnRedrawRequested);
+                    plantResultPanel.ShowResults(lastRecognitionResult, unitData, LoadBattleScene, OnRedrawRequested);
                     return;
                 }
             }
@@ -226,7 +226,7 @@ public class DrawingManager : MonoBehaviour
         }
 
         // Clear stored results
-        lastPlantResult = null;
+        lastRecognitionResult = null;
         lastDominantColor = Color.green;
 
         // Note: The drawing panel should already be visible
@@ -234,7 +234,7 @@ public class DrawingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Analyze the drawing and store stats
+    /// Analyze the drawing and store stats using the new recognition system
     /// </summary>
     private void AnalyzeAndStoreDrawing()
     {
@@ -244,77 +244,53 @@ public class DrawingManager : MonoBehaviour
             return;
         }
 
-        // Get drawing data
-        int strokeCount = drawingCanvas.currentStrokeCount;
-        int allStrokesCount = drawingCanvas.allStrokes.Count;
-
-        Debug.Log($"DrawingCanvas state: currentStrokeCount={strokeCount}, allStrokes.Count={allStrokesCount}");
-
-        // Calculate total length and points from all strokes
-        float totalLength = 0f;
-        int totalPoints = 0;
-
-        foreach (var stroke in drawingCanvas.allStrokes)
+        if (recognitionSystem == null)
         {
-            if (stroke == null) continue;
-
-            Vector3[] positions = new Vector3[stroke.positionCount];
-            stroke.GetPositions(positions);
-
-            // Calculate length
-            for (int i = 1; i < positions.Length; i++)
-            {
-                totalLength += Vector3.Distance(positions[i - 1], positions[i]);
-            }
-
-            totalPoints += positions.Length;
+            Debug.LogError("PlantRecognitionSystem reference missing!");
+            return;
         }
 
-        Debug.Log($"Drawing Analysis: {strokeCount} strokes, {totalLength:F2} length, {totalPoints} points");
+        Debug.Log("========== ANALYZING DRAWING ==========");
 
-        // ===== NEW: ANALYZE PLANT TYPE WITH COLOR =====
-        PlantAnalyzer.PlantAnalysisResult plantResult = null;
-        Color dominantColor = Color.green;
+        // Get stroke count
+        int strokeCount = drawingCanvas.allStrokes.Count;
+        Debug.Log($"Total strokes to analyze: {strokeCount}");
 
-        if (plantAnalyzer != null)
+        if (strokeCount == 0)
         {
-            // Get dominant color from drawing
-            dominantColor = drawingCanvas.GetDominantColorByCount();
-            Debug.Log($"Passing dominant color to analyzer: {dominantColor}");
-
-            // Analyze with color influence
-            plantResult = plantAnalyzer.AnalyzeDrawing(drawingCanvas.allStrokes, dominantColor);
-            unitData.SetPlantType(plantResult);
-
-            // Store for panel display
-            lastPlantResult = plantResult;
-            lastDominantColor = dominantColor;
-        }
-        else
-        {
-            Debug.LogWarning("PlantAnalyzer not found! Plant type will be Unknown.");
+            Debug.LogWarning("No strokes drawn! Cannot analyze.");
+            return;
         }
 
-        // Store in DrawnUnitData
-        unitData.SetStatsFromDrawing(strokeCount, totalLength, totalPoints);
+        // Get dominant color from drawing
+        Color dominantColor = drawingCanvas.GetDominantColorByCount();
+        lastDominantColor = dominantColor;
+        Debug.Log($"Dominant drawing color: {dominantColor}");
 
-        // Log final result
-        if (plantResult != null)
-        {
-            Debug.Log($"🌱 Plant Detected: {plantResult.detectedType} ({plantResult.elementType}) - Confidence: {plantResult.confidence:P0}");
-            Debug.Log($"📊 Stats: ATK={unitData.attack}, DEF={unitData.defense}, HP={unitData.health}");
+        // Use new recognition system
+        PlantRecognitionSystem.RecognitionResult result = recognitionSystem.AnalyzeDrawing(
+            drawingCanvas.allStrokes,
+            dominantColor
+        );
 
-            // Get available moves for this plant type
-            MoveData[] moves = MoveData.GetMovesForPlant(plantResult.detectedType);
-            Debug.Log($"⚔️ Available Moves:");
-            foreach (var move in moves)
-            {
-                Debug.Log($"  - {move.moveName} ({move.element}, Power: {move.basePower})");
-            }
-        }
-        else
+        // Store result
+        lastRecognitionResult = result;
+
+        // Update DrawnUnitData with recognized plant
+        unitData.SetPlantData(result.plantData);
+
+        // Get available moves for this plant type
+        MoveData[] moves = MoveData.GetMovesForPlant(result.plantType);
+
+        Debug.Log("========== ANALYSIS COMPLETE ==========");
+        Debug.Log($"🌱 Recognized: {result.plantData.displayName}");
+        Debug.Log($"🔥 Element: {result.element}");
+        Debug.Log($"⭐ Confidence: {result.confidence:P0}");
+        Debug.Log($"💚 Stats: HP={result.plantData.baseHP}, ATK={result.plantData.baseAttack}, DEF={result.plantData.baseDefense}");
+        Debug.Log($"⚔️ Available Moves: {moves.Length}");
+        foreach (var move in moves)
         {
-            Debug.LogError("Plant analysis failed - no result!");
+            Debug.Log($"   - {move.moveName} (Power: {move.basePower})");
         }
     }
 

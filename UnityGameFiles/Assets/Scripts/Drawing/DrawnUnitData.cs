@@ -14,9 +14,10 @@ public class DrawnUnitData : MonoBehaviour
     public int health = 30;
 
     [Header("Plant Type")]
-    public PlantAnalyzer.PlantType plantType = PlantAnalyzer.PlantType.Unknown;
-    public string elementType = "Unknown"; // "Fire", "Grass", "Water"
+    public PlantRecognitionSystem.PlantType plantType;
+    public PlantRecognitionSystem.ElementType element;
     public float detectionConfidence = 0f;
+    public string plantDisplayName = "Unknown";
 
     [Header("Drawing Properties")]
     public int strokeCount = 0;
@@ -69,17 +70,22 @@ public class DrawnUnitData : MonoBehaviour
     }
 
     /// <summary>
-    /// Set plant type from analysis
+    /// Set plant data from new recognition system
     /// </summary>
-    public void SetPlantType(PlantAnalyzer.PlantAnalysisResult result)
+    public void SetPlantData(PlantRecognitionSystem.PlantData data)
     {
-        if (result != null)
+        if (data != null)
         {
-            plantType = result.detectedType;
-            elementType = result.elementType;
-            detectionConfidence = result.confidence;
+            plantType = data.type;
+            element = data.element;
+            plantDisplayName = data.displayName;
 
-            Debug.Log($"Plant Type Set: {plantType} ({elementType}) - {detectionConfidence:P0} confidence");
+            // Use fixed stats from plant data
+            attack = data.baseAttack;
+            defense = data.baseDefense;
+            health = data.baseHP;
+
+            Debug.Log($"Plant Data Set: {plantDisplayName} ({element}) - HP:{health} ATK:{attack} DEF:{defense}");
         }
     }
 
@@ -95,8 +101,9 @@ public class DrawnUnitData : MonoBehaviour
         totalDrawingLength = 0f;
         totalPoints = 0;
         drawingTexture = null;
-        plantType = PlantAnalyzer.PlantType.Unknown;
-        elementType = "Unknown";
+        plantType = PlantRecognitionSystem.PlantType.GrassSprout;
+        element = PlantRecognitionSystem.ElementType.Grass;
+        plantDisplayName = "Unknown";
         detectionConfidence = 0f;
     }
 }
