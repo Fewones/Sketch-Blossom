@@ -13,8 +13,8 @@ public class SetupResultPanelLayout : EditorWindow
     {
         Debug.Log("========== FORMATTING RESULT PANEL LAYOUT ==========");
 
-        // Find PlantResultPanel in the scene
-        PlantResultPanel resultPanel = FindFirstObjectByType<PlantResultPanel>();
+        // Find PlantResultPanel in the scene (including inactive objects)
+        PlantResultPanel resultPanel = FindFirstObjectByType<PlantResultPanel>(FindObjectsInactive.Include);
         if (resultPanel == null)
         {
             EditorUtility.DisplayDialog("Error", "PlantResultPanel not found in scene!", "OK");
