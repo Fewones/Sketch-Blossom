@@ -23,8 +23,8 @@ public class MoveExecutor : MonoBehaviour
         MoveData move,
         BattleUnit attacker,
         BattleUnit target,
-        PlantAnalyzer.PlantType attackerPlantType,
-        PlantAnalyzer.PlantType targetPlantType)
+        PlantRecognitionSystem.PlantType attackerPlantType,
+        PlantRecognitionSystem.PlantType targetPlantType)
     {
         Debug.Log($"=== EXECUTING MOVE: {move.moveName} ===");
 
@@ -64,8 +64,8 @@ public class MoveExecutor : MonoBehaviour
         MoveData move,
         BattleUnit attacker,
         BattleUnit target,
-        PlantAnalyzer.PlantType attackerPlantType,
-        PlantAnalyzer.PlantType targetPlantType)
+        PlantRecognitionSystem.PlantType attackerPlantType,
+        PlantRecognitionSystem.PlantType targetPlantType)
     {
         // Calculate type advantage
         MoveData.ElementType attackElement = move.element;
@@ -232,13 +232,28 @@ public class MoveExecutor : MonoBehaviour
     /// <summary>
     /// Convert plant type to element type
     /// </summary>
-    private MoveData.ElementType GetElementTypeForPlant(PlantAnalyzer.PlantType plantType)
+    private MoveData.ElementType GetElementTypeForPlant(PlantRecognitionSystem.PlantType plantType)
     {
         switch (plantType)
         {
-            case PlantAnalyzer.PlantType.Sunflower: return MoveData.ElementType.Fire;
-            case PlantAnalyzer.PlantType.Cactus: return MoveData.ElementType.Grass;
-            case PlantAnalyzer.PlantType.WaterLily: return MoveData.ElementType.Water;
+            // Fire plants
+            case PlantRecognitionSystem.PlantType.Sunflower:
+            case PlantRecognitionSystem.PlantType.FireRose:
+            case PlantRecognitionSystem.PlantType.FlameTulip:
+                return MoveData.ElementType.Fire;
+
+            // Grass plants
+            case PlantRecognitionSystem.PlantType.Cactus:
+            case PlantRecognitionSystem.PlantType.VineFlower:
+            case PlantRecognitionSystem.PlantType.GrassSprout:
+                return MoveData.ElementType.Grass;
+
+            // Water plants
+            case PlantRecognitionSystem.PlantType.WaterLily:
+            case PlantRecognitionSystem.PlantType.CoralBloom:
+            case PlantRecognitionSystem.PlantType.BubbleFlower:
+                return MoveData.ElementType.Water;
+
             default: return MoveData.ElementType.Fire; // Default
         }
     }
