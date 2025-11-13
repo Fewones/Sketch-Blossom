@@ -210,7 +210,7 @@ public class DrawingSceneUI : MonoBehaviour
     /// <summary>
     /// Show plant detection feedback
     /// </summary>
-    public void ShowPlantDetection(PlantAnalyzer.PlantAnalysisResult result)
+    public void ShowPlantDetection(PlantRecognitionSystem.RecognitionResult result)
     {
         if (feedbackPanel != null)
         {
@@ -219,15 +219,15 @@ public class DrawingSceneUI : MonoBehaviour
 
         if (detectedPlantText != null)
         {
-            string plantName = result.detectedType.ToString();
+            string plantName = result.plantData.displayName;
             detectedPlantText.text = $"<size=36><b>{plantName}</b></size>";
         }
 
         if (elementTypeText != null)
         {
-            Color elementColor = GetElementColor(result.elementType);
+            Color elementColor = GetElementColor(result.element.ToString());
             elementTypeText.text = $"<color=#{ColorUtility.ToHtmlStringRGB(elementColor)}>" +
-                                  $"<b>{result.elementType} Type</b></color>";
+                                  $"<b>{result.element} Type</b></color>";
         }
 
         if (confidenceText != null)
@@ -242,7 +242,7 @@ public class DrawingSceneUI : MonoBehaviour
             Image panelImage = feedbackPanel.GetComponent<Image>();
             if (panelImage != null)
             {
-                Color elementColor = GetElementColor(result.elementType);
+                Color elementColor = GetElementColor(result.element.ToString());
                 elementColor.a = 0.15f; // Subtle background tint
                 panelImage.color = elementColor;
             }
