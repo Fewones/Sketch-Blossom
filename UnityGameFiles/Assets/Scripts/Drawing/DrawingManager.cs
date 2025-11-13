@@ -259,9 +259,22 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Hidden DrawingPanel");
         }
 
-        // DON'T hide the canvas - just hide the UI panels
-        // The strokes should remain visible in the background
-        Debug.Log("✓ Keeping canvas visible (strokes stay in background)");
+        // HIDE the stroke container so strokes don't show over result panel
+        if (usingSimpleCanvas && simpleCanvas != null && simpleCanvas.strokeContainer != null)
+        {
+            simpleCanvas.strokeContainer.gameObject.SetActive(false);
+            Debug.Log("✓ Hidden stroke container (strokes won't show over results)");
+        }
+        else if (usingLegacyCanvas && drawingCanvas != null)
+        {
+            // For legacy canvas, try to hide the stroke parent
+            Transform strokeParent = drawingCanvas.transform.Find("Strokes");
+            if (strokeParent != null)
+            {
+                strokeParent.gameObject.SetActive(false);
+                Debug.Log("✓ Hidden legacy stroke container");
+            }
+        }
 
         // Show result data - PlantResultPanel will handle showing its own overlay/panel
         if (plantResultPanel != null)
@@ -289,7 +302,23 @@ public class DrawingManager : MonoBehaviour
         bool usingSimpleCanvas = (simpleCanvas != null);
         bool usingLegacyCanvas = (drawingCanvas != null);
 
-        // Canvas is already visible, just clear it
+        // SHOW the stroke container again
+        if (usingSimpleCanvas && simpleCanvas != null && simpleCanvas.strokeContainer != null)
+        {
+            simpleCanvas.strokeContainer.gameObject.SetActive(true);
+            Debug.Log("✓ Shown stroke container for redrawing");
+        }
+        else if (usingLegacyCanvas && drawingCanvas != null)
+        {
+            Transform strokeParent = drawingCanvas.transform.Find("Strokes");
+            if (strokeParent != null)
+            {
+                strokeParent.gameObject.SetActive(true);
+                Debug.Log("✓ Shown legacy stroke container");
+            }
+        }
+
+        // Clear the canvas
         if (usingSimpleCanvas)
         {
             simpleCanvas.ClearAll();
