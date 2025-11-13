@@ -280,8 +280,8 @@ public class SetupDrawingSystem : EditorWindow
 
     static void SetupColorSelector(SimpleDrawingCanvas canvas)
     {
-        // Find existing DrawingColorSelector
-        DrawingColorSelector colorSelector = FindObjectOfType<DrawingColorSelector>();
+        // Find existing DrawingColorSelector (including inactive objects)
+        DrawingColorSelector colorSelector = FindObjectOfType<DrawingColorSelector>(true);
         if (colorSelector != null)
         {
             // Link SimpleDrawingCanvas to color selector
@@ -293,12 +293,17 @@ public class SetupDrawingSystem : EditorWindow
                 field.SetValue(colorSelector, canvas);
                 Debug.Log("  ✓ Linked SimpleDrawingCanvas to DrawingColorSelector");
             }
+            else
+            {
+                Debug.LogWarning("  ⚠️ Could not find simpleDrawingCanvas field in DrawingColorSelector");
+            }
 
             EditorUtility.SetDirty(colorSelector);
         }
         else
         {
             Debug.LogWarning("  ⚠️ DrawingColorSelector not found in scene - color buttons won't work");
+            Debug.LogWarning("  ⚠️ Make sure DrawingColorSelector component exists in the DrawingPanel");
         }
     }
 
