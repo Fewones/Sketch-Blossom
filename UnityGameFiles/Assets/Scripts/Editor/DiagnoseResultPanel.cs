@@ -87,14 +87,14 @@ public class DiagnoseResultPanel : EditorWindow
             }
         }
 
-        // Check PlantAnalyzer reference
-        if (manager.plantAnalyzer == null)
+        // Check PlantRecognitionSystem reference
+        if (manager.recognitionSystem == null)
         {
-            Debug.LogWarning("⚠️ DrawingManager.plantAnalyzer is NULL!");
+            Debug.LogWarning("⚠️ DrawingManager.recognitionSystem is NULL!");
         }
         else
         {
-            Debug.Log("✓ PlantAnalyzer assigned: " + manager.plantAnalyzer.gameObject.name);
+            Debug.Log("✓ PlantRecognitionSystem assigned: " + manager.recognitionSystem.gameObject.name);
         }
 
         // Check PlantResultPanel reference
