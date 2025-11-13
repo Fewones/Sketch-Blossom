@@ -147,9 +147,21 @@ public class DrawingCanvas : MonoBehaviour
         UpdateStrokeUI();
 
         // Only setup finish button if it exists (for DrawingScene)
+        // BUT: Don't hook it up if DrawingManager exists - DrawingManager will handle it
         if (finishButton != null)
         {
-            finishButton.onClick.AddListener(OnFinishDrawing);
+            DrawingManager manager = FindFirstObjectByType<DrawingManager>();
+            if (manager == null)
+            {
+                // No DrawingManager - use old behavior
+                finishButton.onClick.AddListener(OnFinishDrawing);
+                Debug.Log("DrawingCanvas: Hooked up finish button (no DrawingManager found)");
+            }
+            else
+            {
+                // DrawingManager exists - let it handle the button
+                Debug.Log("DrawingCanvas: DrawingManager found, letting it handle finish button");
+            }
             finishButton.interactable = false;
         }
 
