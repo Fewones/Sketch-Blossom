@@ -259,6 +259,14 @@ public class DrawingCanvas : MonoBehaviour
     }
 
     /// <summary>
+    /// Get all strokes for move detection
+    /// </summary>
+    public List<LineRenderer> GetAllStrokes()
+    {
+        return allStrokes;
+    }
+
+    /// <summary>
     /// Clear all drawing data - used when starting new turn in battle
     /// </summary>
     public void ClearCanvas()
