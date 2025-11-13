@@ -83,16 +83,52 @@ public class DrawingManager : MonoBehaviour
         if (plantResultPanel != null && lastPlantResult != null)
         {
             Debug.Log("===== SHOWING RESULT PANEL =====");
-            plantResultPanel.ShowResults(lastPlantResult, lastDominantColor, unitData, LoadBattleScene);
+            plantResultPanel.ShowResults(lastPlantResult, lastDominantColor, unitData, LoadBattleScene, OnRedrawRequested);
         }
         else
         {
             Debug.LogError("Cannot show results - panel or result is null!");
             Debug.LogError($"Panel: {(plantResultPanel != null ? "OK" : "NULL")}");
             Debug.LogError($"Result: {(lastPlantResult != null ? "OK" : "NULL")}");
+
+            // Try to find the panel
+            if (plantResultPanel == null)
+            {
+                plantResultPanel = FindFirstObjectByType<PlantResultPanel>();
+                if (plantResultPanel != null)
+                {
+                    Debug.Log("Found PlantResultPanel via FindFirstObjectByType, retrying...");
+                    plantResultPanel.ShowResults(lastPlantResult, lastDominantColor, unitData, LoadBattleScene, OnRedrawRequested);
+                    return;
+                }
+            }
+
             // Fallback - just transition after delay
+            Debug.LogError("FALLBACK: Transitioning to battle in 3 seconds...");
             Invoke("LoadBattleScene", 3f);
         }
+    }
+
+    /// <summary>
+    /// Called when player clicks "Redraw" button
+    /// </summary>
+    private void OnRedrawRequested()
+    {
+        Debug.Log("DrawingManager: Redraw requested");
+
+        // Clear the canvas
+        if (drawingCanvas != null)
+        {
+            drawingCanvas.ClearCanvas();
+            Debug.Log("Canvas cleared for redrawing");
+        }
+
+        // Clear stored results
+        lastPlantResult = null;
+        lastDominantColor = Color.green;
+
+        // Note: The drawing panel should already be visible
+        // The player can now draw again
     }
 
     /// <summary>

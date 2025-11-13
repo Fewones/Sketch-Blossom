@@ -37,7 +37,8 @@ public class PlantResultPanelSetup : EditorWindow
         GameObject stats = CreateText(panel.transform, "StatsText", new Vector2(-150, -20), 20, "Stats:\nHP: 30\nATK: 15\nDEF: 10", TextAlignmentOptions.Left);
         GameObject moves = CreateText(panel.transform, "MovesText", new Vector2(150, -20), 20, "Moves:\n• Fireball ⚡\n• Flame Wave ⚡⚡\n• Burn ⚡⚡⚡", TextAlignmentOptions.Left);
         GameObject colorInfo = CreateText(panel.transform, "ColorInfoText", new Vector2(0, -120), 18, "Drawing Color: RED");
-        GameObject button = CreateContinueButton(panel.transform);
+        GameObject continueBtn = CreateContinueButton(panel.transform);
+        GameObject redrawBtn = CreateRedrawButton(panel.transform);
 
         // Add PlantResultPanel component
         PlantResultPanel panelScript = overlay.GetComponent<PlantResultPanel>();
@@ -56,7 +57,8 @@ public class PlantResultPanelSetup : EditorWindow
         panelScript.statsText = stats.GetComponent<TextMeshProUGUI>();
         panelScript.movesText = moves.GetComponent<TextMeshProUGUI>();
         panelScript.colorInfoText = colorInfo.GetComponent<TextMeshProUGUI>();
-        panelScript.continueButton = button.GetComponent<Button>();
+        panelScript.continueButton = continueBtn.GetComponent<Button>();
+        panelScript.redrawButton = redrawBtn.GetComponent<Button>();
 
         // Link to DrawingManager
         DrawingManager manager = FindObjectOfType<DrawingManager>();
@@ -213,8 +215,56 @@ public class PlantResultPanelSetup : EditorWindow
         TextMeshProUGUI buttonText = textObj.GetComponent<TextMeshProUGUI>();
         if (buttonText == null) buttonText = textObj.AddComponent<TextMeshProUGUI>();
 
-        buttonText.text = "Continue to Battle →";
+        buttonText.text = "Go to Battle →";
         buttonText.fontSize = 24;
+        buttonText.alignment = TextAlignmentOptions.Center;
+        buttonText.color = Color.white;
+        buttonText.fontStyle = FontStyles.Bold;
+
+        return buttonObj;
+    }
+
+    private static GameObject CreateRedrawButton(Transform parent)
+    {
+        GameObject buttonObj = CreateOrGet(parent, "RedrawButton");
+
+        RectTransform rect = buttonObj.GetComponent<RectTransform>();
+        if (rect == null) rect = buttonObj.AddComponent<RectTransform>();
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(0, -160);
+        rect.sizeDelta = new Vector2(200, 50);
+
+        Image image = buttonObj.GetComponent<Image>();
+        if (image == null) image = buttonObj.AddComponent<Image>();
+        image.color = new Color(0.8f, 0.6f, 0.2f, 1f); // Orange color
+
+        Button button = buttonObj.GetComponent<Button>();
+        if (button == null) button = buttonObj.AddComponent<Button>();
+
+        ColorBlock colors = button.colors;
+        colors.normalColor = new Color(0.8f, 0.6f, 0.2f, 1f);
+        colors.highlightedColor = new Color(0.9f, 0.7f, 0.3f, 1f);
+        colors.pressedColor = new Color(0.6f, 0.4f, 0.1f, 1f);
+        button.colors = colors;
+
+        // Button text
+        GameObject textObj = CreateOrGet(buttonObj.transform, "Text");
+        RectTransform textRect = textObj.GetComponent<RectTransform>();
+        if (textRect == null) textRect = textObj.AddComponent<RectTransform>();
+
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.sizeDelta = Vector2.zero;
+        textRect.anchoredPosition = Vector2.zero;
+
+        TextMeshProUGUI buttonText = textObj.GetComponent<TextMeshProUGUI>();
+        if (buttonText == null) buttonText = textObj.AddComponent<TextMeshProUGUI>();
+
+        buttonText.text = "← Redraw Plant";
+        buttonText.fontSize = 20;
         buttonText.alignment = TextAlignmentOptions.Center;
         buttonText.color = Color.white;
         buttonText.fontStyle = FontStyles.Bold;

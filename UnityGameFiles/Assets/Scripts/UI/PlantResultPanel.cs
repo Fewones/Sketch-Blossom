@@ -21,6 +21,7 @@ public class PlantResultPanel : MonoBehaviour
     public TextMeshProUGUI movesText;
     public TextMeshProUGUI colorInfoText;
     public Button continueButton;
+    public Button redrawButton;
 
     [Header("Colors")]
     public Color sunflowerColor = new Color(1f, 0.6f, 0f);
@@ -28,39 +29,89 @@ public class PlantResultPanel : MonoBehaviour
     public Color waterLilyColor = new Color(0.3f, 0.6f, 1f);
 
     private System.Action onContinueCallback;
+    private System.Action onRedrawCallback;
 
     private void Start()
     {
+        Debug.Log("PlantResultPanel.Start() called");
+
         // Hide panel initially
         if (panelOverlay != null)
         {
             panelOverlay.SetActive(false);
+            Debug.Log("PlantResultPanel: Panel hidden on start");
+        }
+        else
+        {
+            Debug.LogError("PlantResultPanel: panelOverlay is NULL!");
         }
 
         // Setup continue button
         if (continueButton != null)
         {
             continueButton.onClick.AddListener(OnContinue);
+            Debug.Log("PlantResultPanel: Continue button listener added");
+        }
+        else
+        {
+            Debug.LogError("PlantResultPanel: continueButton is NULL!");
+        }
+
+        // Setup redraw button
+        if (redrawButton != null)
+        {
+            redrawButton.onClick.AddListener(OnRedraw);
+            Debug.Log("PlantResultPanel: Redraw button listener added");
+        }
+        else
+        {
+            Debug.LogWarning("PlantResultPanel: redrawButton is NULL - button may not exist yet");
         }
     }
 
-    public void ShowResults(PlantAnalyzer.PlantAnalysisResult result, Color dominantColor, DrawnUnitData unitData, System.Action onContinue = null)
+    public void ShowResults(PlantAnalyzer.PlantAnalysisResult result, Color dominantColor, DrawnUnitData unitData, System.Action onContinue = null, System.Action onRedraw = null)
     {
+        Debug.Log("========== PLANT RESULT PANEL: SHOW RESULTS ==========");
+
         if (result == null)
         {
             Debug.LogError("PlantResultPanel: Cannot show null result");
             return;
         }
 
-        onContinueCallback = onContinue;
-
-        // Show the panel
-        if (panelOverlay != null)
+        if (panelOverlay == null)
         {
-            panelOverlay.SetActive(true);
+            Debug.LogError("PlantResultPanel: panelOverlay is NULL! Cannot show results.");
+            return;
         }
 
-        Debug.Log("PlantResultPanel: Displaying results on screen");
+        onContinueCallback = onContinue;
+        onRedrawCallback = onRedraw;
+
+        // Show the panel
+        panelOverlay.SetActive(true);
+        Debug.Log("PlantResultPanel: Panel overlay activated!");
+
+        // Log detailed results to console
+        Debug.Log("=== PLANT ANALYSIS RESULTS ===");
+        Debug.Log($"🌱 Plant Type: {result.detectedType}");
+        Debug.Log($"🔥 Element: {result.elementType}");
+        Debug.Log($"⭐ Confidence: {result.confidence:P0}");
+        if (unitData != null)
+        {
+            Debug.Log($"❤️ HP: {unitData.health}");
+            Debug.Log($"⚔️ Attack: {unitData.attack}");
+            Debug.Log($"🛡️ Defense: {unitData.defense}");
+        }
+        Debug.Log($"🎨 Dominant Color: {GetColorName(dominantColor)}");
+
+        MoveData[] moves = MoveData.GetMovesForPlant(result.detectedType);
+        Debug.Log("⚔️ Available Moves:");
+        foreach (var move in moves)
+        {
+            Debug.Log($"  • {move.moveName} (Power: {move.basePower})");
+        }
+        Debug.Log("==============================");
 
         // Update title
         if (titleText != null)
@@ -125,6 +176,8 @@ public class PlantResultPanel : MonoBehaviour
 
     private void OnContinue()
     {
+        Debug.Log("PlantResultPanel: Continue to Battle button clicked");
+
         // Hide panel
         if (panelOverlay != null)
         {
@@ -133,6 +186,20 @@ public class PlantResultPanel : MonoBehaviour
 
         // Invoke callback
         onContinueCallback?.Invoke();
+    }
+
+    private void OnRedraw()
+    {
+        Debug.Log("PlantResultPanel: Redraw button clicked");
+
+        // Hide panel
+        if (panelOverlay != null)
+        {
+            panelOverlay.SetActive(false);
+        }
+
+        // Invoke redraw callback
+        onRedrawCallback?.Invoke();
     }
 
     private string GetPlantEmoji(PlantAnalyzer.PlantType type)
