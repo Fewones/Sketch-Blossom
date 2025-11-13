@@ -116,6 +116,15 @@ public class DrawingSceneUI : MonoBehaviour
             }
         }
 
+        // Show overlay (dark background)
+        GameObject overlay = GameObject.Find("DrawingOverlay");
+        if (overlay != null)
+        {
+            overlay.SetActive(true);
+            Debug.Log("DrawingOverlay activated");
+        }
+
+        // Show drawing panel (pop-up window)
         if (drawingPanel != null)
         {
             drawingPanel.SetActive(true);
@@ -123,14 +132,19 @@ public class DrawingSceneUI : MonoBehaviour
             {
                 StartCoroutine(FadeInPanel(drawingPanel));
             }
+            Debug.Log("DrawingPanel activated");
         }
 
         // Enable drawing canvas
-        DrawingCanvas canvas = FindObjectOfType<DrawingCanvas>();
+        DrawingCanvas canvas = FindFirstObjectByType<DrawingCanvas>();
         if (canvas != null)
         {
             canvas.isDrawingEnabled = true;
             Debug.Log("DrawingCanvas enabled - player can now draw");
+        }
+        else
+        {
+            Debug.LogError("DrawingCanvas not found!");
         }
 
         UpdateHintText("Draw your plant! Use 3-8 strokes for best results.");
@@ -268,7 +282,7 @@ public class DrawingSceneUI : MonoBehaviour
     /// </summary>
     public void OnClearCanvas()
     {
-        DrawingCanvas canvas = FindObjectOfType<DrawingCanvas>();
+        DrawingCanvas canvas = FindFirstObjectByType<DrawingCanvas>();
         if (canvas != null)
         {
             canvas.ClearCanvas();
