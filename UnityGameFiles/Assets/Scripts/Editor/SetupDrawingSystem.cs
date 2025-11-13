@@ -191,21 +191,50 @@ public class SetupDrawingSystem : EditorWindow
             return;
         }
 
+        // Check if color buttons already exist
+        Transform existingPanel = uiCanvas.transform.Find("ColorButtonPanel");
+        if (existingPanel != null)
+        {
+            bool delete = EditorUtility.DisplayDialog("Color Buttons Exist",
+                "Color buttons already exist.\nDelete and recreate them?", "Yes", "Cancel");
+            if (delete)
+            {
+                GameObject.DestroyImmediate(existingPanel.gameObject);
+                Debug.Log("Deleted existing color buttons");
+            }
+            else
+            {
+                return;
+            }
+        }
+
         // Create color button panel
         GameObject buttonPanel = new GameObject("ColorButtonPanel");
-        buttonPanel.transform.SetParent(uiCanvas.transform);
+        buttonPanel.transform.SetParent(uiCanvas.transform, false); // Set worldPositionStays to false
 
         RectTransform panelRect = buttonPanel.AddComponent<RectTransform>();
+
+        // Anchor to top-left corner
         panelRect.anchorMin = new Vector2(0, 1);
         panelRect.anchorMax = new Vector2(0, 1);
         panelRect.pivot = new Vector2(0, 1);
-        panelRect.anchoredPosition = new Vector2(20, -20);
-        panelRect.sizeDelta = new Vector2(200, 50);
+
+        // Position from top-left
+        panelRect.anchoredPosition = new Vector2(10, -10);
+
+        // Small panel size
+        panelRect.sizeDelta = new Vector2(150, 40);
+
+        // Reset scale to ensure proper sizing
+        panelRect.localScale = Vector3.one;
 
         HorizontalLayoutGroup layout = buttonPanel.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 10;
+        layout.spacing = 5;
         layout.childControlWidth = false;
         layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+        layout.padding = new RectOffset(5, 5, 5, 5);
 
         // Create Red button
         CreateColorButton(buttonPanel.transform, "RedButton", Color.red, canvas);
@@ -216,17 +245,27 @@ public class SetupDrawingSystem : EditorWindow
         // Create Blue button
         CreateColorButton(buttonPanel.transform, "BlueButton", Color.blue, canvas);
 
-        Debug.Log("✓ Created color buttons");
-        EditorUtility.DisplayDialog("Success", "Color buttons created!\nThey are linked to SimpleDrawingCanvas.", "OK");
+        Debug.Log("✓ Created color buttons (40x40 pixels)");
+        EditorUtility.DisplayDialog("Success",
+            "Color buttons created!\n\n" +
+            "They are small buttons in the top-left corner.\n" +
+            "They are linked to SimpleDrawingCanvas for color selection.",
+            "OK");
     }
 
     static void CreateColorButton(Transform parent, string name, Color color, SimpleDrawingCanvas canvas)
     {
         GameObject buttonObj = new GameObject(name);
-        buttonObj.transform.SetParent(parent);
+        buttonObj.transform.SetParent(parent, false); // Set worldPositionStays to false
 
         RectTransform rect = buttonObj.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(50, 50);
+
+        // Smaller button size (40x40 pixels)
+        rect.sizeDelta = new Vector2(40, 40);
+
+        // Reset local position and scale
+        rect.localPosition = Vector3.zero;
+        rect.localScale = Vector3.one;
 
         Image image = buttonObj.AddComponent<Image>();
         image.color = color;
@@ -234,6 +273,29 @@ public class SetupDrawingSystem : EditorWindow
         Button button = buttonObj.AddComponent<Button>();
         button.onClick.AddListener(() => canvas.SetColor(color));
 
-        Debug.Log($"  Created {name}");
+        Debug.Log($"  Created {name} (40x40 pixels)");
+    }
+
+    [MenuItem("Tools/Sketch Blossom/Delete Color Buttons")]
+    public static void DeleteColorButtons()
+    {
+        Canvas uiCanvas = FindObjectOfType<Canvas>();
+        if (uiCanvas == null)
+        {
+            EditorUtility.DisplayDialog("Error", "No Canvas found in scene!", "OK");
+            return;
+        }
+
+        Transform buttonPanel = uiCanvas.transform.Find("ColorButtonPanel");
+        if (buttonPanel != null)
+        {
+            GameObject.DestroyImmediate(buttonPanel.gameObject);
+            Debug.Log("✓ Deleted color buttons");
+            EditorUtility.DisplayDialog("Success", "Color buttons deleted!", "OK");
+        }
+        else
+        {
+            EditorUtility.DisplayDialog("Not Found", "ColorButtonPanel not found in scene.", "OK");
+        }
     }
 }
