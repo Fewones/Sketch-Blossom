@@ -18,8 +18,6 @@ public class DrawingManager : MonoBehaviour
     [Header("UI Panels")]
     public GameObject drawingOverlay;
     public GameObject drawingPanel;
-    public GameObject resultOverlay;
-    public GameObject resultPanel;
 
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
@@ -111,7 +109,7 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ PlantResultPanel assigned: " + plantResultPanel.gameObject.name);
         }
 
-        // Auto-find UI panels if not assigned
+        // Auto-find drawing UI panels if not assigned
         Canvas canvas = FindFirstObjectByType<Canvas>();
 
         if (canvas != null)
@@ -136,25 +134,7 @@ public class DrawingManager : MonoBehaviour
                 }
             }
 
-            if (resultOverlay == null)
-            {
-                Transform overlayTransform = canvas.transform.Find("ResultOverlay");
-                if (overlayTransform != null)
-                {
-                    resultOverlay = overlayTransform.gameObject;
-                    Debug.Log("✓ Auto-found ResultOverlay");
-                }
-            }
-
-            if (resultPanel == null)
-            {
-                Transform panelTransform = canvas.transform.Find("ResultPanel");
-                if (panelTransform != null)
-                {
-                    resultPanel = panelTransform.gameObject;
-                    Debug.Log("✓ Auto-found ResultPanel");
-                }
-            }
+            // Note: We don't manage ResultOverlay/ResultPanel - PlantResultPanel handles its own visibility
         }
 
         // Hook into the existing finish button
@@ -266,7 +246,7 @@ public class DrawingManager : MonoBehaviour
 
         Debug.Log("===== ANALYSIS SUCCEEDED - SHOWING RESULTS =====");
 
-        // HIDE DRAWING UI
+        // HIDE DRAWING UI (only drawing UI - let PlantResultPanel show itself)
         if (drawingOverlay != null)
         {
             drawingOverlay.SetActive(false);
@@ -279,23 +259,10 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Hidden DrawingPanel");
         }
 
-        // SHOW RESULT UI
-        if (resultOverlay != null)
-        {
-            resultOverlay.SetActive(true);
-            Debug.Log("✓ Showing ResultOverlay");
-        }
-
-        if (resultPanel != null)
-        {
-            resultPanel.SetActive(true);
-            Debug.Log("✓ Showing ResultPanel");
-        }
-
-        // Show result data in panel
+        // Show result data - PlantResultPanel will handle showing its own overlay/panel
         if (plantResultPanel != null)
         {
-            Debug.Log("✓ Populating PlantResultPanel with data");
+            Debug.Log("✓ Calling PlantResultPanel.ShowResults() - it will show its own UI");
             // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
             plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
         }
@@ -308,6 +275,7 @@ public class DrawingManager : MonoBehaviour
 
     /// <summary>
     /// Called when player clicks "Redraw" button
+    /// PlantResultPanel has already hidden itself before calling this callback
     /// </summary>
     private void OnRedrawRequested()
     {
@@ -333,20 +301,8 @@ public class DrawingManager : MonoBehaviour
         lastRecognitionResult = null;
         lastDominantColor = Color.green;
 
-        // HIDE RESULT UI
-        if (resultOverlay != null)
-        {
-            resultOverlay.SetActive(false);
-            Debug.Log("✓ Hidden ResultOverlay");
-        }
-
-        if (resultPanel != null)
-        {
-            resultPanel.SetActive(false);
-            Debug.Log("✓ Hidden ResultPanel");
-        }
-
         // SHOW DRAWING UI
+        // Note: PlantResultPanel has already hidden its own UI before calling this callback
         if (drawingOverlay != null)
         {
             drawingOverlay.SetActive(true);

@@ -226,7 +226,7 @@ public class SetupDrawingSystem : EditorWindow
             }
         }
 
-        // Find and link UI panels
+        // Find and link drawing UI panels (DrawingManager only manages drawing UI)
         Transform drawingOverlay = canvas.transform.Find("DrawingOverlay");
         if (drawingOverlay != null)
         {
@@ -251,29 +251,8 @@ public class SetupDrawingSystem : EditorWindow
             }
         }
 
-        Transform resultOverlay = canvas.transform.Find("ResultOverlay");
-        if (resultOverlay != null)
-        {
-            var field = typeof(DrawingManager).GetField("resultOverlay",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            if (field != null)
-            {
-                field.SetValue(manager, resultOverlay.gameObject);
-                Debug.Log("  ✓ Linked ResultOverlay");
-            }
-        }
-
-        Transform resultPanelTransform = canvas.transform.Find("ResultPanel");
-        if (resultPanelTransform != null)
-        {
-            var field = typeof(DrawingManager).GetField("resultPanel",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            if (field != null)
-            {
-                field.SetValue(manager, resultPanelTransform.gameObject);
-                Debug.Log("  ✓ Linked ResultPanel");
-            }
-        }
+        // Note: ResultOverlay/ResultPanel are managed by PlantResultPanel itself
+        Debug.Log("  ℹ️ Result panels are managed by PlantResultPanel component");
 
         EditorUtility.SetDirty(manager);
     }

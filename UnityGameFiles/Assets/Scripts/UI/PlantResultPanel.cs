@@ -193,13 +193,22 @@ public class PlantResultPanel : MonoBehaviour
         Debug.Log("PlantResultPanel: Redraw button clicked");
 
         // Hide panel
-        if (panelOverlay != null)
-        {
-            panelOverlay.SetActive(false);
-        }
+        HidePanel();
 
         // Invoke redraw callback
         onRedrawCallback?.Invoke();
+    }
+
+    /// <summary>
+    /// Hide the result panel
+    /// </summary>
+    public void HidePanel()
+    {
+        if (panelOverlay != null)
+        {
+            panelOverlay.SetActive(false);
+            Debug.Log("PlantResultPanel: Panel hidden");
+        }
     }
 
     private string GetPlantEmoji(PlantRecognitionSystem.ElementType element)
