@@ -24,9 +24,10 @@ public class MoveExecutor : MonoBehaviour
         BattleUnit attacker,
         BattleUnit target,
         PlantRecognitionSystem.PlantType attackerPlantType,
-        PlantRecognitionSystem.PlantType targetPlantType)
+        PlantRecognitionSystem.PlantType targetPlantType,
+        float qualityMultiplier = 1f)
     {
-        Debug.Log($"=== EXECUTING MOVE: {move.moveName} ===");
+        Debug.Log($"=== EXECUTING MOVE: {move.moveName} (Quality: {qualityMultiplier:F2}x) ===");
 
         // Show move name
         if (moveNameText != null)
@@ -39,13 +40,17 @@ public class MoveExecutor : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         // Execute move based on type
-        if (move.isHealingMove)
+        if (move.isDefensiveMove)
         {
-            yield return ExecuteHealingMove(move, attacker);
+            yield return ExecuteDefensiveMove(move, attacker, qualityMultiplier);
+        }
+        else if (move.isHealingMove)
+        {
+            yield return ExecuteHealingMove(move, attacker, qualityMultiplier);
         }
         else
         {
-            yield return ExecuteAttackMove(move, attacker, target, attackerPlantType, targetPlantType);
+            yield return ExecuteAttackMove(move, attacker, target, attackerPlantType, targetPlantType, qualityMultiplier);
         }
 
         // Hide move name
@@ -65,7 +70,8 @@ public class MoveExecutor : MonoBehaviour
         BattleUnit attacker,
         BattleUnit target,
         PlantRecognitionSystem.PlantType attackerPlantType,
-        PlantRecognitionSystem.PlantType targetPlantType)
+        PlantRecognitionSystem.PlantType targetPlantType,
+        float qualityMultiplier = 1f)
     {
         // Calculate type advantage
         MoveData.ElementType attackElement = move.element;
@@ -73,11 +79,11 @@ public class MoveExecutor : MonoBehaviour
 
         float typeMultiplier = MoveData.GetTypeAdvantage(attackElement, defenseElement);
 
-        // Calculate damage
+        // Calculate damage with quality multiplier
         int baseDamage = move.basePower + attacker.attack;
-        int finalDamage = Mathf.RoundToInt(baseDamage * typeMultiplier);
+        int finalDamage = Mathf.RoundToInt(baseDamage * typeMultiplier * qualityMultiplier);
 
-        Debug.Log($"Damage calculation: {move.basePower} (move) + {attacker.attack} (ATK) × {typeMultiplier} (type) = {finalDamage}");
+        Debug.Log($"Damage calculation: ({move.basePower} (move) + {attacker.attack} (ATK)) × {typeMultiplier} (type) × {qualityMultiplier:F2} (quality) = {finalDamage}");
 
         // Show effectiveness feedback
         if (effectivenessText != null)
@@ -116,15 +122,15 @@ public class MoveExecutor : MonoBehaviour
     /// <summary>
     /// Execute a healing move
     /// </summary>
-    private IEnumerator ExecuteHealingMove(MoveData move, BattleUnit healer)
+    private IEnumerator ExecuteHealingMove(MoveData move, BattleUnit healer, float qualityMultiplier = 1f)
     {
-        int healAmount = move.basePower;
+        int healAmount = Mathf.RoundToInt(move.basePower * qualityMultiplier);
         int oldHealth = healer.currentHealth;
 
         healer.currentHealth = Mathf.Min(healer.currentHealth + healAmount, healer.maxHealth);
         int actualHeal = healer.currentHealth - oldHealth;
 
-        Debug.Log($"{healer.unitName} heals for {actualHeal} HP!");
+        Debug.Log($"{healer.unitName} heals for {actualHeal} HP! (Quality: {qualityMultiplier:F2}x)");
 
         // Visual feedback
         if (effectivenessText != null)
@@ -141,6 +147,60 @@ public class MoveExecutor : MonoBehaviour
         if (effectivenessText != null)
         {
             effectivenessText.text = "";
+        }
+    }
+
+    /// <summary>
+    /// Execute a defensive move (Block)
+    /// </summary>
+    private IEnumerator ExecuteDefensiveMove(MoveData move, BattleUnit defender, float qualityMultiplier = 1f)
+    {
+        // Calculate damage reduction based on quality
+        // Better quality = better defense (30% to 70% reduction)
+        float damageReduction = Mathf.Lerp(0.3f, 0.7f, qualityMultiplier);
+
+        // Apply defensive buff to the unit
+        defender.SetDefensiveStance(damageReduction);
+
+        Debug.Log($"{defender.unitName} uses Block! Damage reduction: {damageReduction:P0} (Quality: {qualityMultiplier:F2}x)");
+
+        // Visual feedback
+        if (effectivenessText != null)
+        {
+            effectivenessText.text = $"Blocking! ({damageReduction:P0} damage reduction)";
+            effectivenessText.color = new Color(0.5f, 0.5f, 1f); // Blue for defense
+        }
+
+        // Defensive animation (shield effect)
+        yield return PlayDefensiveAnimation(defender);
+
+        yield return new WaitForSeconds(1.2f);
+
+        if (effectivenessText != null)
+        {
+            effectivenessText.text = "";
+        }
+    }
+
+    /// <summary>
+    /// Play defensive animation
+    /// </summary>
+    private IEnumerator PlayDefensiveAnimation(BattleUnit defender)
+    {
+        SpriteRenderer sprite = defender.GetComponent<SpriteRenderer>();
+        if (sprite != null)
+        {
+            Color originalColor = sprite.color;
+            Color shieldColor = new Color(0.5f, 0.5f, 1f, 1f); // Blue shield
+
+            // Pulse blue (defensive stance)
+            for (int i = 0; i < 3; i++)
+            {
+                sprite.color = shieldColor;
+                yield return new WaitForSeconds(0.15f);
+                sprite.color = originalColor;
+                yield return new WaitForSeconds(0.15f);
+            }
         }
     }
 

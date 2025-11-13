@@ -8,6 +8,10 @@ using System.Linq;
 /// </summary>
 public class MovesetDetector : MonoBehaviour
 {
+    [Header("References")]
+    [Tooltip("Move recognition system for quality scoring")]
+    public MoveRecognitionSystem recognitionSystem;
+
     [Header("Detection Settings")]
     [Tooltip("Minimum confidence score required to recognize a move")]
     public float confidenceThreshold = 0.5f;
@@ -19,16 +23,24 @@ public class MovesetDetector : MonoBehaviour
         public bool wasRecognized;
         public Dictionary<MoveData.MoveType, float> scores;
 
+        // Quality scoring
+        public float quality;           // How well the move was drawn (0-1)
+        public float damageMultiplier;  // Damage multiplier based on quality
+        public string qualityRating;    // User-friendly quality description
+
         public MoveDetectionResult()
         {
             scores = new Dictionary<MoveData.MoveType, float>();
             wasRecognized = false;
+            quality = 0f;
+            damageMultiplier = 1f;
+            qualityRating = "Poor";
         }
 
         public override string ToString()
         {
             if (wasRecognized)
-                return $"{detectedMove} - Confidence: {confidence:P0}";
+                return $"{detectedMove} - Confidence: {confidence:P0} | Quality: {qualityRating} ({damageMultiplier:F2}x damage)";
             else
                 return "Move not recognized!";
         }
@@ -79,6 +91,24 @@ public class MovesetDetector : MonoBehaviour
         if (result.confidence >= confidenceThreshold)
         {
             result.wasRecognized = true;
+
+            // Calculate quality using MoveRecognitionSystem
+            if (recognitionSystem != null)
+            {
+                var qualityResult = recognitionSystem.AnalyzeMove(strokes, result.detectedMove);
+                result.quality = qualityResult.quality;
+                result.damageMultiplier = qualityResult.damageMultiplier;
+                result.qualityRating = qualityResult.qualityRating;
+            }
+            else
+            {
+                // Fallback if no recognition system
+                result.quality = result.confidence;
+                result.damageMultiplier = 1f;
+                result.qualityRating = "Unknown";
+                Debug.LogWarning("MoveRecognitionSystem not assigned! Quality scoring disabled.");
+            }
+
             Debug.Log($"✅ MOVE RECOGNIZED: {result}");
         }
         else
@@ -97,6 +127,10 @@ public class MovesetDetector : MonoBehaviour
     {
         switch (moveType)
         {
+            // UNIVERSAL MOVES
+            case MoveData.MoveType.Block:
+                return CalculateBlockScore(features);
+
             // FIRE MOVES
             case MoveData.MoveType.Fireball:
                 return CalculateFireballScore(features);
@@ -124,6 +158,36 @@ public class MovesetDetector : MonoBehaviour
             default:
                 return 0f;
         }
+    }
+
+    // ===== UNIVERSAL MOVE DETECTION =====
+
+    /// <summary>
+    /// Block: Very easy - any simple closed shape (circle, square, etc.)
+    /// This is the easiest move to recognize!
+    /// </summary>
+    private float CalculateBlockScore(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // Should be 1-3 strokes (simple shape)
+        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.4f;
+        else if (f.strokeCount <= 5) score += 0.2f;  // Still okay
+
+        // Prefer compact shapes
+        float avgSize = (f.width + f.height) / 2f;
+        if (avgSize < 4f) score += 0.3f;
+
+        // Bonus for circular strokes (easiest to draw)
+        if (f.circularStrokes >= 1) score += 0.3f;
+
+        // Or any stroke pattern works decently
+        if (f.strokeCount >= 1) score += 0.2f;
+
+        // Block is forgiving - give minimum score for any drawing
+        score = Mathf.Max(score, 0.4f);
+
+        return Mathf.Clamp01(score);
     }
 
     // ===== FIRE MOVE DETECTION =====

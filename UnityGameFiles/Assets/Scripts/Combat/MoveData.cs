@@ -10,17 +10,20 @@ public class MoveData
     {
         Unknown,
 
-        // Fire Moves (Sunflower)
+        // Universal Moves
+        Block,          // Defensive move - easy to draw and recognize
+
+        // Fire Moves
         Fireball,
         FlameWave,
         Burn,
 
-        // Grass Moves (Cactus)
+        // Grass Moves
         VineWhip,
         LeafStorm,
         RootAttack,
 
-        // Water Moves (Water Lily)
+        // Water Moves
         WaterSplash,
         Bubble,
         HealingWave
@@ -39,8 +42,9 @@ public class MoveData
     public ElementType element;
     public int basePower;
     public bool isHealingMove;
+    public bool isDefensiveMove;
 
-    public MoveData(MoveType type, string name, string desc, ElementType elem, int power, bool heals = false)
+    public MoveData(MoveType type, string name, string desc, ElementType elem, int power, bool heals = false, bool defensive = false)
     {
         moveType = type;
         moveName = name;
@@ -48,6 +52,13 @@ public class MoveData
         element = elem;
         basePower = power;
         isHealingMove = heals;
+        isDefensiveMove = defensive;
+
+        // Auto-detect defensive moves
+        if (type == MoveType.Block)
+        {
+            isDefensiveMove = true;
+        }
     }
 
     /// <summary>
@@ -61,75 +72,75 @@ public class MoveData
             case PlantRecognitionSystem.PlantType.Sunflower:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.Fireball, "Fireball", "A blazing ball of fire", ElementType.Fire, 15),
-                    new MoveData(MoveType.FlameWave, "Flame Wave", "A spreading wave of flames", ElementType.Fire, 20),
-                    new MoveData(MoveType.Burn, "Burn", "Intense burning attack", ElementType.Fire, 25)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Fire, 0),
+                    new MoveData(MoveType.Fireball, "Fireball", "A blazing ball of fire", ElementType.Fire, 20),
+                    new MoveData(MoveType.Burn, "Burn", "Intense burning attack", ElementType.Fire, 28)
                 };
 
             case PlantRecognitionSystem.PlantType.FireRose:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.Burn, "Ember Petals", "Burning petals rain down", ElementType.Fire, 18),
-                    new MoveData(MoveType.Fireball, "Fire Burst", "Explosive fire from blooms", ElementType.Fire, 22),
-                    new MoveData(MoveType.FlameWave, "Rose Inferno", "Intense fiery assault", ElementType.Fire, 20)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Fire, 0),
+                    new MoveData(MoveType.Burn, "Ember Petals", "Burning petals rain down", ElementType.Fire, 22),
+                    new MoveData(MoveType.Fireball, "Fire Burst", "Explosive fire from blooms", ElementType.Fire, 26)
                 };
 
             case PlantRecognitionSystem.PlantType.FlameTulip:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.Fireball, "Flame Strike", "Precise fiery beam", ElementType.Fire, 20),
-                    new MoveData(MoveType.Burn, "Heat Wave", "Scorching heat blast", ElementType.Fire, 25),
-                    new MoveData(MoveType.FlameWave, "Tulip Blaze", "Elegant fire dance", ElementType.Fire, 18)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Fire, 0),
+                    new MoveData(MoveType.Fireball, "Flame Strike", "Precise fiery beam", ElementType.Fire, 24),
+                    new MoveData(MoveType.Burn, "Heat Wave", "Scorching heat blast", ElementType.Fire, 30)
                 };
 
             // GRASS PLANTS
             case PlantRecognitionSystem.PlantType.Cactus:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.VineWhip, "Needle Shot", "Sharp cactus needles", ElementType.Grass, 15),
-                    new MoveData(MoveType.RootAttack, "Root Strike", "Underground assault", ElementType.Grass, 20),
-                    new MoveData(MoveType.LeafStorm, "Spine Storm", "Barrage of spines", ElementType.Grass, 22)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Grass, 0),
+                    new MoveData(MoveType.VineWhip, "Needle Shot", "Sharp cactus needles", ElementType.Grass, 20),
+                    new MoveData(MoveType.LeafStorm, "Spine Storm", "Barrage of spines", ElementType.Grass, 26)
                 };
 
             case PlantRecognitionSystem.PlantType.VineFlower:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.VineWhip, "Vine Lash", "Whipping vine attack", ElementType.Grass, 18),
-                    new MoveData(MoveType.LeafStorm, "Petal Barrage", "Swirling flower petals", ElementType.Grass, 20),
-                    new MoveData(MoveType.RootAttack, "Entangling Roots", "Bind and damage", ElementType.Grass, 22)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Grass, 0),
+                    new MoveData(MoveType.VineWhip, "Vine Lash", "Whipping vine attack", ElementType.Grass, 22),
+                    new MoveData(MoveType.RootAttack, "Entangling Roots", "Bind and damage", ElementType.Grass, 26)
                 };
 
             case PlantRecognitionSystem.PlantType.GrassSprout:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.LeafStorm, "Grass Blade", "Cutting grass attack", ElementType.Grass, 15),
-                    new MoveData(MoveType.VineWhip, "Sprout Strike", "Quick grass whip", ElementType.Grass, 18),
-                    new MoveData(MoveType.RootAttack, "Growth Surge", "Rapid root assault", ElementType.Grass, 20)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Grass, 0),
+                    new MoveData(MoveType.LeafStorm, "Grass Blade", "Cutting grass attack", ElementType.Grass, 20),
+                    new MoveData(MoveType.RootAttack, "Growth Surge", "Rapid root assault", ElementType.Grass, 24)
                 };
 
             // WATER PLANTS
             case PlantRecognitionSystem.PlantType.WaterLily:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.WaterSplash, "Lily Splash", "Gentle water spray", ElementType.Water, 15),
-                    new MoveData(MoveType.Bubble, "Bubble Shield", "Protective bubbles", ElementType.Water, 18),
-                    new MoveData(MoveType.HealingWave, "Healing Lily", "Restore HP with water", ElementType.Water, 20, true)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Water, 0),
+                    new MoveData(MoveType.WaterSplash, "Lily Splash", "Gentle water spray", ElementType.Water, 20),
+                    new MoveData(MoveType.HealingWave, "Healing Lily", "Restore HP with water", ElementType.Water, 25, true)
                 };
 
             case PlantRecognitionSystem.PlantType.CoralBloom:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.WaterSplash, "Coral Strike", "Sharp coral projectiles", ElementType.Water, 18),
-                    new MoveData(MoveType.Bubble, "Sea Burst", "Explosive bubbles", ElementType.Water, 22),
-                    new MoveData(MoveType.HealingWave, "Coral Regeneration", "Heal over time", ElementType.Water, 15, true)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Water, 0),
+                    new MoveData(MoveType.WaterSplash, "Coral Strike", "Sharp coral projectiles", ElementType.Water, 22),
+                    new MoveData(MoveType.Bubble, "Sea Burst", "Explosive bubbles", ElementType.Water, 26)
                 };
 
             case PlantRecognitionSystem.PlantType.BubbleFlower:
                 return new MoveData[]
                 {
-                    new MoveData(MoveType.Bubble, "Bubble Barrage", "Many small bubbles", ElementType.Water, 20),
-                    new MoveData(MoveType.WaterSplash, "Pop Splash", "Bursting bubble attack", ElementType.Water, 18),
-                    new MoveData(MoveType.HealingWave, "Bubble Heal", "Healing bubble aura", ElementType.Water, 18, true)
+                    new MoveData(MoveType.Block, "Block", "Defensive stance to reduce damage", ElementType.Water, 0),
+                    new MoveData(MoveType.Bubble, "Bubble Barrage", "Many small bubbles", ElementType.Water, 24),
+                    new MoveData(MoveType.HealingWave, "Bubble Heal", "Healing bubble aura", ElementType.Water, 22, true)
                 };
 
             default:

@@ -228,18 +228,24 @@ public class CombatManager : MonoBehaviour
 
             if (detectionResult.wasRecognized)
             {
-                // Move recognized - execute it!
+                // Move recognized - execute it with quality multiplier!
                 MoveData move = GetMoveData(detectionResult.detectedMove, playerPlantType);
 
                 if (move != null)
                 {
                     if (actionText != null)
                     {
-                        actionText.text = $"You used {move.moveName}!";
+                        actionText.text = $"You used {move.moveName}! ({detectionResult.qualityRating})";
                     }
 
                     yield return StartCoroutine(
-                        moveExecutor.ExecuteMove(move, playerUnit, enemyUnit, playerPlantType, enemyPlantType)
+                        moveExecutor.ExecuteMove(
+                            move,
+                            playerUnit,
+                            enemyUnit,
+                            playerPlantType,
+                            enemyPlantType,
+                            detectionResult.damageMultiplier)
                     );
                 }
             }

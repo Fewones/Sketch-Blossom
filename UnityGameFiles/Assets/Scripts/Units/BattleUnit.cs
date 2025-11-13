@@ -29,6 +29,10 @@ public class BattleUnit : MonoBehaviour
     private Vector3 originalPosition;
     private Color originalColor;
 
+    // Defensive stance (Block move)
+    private float defensiveReduction = 0f;
+    private bool isDefending = false;
+
     private void Start()
     {
         currentHealth = maxHealth;
@@ -85,11 +89,43 @@ public class BattleUnit : MonoBehaviour
     }
 
     /// <summary>
+    /// Set defensive stance (Block move)
+    /// </summary>
+    public void SetDefensiveStance(float damageReduction)
+    {
+        defensiveReduction = damageReduction;
+        isDefending = true;
+        Debug.Log($"{unitName} is now defending with {damageReduction:P0} damage reduction!");
+    }
+
+    /// <summary>
+    /// Clear defensive stance
+    /// </summary>
+    public void ClearDefensiveStance()
+    {
+        if (isDefending)
+        {
+            Debug.Log($"{unitName}'s defensive stance ended.");
+        }
+        defensiveReduction = 0f;
+        isDefending = false;
+    }
+
+    /// <summary>
     /// Take damage from an attack
     /// </summary>
     public void TakeDamage(int damage)
     {
-        // Apply defense
+        // Apply defensive reduction if blocking
+        if (isDefending)
+        {
+            float reducedDamage = damage * (1f - defensiveReduction);
+            damage = Mathf.RoundToInt(reducedDamage);
+            Debug.Log($"{unitName} blocks! Damage reduced by {defensiveReduction:P0}: {damage}");
+            ClearDefensiveStance(); // Block is consumed after one hit
+        }
+
+        // Apply defense stat
         int actualDamage = Mathf.Max(1, damage - defense);
         currentHealth -= actualDamage;
         currentHealth = Mathf.Max(0, currentHealth);
