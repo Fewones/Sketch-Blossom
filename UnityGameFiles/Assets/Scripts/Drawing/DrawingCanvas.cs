@@ -41,10 +41,93 @@ public class DrawingCanvas : MonoBehaviour
         else
             Debug.Log("Main Camera found: " + mainCamera.name);
 
+        // Auto-find DrawingArea if not assigned
         if (drawingArea == null)
-            Debug.LogError("ERROR: Drawing Area is NULL!");
+        {
+            Debug.Log("DrawingArea not assigned, attempting to find it...");
+
+            // Find Canvas first
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+            {
+                // Search through Canvas children (including inactive ones)
+                Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
+                if (drawingPanelTransform != null)
+                {
+                    Transform areaTransform = drawingPanelTransform.Find("DrawingArea");
+                    if (areaTransform != null)
+                    {
+                        drawingArea = areaTransform.GetComponent<RectTransform>();
+                        Debug.Log("✓ DrawingArea auto-found!");
+                    }
+                    else
+                    {
+                        Debug.LogError("ERROR: DrawingArea not found inside DrawingPanel!");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("ERROR: DrawingPanel not found in Canvas!");
+                }
+            }
+            else
+            {
+                Debug.LogError("ERROR: Canvas not found in scene!");
+            }
+        }
         else
-            Debug.Log("Drawing Area found");
+        {
+            Debug.Log("DrawingArea found");
+        }
+
+        // Auto-find StrokeContainer if not assigned
+        if (strokeContainer == null)
+        {
+            Transform container = transform.Find("StrokeContainer");
+            if (container != null)
+            {
+                strokeContainer = container;
+                Debug.Log("✓ StrokeContainer auto-found!");
+            }
+        }
+
+        // Auto-find StrokeCountText if not assigned
+        if (strokeCountText == null)
+        {
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+            {
+                Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
+                if (drawingPanelTransform != null)
+                {
+                    Transform counterTransform = drawingPanelTransform.Find("StrokeCounter");
+                    if (counterTransform != null)
+                    {
+                        strokeCountText = counterTransform.GetComponent<TextMeshProUGUI>();
+                        Debug.Log("✓ StrokeCountText auto-found!");
+                    }
+                }
+            }
+        }
+
+        // Auto-find FinishButton if not assigned
+        if (finishButton == null)
+        {
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+            {
+                Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
+                if (drawingPanelTransform != null)
+                {
+                    Transform buttonTransform = drawingPanelTransform.Find("FinishButton");
+                    if (buttonTransform != null)
+                    {
+                        finishButton = buttonTransform.GetComponent<Button>();
+                        Debug.Log("✓ FinishButton auto-found!");
+                    }
+                }
+            }
+        }
 
         if (lineRendererPrefab == null)
             Debug.LogError("ERROR: LineRenderer Prefab is NULL!");
