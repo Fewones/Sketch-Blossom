@@ -354,7 +354,7 @@ public class DrawingSceneCompleteUI : EditorWindow
         finishTxtRect.offsetMax = new Vector2(-5, -5);
 
         TextMeshProUGUI finishTxt = finishText.AddComponent<TextMeshProUGUI>();
-        finishTxt.text = "Finish Drawing";
+        finishTxt.text = "Finish Plant";
         finishTxt.fontSize = 18;
         finishTxt.alignment = TextAlignmentOptions.Center;
         finishTxt.color = Color.white;
