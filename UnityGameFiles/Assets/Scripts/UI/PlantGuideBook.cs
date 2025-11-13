@@ -88,80 +88,163 @@ public class PlantGuideBook : MonoBehaviour
         // Create guide pages for each plant type
         pages = new GuidePageData[]
         {
+            // Page 1: Welcome & Color Selection
             new GuidePageData
             {
                 title = "Welcome to the Plant Guide!",
-                description = "This guide will help you learn how to draw different plants.\n\n" +
-                             "Each plant type has unique characteristics that determine its elemental type:\n\n" +
-                             "• <color=#FF6B35>SUNFLOWER</color> → Fire Type 🔥\n" +
-                             "• <color=#4ECDC4>CACTUS</color> → Grass Type 🌱\n" +
-                             "• <color=#95E1D3>WATER LILY</color> → Water Type 💧\n\n" +
-                             "Use the arrow buttons to see drawing tips!",
+                description = "Discover 9 unique plants across 3 elements!\n\n" +
+                             "<b>🎨 Choose Your Color First:</b>\n" +
+                             "• <color=red>RED</color> → Fire Plants 🔥\n" +
+                             "• <color=green>GREEN</color> → Grass Plants 🌿\n" +
+                             "• <color=blue>BLUE</color> → Water Plants 💧\n\n" +
+                             "<b>Then Draw Your Shape!</b>\n" +
+                             "Each element has 3 plant types.\n" +
+                             "Your drawing shape determines which plant.\n\n" +
+                             "→ Use arrows to explore all plants!",
                 pageColor = new Color(1f, 0.95f, 0.8f)
             },
+
+            // Pages 2-4: FIRE PLANTS (Red)
             new GuidePageData
             {
-                title = "🔥 Sunflower (Fire Type)",
-                description = "<b>How to Draw:</b>\n" +
-                             "1. Draw a <b>circle</b> in the center\n" +
-                             "2. Add multiple <b>petals</b> radiating outward\n" +
-                             "3. Draw 5-8 curved strokes around the center\n\n" +
-                             "<b>Key Features:</b>\n" +
-                             "• Round, circular shape\n" +
-                             "• Multiple radiating strokes\n" +
-                             "• Symmetrical petal pattern\n\n" +
-                             "<b>Battle Moves:</b>\n" +
-                             "• Fireball (circle)\n" +
-                             "• Flame Wave (horizontal wave)\n" +
-                             "• Burn (zigzag)",
-                pageColor = new Color(1f, 0.9f, 0.7f)
+                title = "🔥 Fire: Sunflower",
+                description = "<b><color=red>Draw with RED color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Think of petals spreading from a center...\n" +
+                             "Radial patterns work well.\n" +
+                             "Many lines from one point.\n\n" +
+                             "<b>Stats:</b> HP: 30 | ATK: 18 | DEF: 8\n" +
+                             "High damage, quick attacks\n\n" +
+                             "<b>Best For:</b> Aggressive playstyle",
+                pageColor = new Color(1f, 0.85f, 0.7f)
             },
             new GuidePageData
             {
-                title = "🌱 Cactus (Grass Type)",
-                description = "<b>How to Draw:</b>\n" +
-                             "1. Draw a <b>tall vertical line</b> for the body\n" +
-                             "2. Add <b>small spikes</b> or arms on sides\n" +
-                             "3. Keep it narrow and upright\n\n" +
-                             "<b>Key Features:</b>\n" +
-                             "• Tall and narrow shape\n" +
-                             "• Vertical orientation\n" +
-                             "• Sharp, spiky edges\n\n" +
-                             "<b>Battle Moves:</b>\n" +
-                             "• Vine Whip (curved line)\n" +
-                             "• Leaf Storm (many short strokes)\n" +
-                             "• Root Attack (vertical lines)",
+                title = "🔥 Fire: Fire Rose",
+                description = "<b><color=red>Draw with RED color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Layers upon layers...\n" +
+                             "Compact and dense.\n" +
+                             "Many overlapping strokes.\n\n" +
+                             "<b>Stats:</b> HP: 35 | ATK: 16 | DEF: 10\n" +
+                             "Balanced fire type\n\n" +
+                             "<b>Best For:</b> All-around fire power",
+                pageColor = new Color(1f, 0.8f, 0.8f)
+            },
+            new GuidePageData
+            {
+                title = "🔥 Fire: Flame Tulip",
+                description = "<b><color=red>Draw with RED color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Reach for the sky...\n" +
+                             "Tall and elegant.\n" +
+                             "Few simple strokes, vertical.\n\n" +
+                             "<b>Stats:</b> HP: 28 | ATK: 20 | DEF: 6\n" +
+                             "Highest attack, low defense\n\n" +
+                             "<b>Best For:</b> Glass cannon strategy",
+                pageColor = new Color(1f, 0.75f, 0.6f)
+            },
+
+            // Pages 5-7: GRASS PLANTS (Green)
+            new GuidePageData
+            {
+                title = "🌿 Grass: Cactus",
+                description = "<b><color=green>Draw with GREEN color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Stand tall and proud...\n" +
+                             "Vertical lines dominate.\n" +
+                             "Straight and upright.\n\n" +
+                             "<b>Stats:</b> HP: 32 | ATK: 12 | DEF: 14\n" +
+                             "Balanced defense\n\n" +
+                             "<b>Best For:</b> Defensive tactics",
                 pageColor = new Color(0.7f, 1f, 0.7f)
             },
             new GuidePageData
             {
-                title = "💧 Water Lily (Water Type)",
-                description = "<b>How to Draw:</b>\n" +
-                             "1. Draw <b>wide, rounded leaves</b>\n" +
-                             "2. Make it <b>horizontal and flat</b>\n" +
-                             "3. Add 3-5 smooth, curved strokes\n\n" +
-                             "<b>Key Features:</b>\n" +
-                             "• Wide and low shape\n" +
-                             "• Horizontal orientation\n" +
-                             "• Smooth, curved lines\n\n" +
-                             "<b>Battle Moves:</b>\n" +
-                             "• Water Splash (upward waves)\n" +
-                             "• Bubble (small circles)\n" +
-                             "• Healing Wave (horizontal wave - heals HP!)",
+                title = "🌿 Grass: Vine Flower",
+                description = "<b><color=green>Draw with GREEN color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Flow like water, but green...\n" +
+                             "Curves and waves.\n" +
+                             "Organic, flowing movements.\n\n" +
+                             "<b>Stats:</b> HP: 35 | ATK: 14 | DEF: 12\n" +
+                             "Well-rounded grass type\n\n" +
+                             "<b>Best For:</b> Adaptable strategy",
+                pageColor = new Color(0.6f, 1f, 0.8f)
+            },
+            new GuidePageData
+            {
+                title = "🌿 Grass: Grass Sprout",
+                description = "<b><color=green>Draw with GREEN color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Small but mighty...\n" +
+                             "Many short strokes.\n" +
+                             "Bushy and compact.\n\n" +
+                             "<b>Stats:</b> HP: 30 | ATK: 10 | DEF: 16\n" +
+                             "Highest grass defense\n\n" +
+                             "<b>Best For:</b> Tanking damage",
+                pageColor = new Color(0.8f, 1f, 0.7f)
+            },
+
+            // Pages 8-10: WATER PLANTS (Blue)
+            new GuidePageData
+            {
+                title = "💧 Water: Water Lily",
+                description = "<b><color=blue>Draw with BLUE color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Float peacefully...\n" +
+                             "Spread wide, not tall.\n" +
+                             "Horizontal strokes.\n\n" +
+                             "<b>Stats:</b> HP: 40 | ATK: 10 | DEF: 14\n" +
+                             "Highest HP! Has healing!\n\n" +
+                             "<b>Best For:</b> Survival strategy",
                 pageColor = new Color(0.7f, 0.9f, 1f)
             },
             new GuidePageData
             {
-                title = "Drawing Tips",
-                description = "<b>General Tips:</b>\n\n" +
-                             "• Use <b>3-8 strokes</b> for best results\n" +
-                             "• Draw with <b>confident, smooth lines</b>\n" +
-                             "• Think about the plant's <b>overall shape</b>\n" +
-                             "• Vertical = Cactus, Round = Sunflower, Wide = Water Lily\n\n" +
-                             "<b>Remember:</b>\n" +
-                             "The system detects your plant based on shape patterns, " +
-                             "so focus on the characteristic features!\n\n" +
-                             "Good luck, and have fun drawing! 🎨",
+                title = "💧 Water: Coral Bloom",
+                description = "<b><color=blue>Draw with BLUE color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Branch like underwater trees...\n" +
+                             "Multiple smaller lines.\n" +
+                             "Branching patterns.\n\n" +
+                             "<b>Stats:</b> HP: 38 | ATK: 12 | DEF: 12\n" +
+                             "Balanced water type\n\n" +
+                             "<b>Best For:</b> Versatile play",
+                pageColor = new Color(0.6f, 0.85f, 1f)
+            },
+            new GuidePageData
+            {
+                title = "💧 Water: Bubble Flower",
+                description = "<b><color=blue>Draw with BLUE color</color></b>\n\n" +
+                             "<b>Drawing Hint:</b>\n" +
+                             "Round and bubbly...\n" +
+                             "Clusters of circles.\n" +
+                             "Compact grouping.\n\n" +
+                             "<b>Stats:</b> HP: 36 | ATK: 8 | DEF: 16\n" +
+                             "Highest defense! Healing moves!\n\n" +
+                             "<b>Best For:</b> Ultimate defense",
+                pageColor = new Color(0.8f, 0.9f, 1f)
+            },
+
+            // Page 11: Tips
+            new GuidePageData
+            {
+                title = "Master Tips",
+                description = "<b>🎨 Color Matters!</b>\n" +
+                             "Always select color BEFORE drawing.\n" +
+                             "Color determines element type.\n\n" +
+                             "<b>✏️ Shape Matters!</b>\n" +
+                             "• Radial/circular → Sunflower\n" +
+                             "• Dense layers → Fire Rose\n" +
+                             "• Tall/simple → Flame Tulip\n" +
+                             "• Vertical/straight → Cactus\n" +
+                             "• Flowing curves → Vine Flower\n" +
+                             "• Short/bushy → Grass Sprout\n" +
+                             "• Horizontal/wide → Water Lily\n" +
+                             "• Branching → Coral Bloom\n" +
+                             "• Clustered circles → Bubble Flower\n\n" +
+                             "Experiment and discover! 🌱",
                 pageColor = new Color(0.95f, 0.95f, 1f)
             }
         };
