@@ -6,9 +6,6 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Complete Drawing Scene fixer - addresses all remaining issues
-/// 1. Fixes Guide Book button functionality
-/// 2. Applies plant-themed background
-/// 3. Connects all UI references
 /// </summary>
 public class DrawingSceneCompleteFixer : EditorWindow
 {
@@ -19,16 +16,12 @@ public class DrawingSceneCompleteFixer : EditorWindow
 
         int fixCount = 0;
 
-        // Fix 1: Fix Guide Book button
         fixCount += FixGuideBookButton();
 
-        // Fix 2: Apply plant-themed background
         fixCount += ApplyPlantThemedBackground();
 
-        // Fix 3: Ensure all references are connected
         fixCount += ConnectAllReferences();
 
-        // Fix 4: Verify EventSystem
         fixCount += EnsureEventSystem();
 
         Debug.Log($"=== APPLIED {fixCount} FIXES ===");
