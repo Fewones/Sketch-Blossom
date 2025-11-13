@@ -178,7 +178,8 @@ public class DrawingManager : MonoBehaviour
         if (plantResultPanel != null && lastRecognitionResult != null)
         {
             Debug.Log("===== SHOWING RESULT PANEL =====");
-            plantResultPanel.ShowResults(lastRecognitionResult, unitData, LoadBattleScene, OnRedrawRequested);
+            // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
+            plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
         }
         else
         {
@@ -193,14 +194,15 @@ public class DrawingManager : MonoBehaviour
                 if (plantResultPanel != null)
                 {
                     Debug.Log("Found PlantResultPanel via FindFirstObjectByType, retrying...");
-                    plantResultPanel.ShowResults(lastRecognitionResult, unitData, LoadBattleScene, OnRedrawRequested);
+                    // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
+                    plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
                     return;
                 }
             }
 
-            // Fallback - just transition after delay
-            Debug.LogError("FALLBACK: Transitioning to battle in 3 seconds...");
-            Invoke("LoadBattleScene", 3f);
+            // BATTLE SCENE DISABLED FOR TESTING
+            Debug.LogWarning("BATTLE SCENE TRANSITION DISABLED - Stay in drawing scene for testing");
+            // Invoke("LoadBattleScene", 3f);
         }
     }
 
@@ -295,11 +297,13 @@ public class DrawingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Load the battle scene
+    /// Load the battle scene - DISABLED FOR TESTING
     /// </summary>
     private void LoadBattleScene()
     {
-        Debug.Log($"Loading {battleSceneName}...");
-        SceneManager.LoadScene(battleSceneName);
+        Debug.LogWarning("⚠️ BATTLE SCENE LOADING DISABLED FOR TESTING ⚠️");
+        Debug.LogWarning($"Would have loaded: {battleSceneName}");
+        Debug.LogWarning("Stay in drawing scene to test plant recognition");
+        // SceneManager.LoadScene(battleSceneName);
     }
 }
