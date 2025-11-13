@@ -30,52 +30,57 @@ public class PlantResultPanel : MonoBehaviour
 
     private System.Action onContinueCallback;
     private System.Action onRedrawCallback;
+    private bool hasBeenInitialized = false;
 
-    private void Start()
+    private void Awake()
     {
-        Debug.Log("PlantResultPanel.Start() called");
+        // Use Awake instead of Start - runs before any SetActive calls
+        Debug.Log("PlantResultPanel.Awake() called");
 
-        // Hide panel initially (both overlay and window)
-        if (panelOverlay != null)
-        {
-            panelOverlay.SetActive(false);
-            Debug.Log("PlantResultPanel: Panel overlay hidden on start");
-        }
-        else
-        {
-            Debug.LogError("PlantResultPanel: panelOverlay is NULL!");
-        }
-
-        if (panelWindow != null)
-        {
-            panelWindow.SetActive(false);
-            Debug.Log("PlantResultPanel: Panel window hidden on start");
-        }
-        else
-        {
-            Debug.LogWarning("PlantResultPanel: panelWindow is NULL!");
-        }
-
-        // Setup continue button
+        // Setup button listeners in Awake (won't interfere with ShowResults)
         if (continueButton != null)
         {
             continueButton.onClick.AddListener(OnContinue);
             Debug.Log("PlantResultPanel: Continue button listener added");
         }
-        else
-        {
-            Debug.LogError("PlantResultPanel: continueButton is NULL!");
-        }
 
-        // Setup redraw button
         if (redrawButton != null)
         {
             redrawButton.onClick.AddListener(OnRedraw);
             Debug.Log("PlantResultPanel: Redraw button listener added");
         }
-        else
+
+        hasBeenInitialized = true;
+    }
+
+    private void OnEnable()
+    {
+        // OnEnable runs every time the GameObject is activated
+        // Only hide panels if we're being enabled but NOT during ShowResults
+        if (hasBeenInitialized && !IsShowingResults())
         {
-            Debug.LogWarning("PlantResultPanel: redrawButton is NULL - button may not exist yet");
+            Debug.Log("PlantResultPanel.OnEnable() - Hiding panels (not showing results)");
+            HidePanelInternal();
+        }
+    }
+
+    private bool IsShowingResults()
+    {
+        // If either panel is active, we're showing results
+        return (panelOverlay != null && panelOverlay.activeSelf) ||
+               (panelWindow != null && panelWindow.activeSelf);
+    }
+
+    private void HidePanelInternal()
+    {
+        if (panelOverlay != null)
+        {
+            panelOverlay.SetActive(false);
+        }
+
+        if (panelWindow != null)
+        {
+            panelWindow.SetActive(false);
         }
     }
 
