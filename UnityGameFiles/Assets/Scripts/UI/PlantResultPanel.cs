@@ -35,15 +35,25 @@ public class PlantResultPanel : MonoBehaviour
     {
         Debug.Log("PlantResultPanel.Start() called");
 
-        // Hide panel initially
+        // Hide panel initially (both overlay and window)
         if (panelOverlay != null)
         {
             panelOverlay.SetActive(false);
-            Debug.Log("PlantResultPanel: Panel hidden on start");
+            Debug.Log("PlantResultPanel: Panel overlay hidden on start");
         }
         else
         {
             Debug.LogError("PlantResultPanel: panelOverlay is NULL!");
+        }
+
+        if (panelWindow != null)
+        {
+            panelWindow.SetActive(false);
+            Debug.Log("PlantResultPanel: Panel window hidden on start");
+        }
+        else
+        {
+            Debug.LogWarning("PlantResultPanel: panelWindow is NULL!");
         }
 
         // Setup continue button
@@ -88,9 +98,20 @@ public class PlantResultPanel : MonoBehaviour
         onContinueCallback = onContinue;
         onRedrawCallback = onRedraw;
 
-        // Show the panel
+        // Show the panel overlay (background)
         panelOverlay.SetActive(true);
         Debug.Log("PlantResultPanel: Panel overlay activated!");
+
+        // Show the panel window (content)
+        if (panelWindow != null)
+        {
+            panelWindow.SetActive(true);
+            Debug.Log("PlantResultPanel: Panel window activated!");
+        }
+        else
+        {
+            Debug.LogWarning("PlantResultPanel: panelWindow is NULL - content may not be visible!");
+        }
 
         // Log detailed results to console
         Debug.Log("=== PLANT RECOGNITION RESULTS ===");
@@ -207,7 +228,13 @@ public class PlantResultPanel : MonoBehaviour
         if (panelOverlay != null)
         {
             panelOverlay.SetActive(false);
-            Debug.Log("PlantResultPanel: Panel hidden");
+            Debug.Log("PlantResultPanel: Panel overlay hidden");
+        }
+
+        if (panelWindow != null)
+        {
+            panelWindow.SetActive(false);
+            Debug.Log("PlantResultPanel: Panel window hidden");
         }
     }
 
