@@ -52,6 +52,18 @@ public class SetupResultPanelLayout : EditorWindow
 
         Debug.Log($"✓ Found Panel Window: {panelWindow.name}");
 
+        // Add/Update background color for panel window
+        Image panelWindowImage = panelWindow.GetComponent<Image>();
+        if (panelWindowImage == null)
+        {
+            panelWindowImage = panelWindow.AddComponent<Image>();
+            Debug.Log("✓ Added Image component to Panel Window");
+        }
+        Undo.RecordObject(panelWindowImage, "Set Panel Background Color");
+        panelWindowImage.color = new Color(0.95f, 0.95f, 0.95f, 1f); // Light gray, fully opaque
+        EditorUtility.SetDirty(panelWindowImage);
+        Debug.Log("✓ Set Panel Window background to light gray");
+
         // Format Title (top center)
         if (titleText != null)
         {
@@ -167,6 +179,7 @@ public class SetupResultPanelLayout : EditorWindow
         Debug.Log("========== LAYOUT FORMATTING COMPLETE ==========");
         EditorUtility.DisplayDialog("Success",
             "PlantResultPanel layout formatted successfully!\n\n" +
+            "✓ Background: Light Gray\n" +
             "✓ Title: Top Center\n" +
             "✓ Plant Name: Large, Centered\n" +
             "✓ Element: Below Plant Name\n" +

@@ -259,6 +259,18 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Hidden DrawingPanel");
         }
 
+        // HIDE the drawing canvas so strokes don't show over result panel
+        if (usingSimpleCanvas && simpleCanvas != null)
+        {
+            simpleCanvas.gameObject.SetActive(false);
+            Debug.Log("✓ Hidden SimpleDrawingCanvas (strokes won't show over results)");
+        }
+        else if (usingLegacyCanvas && drawingCanvas != null)
+        {
+            drawingCanvas.gameObject.SetActive(false);
+            Debug.Log("✓ Hidden legacy DrawingCanvas (strokes won't show over results)");
+        }
+
         // Show result data - PlantResultPanel will handle showing its own overlay/panel
         if (plantResultPanel != null)
         {
@@ -284,6 +296,18 @@ public class DrawingManager : MonoBehaviour
         // Determine which canvas system we're using
         bool usingSimpleCanvas = (simpleCanvas != null);
         bool usingLegacyCanvas = (drawingCanvas != null);
+
+        // SHOW the drawing canvas again (before clearing)
+        if (usingSimpleCanvas && simpleCanvas != null)
+        {
+            simpleCanvas.gameObject.SetActive(true);
+            Debug.Log("✓ Shown SimpleDrawingCanvas for redrawing");
+        }
+        else if (usingLegacyCanvas && drawingCanvas != null)
+        {
+            drawingCanvas.gameObject.SetActive(true);
+            Debug.Log("✓ Shown legacy DrawingCanvas for redrawing");
+        }
 
         // Clear the canvas
         if (usingSimpleCanvas)
