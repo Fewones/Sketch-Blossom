@@ -21,21 +21,33 @@ public class DrawingManager : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("========== DRAWING MANAGER START ==========");
+
         // Create or get the unit data object
         if (DrawnUnitData.Instance == null)
         {
             GameObject dataObj = new GameObject("DrawnUnitData");
             unitData = dataObj.AddComponent<DrawnUnitData>();
+            Debug.Log("✓ Created new DrawnUnitData");
         }
         else
         {
             unitData = DrawnUnitData.Instance;
             unitData.ClearData(); // Clear previous data
+            Debug.Log("✓ Using existing DrawnUnitData");
         }
 
         if (drawingCanvas == null)
         {
             drawingCanvas = FindObjectOfType<DrawingCanvas>();
+            if (drawingCanvas != null)
+                Debug.Log("✓ Auto-found DrawingCanvas: " + drawingCanvas.gameObject.name);
+            else
+                Debug.LogError("❌ DrawingCanvas NOT FOUND!");
+        }
+        else
+        {
+            Debug.Log("✓ DrawingCanvas assigned: " + drawingCanvas.gameObject.name);
         }
 
         if (plantAnalyzer == null)
@@ -46,26 +58,55 @@ public class DrawingManager : MonoBehaviour
                 // Create PlantAnalyzer if it doesn't exist
                 GameObject analyzerObj = new GameObject("PlantAnalyzer");
                 plantAnalyzer = analyzerObj.AddComponent<PlantAnalyzer>();
+                Debug.Log("✓ Created new PlantAnalyzer");
+            }
+            else
+            {
+                Debug.Log("✓ Auto-found PlantAnalyzer: " + plantAnalyzer.gameObject.name);
             }
         }
+        else
+        {
+            Debug.Log("✓ PlantAnalyzer assigned: " + plantAnalyzer.gameObject.name);
+        }
 
-        // Auto-find result panel
+        // Auto-find result panel (check inactive too)
         if (plantResultPanel == null)
         {
-            plantResultPanel = FindObjectOfType<PlantResultPanel>();
+            plantResultPanel = FindFirstObjectByType<PlantResultPanel>(FindObjectsInactive.Include);
             if (plantResultPanel == null)
             {
-                Debug.LogWarning("PlantResultPanel not found! Run: Tools > Sketch Blossom > Setup Plant Result Panel");
+                Debug.LogError("❌ PlantResultPanel NOT FOUND!");
+                Debug.LogError("❌ Please run: Tools > Sketch Blossom > Setup Plant Result Panel (Complete)");
             }
+            else
+            {
+                Debug.Log("✓ Auto-found PlantResultPanel: " + plantResultPanel.gameObject.name);
+            }
+        }
+        else
+        {
+            Debug.Log("✓ PlantResultPanel assigned: " + plantResultPanel.gameObject.name);
         }
 
         // Hook into the existing finish button
         if (drawingCanvas != null && drawingCanvas.finishButton != null)
         {
             // Remove existing listener and add our own
+            int oldListeners = drawingCanvas.finishButton.onClick.GetPersistentEventCount();
             drawingCanvas.finishButton.onClick.RemoveAllListeners();
             drawingCanvas.finishButton.onClick.AddListener(OnFinishDrawing);
+            Debug.Log($"✓ Finish button hooked up (removed {oldListeners} old listeners, added OnFinishDrawing)");
         }
+        else
+        {
+            if (drawingCanvas == null)
+                Debug.LogError("❌ Cannot hook finish button - DrawingCanvas is NULL!");
+            else if (drawingCanvas.finishButton == null)
+                Debug.LogError("❌ Cannot hook finish button - finishButton is NULL!");
+        }
+
+        Debug.Log("========== DRAWING MANAGER START COMPLETE ==========\n");
     }
 
     /// <summary>
