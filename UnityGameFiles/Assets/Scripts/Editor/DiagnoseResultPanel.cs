@@ -37,6 +37,44 @@ public class DiagnoseResultPanel : EditorWindow
             if (manager.drawingCanvas.finishButton == null)
             {
                 Debug.LogError("❌ DrawingCanvas.finishButton is NULL!");
+
+                // Try to find it
+                Canvas canvas = FindObjectOfType<Canvas>();
+                if (canvas != null)
+                {
+                    Debug.Log("Searching for FinishButton in Canvas hierarchy...");
+                    Transform drawingPanel = canvas.transform.Find("DrawingPanel");
+                    if (drawingPanel != null)
+                    {
+                        Debug.Log("✓ Found DrawingPanel");
+                        Transform finishBtn = drawingPanel.Find("FinishButton");
+                        if (finishBtn != null)
+                        {
+                            Debug.Log("✓ Found FinishButton at: Canvas/DrawingPanel/FinishButton");
+                            Button btn = finishBtn.GetComponent<Button>();
+                            if (btn != null)
+                            {
+                                Debug.Log("✓ FinishButton has Button component, assigning to DrawingCanvas...");
+                                manager.drawingCanvas.finishButton = btn;
+                                EditorUtility.SetDirty(manager.drawingCanvas);
+                                Debug.Log("✓ FinishButton assigned to DrawingCanvas!");
+                            }
+                            else
+                            {
+                                Debug.LogError("❌ FinishButton doesn't have a Button component!");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogError("❌ FinishButton not found in DrawingPanel!");
+                            Debug.LogError("Check hierarchy: Canvas > DrawingPanel > FinishButton");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("❌ DrawingPanel not found in Canvas!");
+                    }
+                }
             }
             else
             {

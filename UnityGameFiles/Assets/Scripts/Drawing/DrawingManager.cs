@@ -90,20 +90,59 @@ public class DrawingManager : MonoBehaviour
         }
 
         // Hook into the existing finish button
-        if (drawingCanvas != null && drawingCanvas.finishButton != null)
+        // Try to find it ourselves if DrawingCanvas hasn't found it yet
+        if (drawingCanvas != null)
         {
-            // Remove existing listener and add our own
-            int oldListeners = drawingCanvas.finishButton.onClick.GetPersistentEventCount();
-            drawingCanvas.finishButton.onClick.RemoveAllListeners();
-            drawingCanvas.finishButton.onClick.AddListener(OnFinishDrawing);
-            Debug.Log($"✓ Finish button hooked up (removed {oldListeners} old listeners, added OnFinishDrawing)");
+            if (drawingCanvas.finishButton == null)
+            {
+                Debug.Log("⚠️ DrawingCanvas.finishButton is null, attempting manual search...");
+
+                // Search for FinishButton in the Canvas hierarchy
+                Canvas canvas = FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
+                    if (drawingPanelTransform != null)
+                    {
+                        Transform buttonTransform = drawingPanelTransform.Find("FinishButton");
+                        if (buttonTransform != null)
+                        {
+                            drawingCanvas.finishButton = buttonTransform.GetComponent<Button>();
+                            if (drawingCanvas.finishButton != null)
+                            {
+                                Debug.Log("✓ Found and assigned FinishButton manually!");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogError("❌ FinishButton not found in DrawingPanel!");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("❌ DrawingPanel not found in Canvas!");
+                    }
+                }
+            }
+
+            // Now try to hook it up
+            if (drawingCanvas.finishButton != null)
+            {
+                // Remove existing listener and add our own
+                int oldListeners = drawingCanvas.finishButton.onClick.GetPersistentEventCount();
+                drawingCanvas.finishButton.onClick.RemoveAllListeners();
+                drawingCanvas.finishButton.onClick.AddListener(OnFinishDrawing);
+                Debug.Log($"✓ Finish button hooked up (removed {oldListeners} old listeners, added OnFinishDrawing)");
+            }
+            else
+            {
+                Debug.LogError("❌ Cannot hook finish button - finishButton still NULL after manual search!");
+                Debug.LogError("❌ Make sure 'DrawingPanel/FinishButton' exists in your Canvas hierarchy");
+            }
         }
         else
         {
-            if (drawingCanvas == null)
-                Debug.LogError("❌ Cannot hook finish button - DrawingCanvas is NULL!");
-            else if (drawingCanvas.finishButton == null)
-                Debug.LogError("❌ Cannot hook finish button - finishButton is NULL!");
+            Debug.LogError("❌ Cannot hook finish button - DrawingCanvas is NULL!");
         }
 
         Debug.Log("========== DRAWING MANAGER START COMPLETE ==========\n");
