@@ -125,6 +125,14 @@ public class DrawingSceneUI : MonoBehaviour
             }
         }
 
+        // Enable drawing canvas
+        DrawingCanvas canvas = FindObjectOfType<DrawingCanvas>();
+        if (canvas != null)
+        {
+            canvas.isDrawingEnabled = true;
+            Debug.Log("DrawingCanvas enabled - player can now draw");
+        }
+
         UpdateHintText("Draw your plant! Use 3-8 strokes for best results.");
         hasStartedDrawing = true;
     }

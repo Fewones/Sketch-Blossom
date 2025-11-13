@@ -18,6 +18,10 @@ public class DrawingCanvas : MonoBehaviour
     [Header("Drawing Area")]
     public RectTransform drawingArea;
 
+    [Header("Drawing Control")]
+    [Tooltip("Set to true to enable drawing. False by default to prevent drawing before Start button")]
+    public bool isDrawingEnabled = false;
+
     public int currentStrokeCount = 0;
     public List<LineRenderer> allStrokes = new List<LineRenderer>();
 
@@ -66,6 +70,12 @@ public class DrawingCanvas : MonoBehaviour
 
     void HandleInput()
     {
+        // Don't allow drawing if not enabled
+        if (!isDrawingEnabled)
+        {
+            return;
+        }
+
         // Mouse/Touch Down
         if (Input.GetMouseButtonDown(0))
         {
