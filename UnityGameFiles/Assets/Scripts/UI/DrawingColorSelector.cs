@@ -73,7 +73,19 @@ public class DrawingColorSelector : MonoBehaviour
         if (blueButton != null)
             blueButton.onClick.AddListener(OnBlueButtonClicked);
 
-        // Set initial state (green is default)
+        // Set initial color to green (not just visuals - actually set the color!)
+        if (simpleDrawingCanvas != null)
+        {
+            simpleDrawingCanvas.SetColor(Color.green);
+            Debug.Log("DrawingColorSelector: Set initial color to GREEN");
+        }
+        else if (drawingCanvas != null)
+        {
+            drawingCanvas.SelectGreenColor();
+            Debug.Log("DrawingColorSelector: Set initial color to GREEN (legacy)");
+        }
+
+        // Update button visuals to match
         UpdateButtonVisuals("green");
 
         // Set up labels if they exist

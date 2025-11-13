@@ -15,6 +15,12 @@ public class DrawingManager : MonoBehaviour
     public PlantRecognitionSystem recognitionSystem;
     public PlantResultPanel plantResultPanel;
 
+    [Header("UI Panels")]
+    public GameObject drawingOverlay;
+    public GameObject drawingPanel;
+    public GameObject resultOverlay;
+    public GameObject resultPanel;
+
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
 
@@ -105,9 +111,53 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ PlantResultPanel assigned: " + plantResultPanel.gameObject.name);
         }
 
-        // Hook into the existing finish button
-        // Try to find it in the Canvas hierarchy
+        // Auto-find UI panels if not assigned
         Canvas canvas = FindFirstObjectByType<Canvas>();
+
+        if (canvas != null)
+        {
+            if (drawingOverlay == null)
+            {
+                Transform overlayTransform = canvas.transform.Find("DrawingOverlay");
+                if (overlayTransform != null)
+                {
+                    drawingOverlay = overlayTransform.gameObject;
+                    Debug.Log("✓ Auto-found DrawingOverlay");
+                }
+            }
+
+            if (drawingPanel == null)
+            {
+                Transform panelTransform = canvas.transform.Find("DrawingPanel");
+                if (panelTransform != null)
+                {
+                    drawingPanel = panelTransform.gameObject;
+                    Debug.Log("✓ Auto-found DrawingPanel");
+                }
+            }
+
+            if (resultOverlay == null)
+            {
+                Transform overlayTransform = canvas.transform.Find("ResultOverlay");
+                if (overlayTransform != null)
+                {
+                    resultOverlay = overlayTransform.gameObject;
+                    Debug.Log("✓ Auto-found ResultOverlay");
+                }
+            }
+
+            if (resultPanel == null)
+            {
+                Transform panelTransform = canvas.transform.Find("ResultPanel");
+                if (panelTransform != null)
+                {
+                    resultPanel = panelTransform.gameObject;
+                    Debug.Log("✓ Auto-found ResultPanel");
+                }
+            }
+        }
+
+        // Hook into the existing finish button
         Button finishButton = null;
 
         if (canvas != null)
@@ -204,7 +254,7 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("Using legacy DrawingCanvas - forced end stroke");
         }
 
-        // Analyze the drawing BEFORE hiding strokes
+        // Analyze the drawing BEFORE hiding anything
         AnalyzeAndStoreDrawing();
 
         // Check if analysis produced a result
@@ -214,22 +264,38 @@ public class DrawingManager : MonoBehaviour
             return;
         }
 
-        // NOW hide the drawn strokes since we have a valid result
-        if (usingSimpleCanvas && simpleCanvas.strokeContainer != null)
+        Debug.Log("===== ANALYSIS SUCCEEDED - SHOWING RESULTS =====");
+
+        // HIDE DRAWING UI
+        if (drawingOverlay != null)
         {
-            simpleCanvas.strokeContainer.gameObject.SetActive(false);
-            Debug.Log("Hidden SimpleCanvas stroke container to show result panel");
-        }
-        else if (usingLegacyCanvas && drawingCanvas.strokeContainer != null)
-        {
-            drawingCanvas.strokeContainer.gameObject.SetActive(false);
-            Debug.Log("Hidden legacy canvas stroke container to show result panel");
+            drawingOverlay.SetActive(false);
+            Debug.Log("✓ Hidden DrawingOverlay");
         }
 
-        // Show result panel
+        if (drawingPanel != null)
+        {
+            drawingPanel.SetActive(false);
+            Debug.Log("✓ Hidden DrawingPanel");
+        }
+
+        // SHOW RESULT UI
+        if (resultOverlay != null)
+        {
+            resultOverlay.SetActive(true);
+            Debug.Log("✓ Showing ResultOverlay");
+        }
+
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(true);
+            Debug.Log("✓ Showing ResultPanel");
+        }
+
+        // Show result data in panel
         if (plantResultPanel != null)
         {
-            Debug.Log("===== SHOWING RESULT PANEL =====");
+            Debug.Log("✓ Populating PlantResultPanel with data");
             // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
             plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
         }
@@ -245,42 +311,55 @@ public class DrawingManager : MonoBehaviour
     /// </summary>
     private void OnRedrawRequested()
     {
-        Debug.Log("DrawingManager: Redraw requested");
+        Debug.Log("===== REDRAW REQUESTED =====");
 
         // Determine which canvas system we're using
         bool usingSimpleCanvas = (simpleCanvas != null);
         bool usingLegacyCanvas = (drawingCanvas != null);
 
-        // Show the stroke container again
-        if (usingSimpleCanvas && simpleCanvas.strokeContainer != null)
-        {
-            simpleCanvas.strokeContainer.gameObject.SetActive(true);
-            Debug.Log("Showed SimpleCanvas stroke container for redrawing");
-        }
-        else if (usingLegacyCanvas && drawingCanvas.strokeContainer != null)
-        {
-            drawingCanvas.strokeContainer.gameObject.SetActive(true);
-            Debug.Log("Showed legacy canvas stroke container for redrawing");
-        }
-
         // Clear the canvas
         if (usingSimpleCanvas)
         {
             simpleCanvas.ClearAll();
-            Debug.Log("SimpleCanvas cleared for redrawing");
+            Debug.Log("✓ SimpleCanvas cleared for redrawing");
         }
         else if (usingLegacyCanvas)
         {
             drawingCanvas.ClearCanvas();
-            Debug.Log("Legacy canvas cleared for redrawing");
+            Debug.Log("✓ Legacy canvas cleared for redrawing");
         }
 
         // Clear stored results
         lastRecognitionResult = null;
         lastDominantColor = Color.green;
 
-        // Note: The drawing panel should already be visible
-        // The player can now draw again
+        // HIDE RESULT UI
+        if (resultOverlay != null)
+        {
+            resultOverlay.SetActive(false);
+            Debug.Log("✓ Hidden ResultOverlay");
+        }
+
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(false);
+            Debug.Log("✓ Hidden ResultPanel");
+        }
+
+        // SHOW DRAWING UI
+        if (drawingOverlay != null)
+        {
+            drawingOverlay.SetActive(true);
+            Debug.Log("✓ Showing DrawingOverlay");
+        }
+
+        if (drawingPanel != null)
+        {
+            drawingPanel.SetActive(true);
+            Debug.Log("✓ Showing DrawingPanel");
+        }
+
+        Debug.Log("✓ Ready to draw again!");
     }
 
     /// <summary>

@@ -213,7 +213,7 @@ public class SetupDrawingSystem : EditorWindow
             return;
         }
 
-        // Find PlantResultPanel
+        // Find PlantResultPanel component
         PlantResultPanel resultPanel = FindObjectOfType<PlantResultPanel>(true);
         if (resultPanel != null)
         {
@@ -223,6 +223,55 @@ public class SetupDrawingSystem : EditorWindow
             {
                 field.SetValue(manager, resultPanel);
                 Debug.Log("  ✓ Linked PlantResultPanel");
+            }
+        }
+
+        // Find and link UI panels
+        Transform drawingOverlay = canvas.transform.Find("DrawingOverlay");
+        if (drawingOverlay != null)
+        {
+            var field = typeof(DrawingManager).GetField("drawingOverlay",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(manager, drawingOverlay.gameObject);
+                Debug.Log("  ✓ Linked DrawingOverlay");
+            }
+        }
+
+        Transform drawingPanel = canvas.transform.Find("DrawingPanel");
+        if (drawingPanel != null)
+        {
+            var field = typeof(DrawingManager).GetField("drawingPanel",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(manager, drawingPanel.gameObject);
+                Debug.Log("  ✓ Linked DrawingPanel");
+            }
+        }
+
+        Transform resultOverlay = canvas.transform.Find("ResultOverlay");
+        if (resultOverlay != null)
+        {
+            var field = typeof(DrawingManager).GetField("resultOverlay",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(manager, resultOverlay.gameObject);
+                Debug.Log("  ✓ Linked ResultOverlay");
+            }
+        }
+
+        Transform resultPanelTransform = canvas.transform.Find("ResultPanel");
+        if (resultPanelTransform != null)
+        {
+            var field = typeof(DrawingManager).GetField("resultPanel",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(manager, resultPanelTransform.gameObject);
+                Debug.Log("  ✓ Linked ResultPanel");
             }
         }
 

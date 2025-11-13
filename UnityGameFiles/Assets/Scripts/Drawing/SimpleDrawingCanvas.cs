@@ -20,7 +20,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     public float minPointDistance = 0.05f;
 
     [Header("Current State")]
-    public Color currentColor = Color.red;
+    public Color currentColor = Color.green;  // Default to green (Grass/Cactus)
 
     // All completed strokes
     public List<LineRenderer> allStrokes = new List<LineRenderer>();
