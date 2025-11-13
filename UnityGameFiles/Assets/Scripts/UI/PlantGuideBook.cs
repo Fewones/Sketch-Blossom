@@ -215,6 +215,10 @@ public class PlantGuideBook : MonoBehaviour
             bookPanel.SetActive(true);
             Debug.Log("PlantGuideBook: Book panel activated");
 
+            // Bring the guide panel to front (above drawing window)
+            bookPanel.transform.SetAsLastSibling();
+            Debug.Log("PlantGuideBook: Panel brought to front (z-order)");
+
             if (useSlideAnimation)
             {
                 StartCoroutine(AnimateBookPosition(openPosition));
@@ -385,6 +389,20 @@ public class PlantGuideBook : MonoBehaviour
     // Keyboard shortcuts (optional)
     private void Update()
     {
+        // Press H to toggle guide book (open/close)
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            if (isBookOpen)
+            {
+                CloseBook();
+            }
+            else
+            {
+                OpenBook();
+            }
+        }
+
+        // Additional shortcuts when book is open
         if (isBookOpen)
         {
             if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
@@ -398,14 +416,6 @@ public class PlantGuideBook : MonoBehaviour
             else if (Input.GetKeyDown(KeyCode.Escape))
             {
                 CloseBook();
-            }
-        }
-        else
-        {
-            // Press H to open guide book
-            if (Input.GetKeyDown(KeyCode.H))
-            {
-                OpenBook();
             }
         }
     }
