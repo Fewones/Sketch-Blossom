@@ -447,22 +447,51 @@ public class DrawingSceneSetup : EditorWindow
     private static void SetupPlantGuideBook()
     {
         GameObject guideManager = GameObject.Find("GuideBookManager");
-        if (guideManager == null) return;
+        if (guideManager == null)
+        {
+            Debug.LogError("GuideBookManager not found!");
+            return;
+        }
 
         PlantGuideBook guide = guideManager.GetComponent<PlantGuideBook>();
-        if (guide == null) return;
+        if (guide == null)
+        {
+            Debug.LogError("PlantGuideBook component not found!");
+            return;
+        }
 
         // Find and assign references
         guide.bookPanel = GameObject.Find("GuideBookPanel");
         guide.openBookButton = GameObject.Find("GuideBookButton")?.GetComponent<Button>();
         guide.closeBookButton = GameObject.Find("GuideBookPanel/CloseButton")?.GetComponent<Button>();
-        guide.nextPageButton = GameObject.Find("NextButton")?.GetComponent<Button>();
-        guide.previousPageButton = GameObject.Find("PreviousButton")?.GetComponent<Button>();
 
-        guide.pageTitle = GameObject.Find("GuideBookPanel/PageTitle")?.GetComponent<TextMeshProUGUI>();
-        guide.pageDescription = GameObject.Find("GuideBookPanel/PageDescription")?.GetComponent<TextMeshProUGUI>();
+        // Look for navigation buttons in hierarchy
+        Button[] allButtons = GameObject.FindObjectsOfType<Button>();
+        foreach (var btn in allButtons)
+        {
+            if (btn.gameObject.name == "NextButton")
+                guide.nextPageButton = btn;
+            else if (btn.gameObject.name == "PreviousButton")
+                guide.previousPageButton = btn;
+        }
+
+        // Find text elements
+        TextMeshProUGUI[] allText = GameObject.FindObjectsOfType<TextMeshProUGUI>();
+        foreach (var text in allText)
+        {
+            if (text.gameObject.name == "PageTitle")
+                guide.pageTitle = text;
+            else if (text.gameObject.name == "PageDescription")
+                guide.pageDescription = text;
+            else if (text.gameObject.name == "PageNumberText")
+                guide.pageNumberText = text;
+        }
+
         guide.guideImage = GameObject.Find("GuideBookPanel/GuideImage")?.GetComponent<Image>();
-        guide.pageNumberText = GameObject.Find("PageNumberText")?.GetComponent<TextMeshProUGUI>();
+
+        // Debug output
+        Debug.Log($"Guide Book Setup - Panel: {guide.bookPanel != null}, OpenBtn: {guide.openBookButton != null}, CloseBtn: {guide.closeBookButton != null}");
+        Debug.Log($"Next: {guide.nextPageButton != null}, Prev: {guide.previousPageButton != null}");
 
         EditorUtility.SetDirty(guideManager);
     }

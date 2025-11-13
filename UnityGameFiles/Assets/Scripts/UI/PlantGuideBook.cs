@@ -43,6 +43,8 @@ public class PlantGuideBook : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("PlantGuideBook: Starting initialization...");
+
         InitializePages();
         SetupButtons();
 
@@ -52,12 +54,32 @@ public class PlantGuideBook : MonoBehaviour
             RectTransform rectTransform = bookPanel.GetComponent<RectTransform>();
             if (rectTransform != null)
             {
+                // Open position is on screen (right side)
                 openPosition = rectTransform.anchoredPosition;
-                closedPosition = new Vector3(openPosition.x - 800f, openPosition.y, openPosition.z);
+
+                // Closed position is off-screen to the right
+                closedPosition = new Vector3(openPosition.x + 1000f, openPosition.y, openPosition.z);
+
+                Debug.Log($"Guide Book positions - Open: {openPosition}, Closed: {closedPosition}");
             }
 
             // Start with book closed
             CloseBook(instant: true);
+        }
+        else
+        {
+            Debug.LogError("PlantGuideBook: bookPanel is NULL! Make sure to assign it in Inspector.");
+        }
+
+        // Ensure open button is visible
+        if (openBookButton != null)
+        {
+            openBookButton.gameObject.SetActive(true);
+            Debug.Log("PlantGuideBook: Open button is active");
+        }
+        else
+        {
+            Debug.LogError("PlantGuideBook: openBookButton is NULL! Make sure to assign it in Inspector.");
         }
     }
 
@@ -151,47 +173,70 @@ public class PlantGuideBook : MonoBehaviour
     {
         if (openBookButton != null)
         {
+            openBookButton.onClick.RemoveAllListeners(); // Clear any existing listeners
             openBookButton.onClick.AddListener(() => OpenBook());
+            Debug.Log("PlantGuideBook: Open button listener added");
         }
 
         if (closeBookButton != null)
         {
+            closeBookButton.onClick.RemoveAllListeners();
             closeBookButton.onClick.AddListener(() => CloseBook());
+            Debug.Log("PlantGuideBook: Close button listener added");
         }
 
         if (nextPageButton != null)
         {
+            nextPageButton.onClick.RemoveAllListeners();
             nextPageButton.onClick.AddListener(NextPage);
         }
 
         if (previousPageButton != null)
         {
+            previousPageButton.onClick.RemoveAllListeners();
             previousPageButton.onClick.AddListener(PreviousPage);
         }
     }
 
     public void OpenBook()
     {
-        if (isBookOpen) return;
+        Debug.Log("PlantGuideBook: OpenBook() called");
+
+        if (isBookOpen)
+        {
+            Debug.Log("PlantGuideBook: Book already open, ignoring");
+            return;
+        }
 
         isBookOpen = true;
 
         if (bookPanel != null)
         {
             bookPanel.SetActive(true);
+            Debug.Log("PlantGuideBook: Book panel activated");
 
             if (useSlideAnimation)
             {
                 StartCoroutine(AnimateBookPosition(openPosition));
             }
+            else
+            {
+                RectTransform rect = bookPanel.GetComponent<RectTransform>();
+                if (rect != null) rect.anchoredPosition = openPosition;
+            }
+        }
+        else
+        {
+            Debug.LogError("PlantGuideBook: Cannot open book - bookPanel is NULL!");
         }
 
         if (openBookButton != null)
         {
             openBookButton.gameObject.SetActive(false);
+            Debug.Log("PlantGuideBook: Open button hidden");
         }
 
-        Debug.Log("Plant Guide Book opened");
+        Debug.Log("Plant Guide Book opened successfully");
     }
 
     public void CloseBook(bool instant = false)
