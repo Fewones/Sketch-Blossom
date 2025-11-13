@@ -140,59 +140,60 @@ public class PlantResultPanel : MonoBehaviour
         }
         Debug.Log("==============================");
 
-        // Update title
+        // Update title - Clean and simple
         if (titleText != null)
         {
-            titleText.text = "🌱 Plant Recognition Complete! 🌱";
+            titleText.text = "Plant Recognized!";
         }
 
-        // Update plant name with emoji
+        // Update plant name - Large and prominent
         if (plantNameText != null)
         {
             string emoji = GetPlantEmoji(result.element);
-            plantNameText.text = $"{emoji} {result.plantData.displayName} {emoji}";
+            plantNameText.text = $"<size=48><b>{result.plantData.displayName}</b></size>";
             plantNameText.color = GetElementColor(result.element);
         }
 
-        // Update element
+        // Update element - Clean type display
         if (elementText != null)
         {
             string elementEmoji = GetElementEmoji(result.element);
-            elementText.text = $"{elementEmoji} {result.element} Type {elementEmoji}";
+            elementText.text = $"<size=24>{elementEmoji} {result.element} Type</size>";
             elementText.color = GetElementColor(result.element);
         }
 
-        // Update confidence
+        // Update confidence - Simplified
         if (confidenceText != null)
         {
             string stars = GetStars(result.confidence);
-            confidenceText.text = $"Confidence: {stars}\n{result.confidence:P0}";
+            confidenceText.text = $"<size=18>{stars}</size>";
         }
 
-        // Update stats
+        // Update stats - Clean table format
         if (statsText != null && unitData != null)
         {
-            statsText.text = $"<b>Plant Stats:</b>\n" +
-                            $"❤️ HP: {unitData.health}\n" +
-                            $"⚔️ Attack: {unitData.attack}\n" +
-                            $"🛡️ Defense: {unitData.defense}";
+            statsText.text =
+                $"<b><size=20>Stats</size></b>\n\n" +
+                $"<size=18>❤️  HP:  {unitData.health,3}</size>\n" +
+                $"<size=18>⚔️  ATK: {unitData.attack,3}</size>\n" +
+                $"<size=18>🛡️  DEF: {unitData.defense,3}</size>";
         }
 
-        // Update color info
+        // Update color info - Minimized (element already shows this)
         if (colorInfoText != null)
         {
-            string colorName = GetColorName(result.dominantColor);
-            colorInfoText.text = $"<b>Drawing Color:</b>\n{colorName}";
+            colorInfoText.text = ""; // Hide - redundant with element type
         }
 
-        // Update moves (reuse moves array declared above)
+        // Update moves - Clean list format
         if (movesText != null)
         {
-            string movesStr = "<b>Available Moves:</b>\n";
+            string movesStr = "<b><size=20>Moves</size></b>\n\n";
             foreach (var move in moves)
             {
                 string powerBars = GetPowerBars(move.basePower);
-                movesStr += $"• {move.moveName} {powerBars}\n";
+                string powerText = move.basePower > 0 ? $" {powerBars}" : " 🛡️";
+                movesStr += $"<size=18>• {move.moveName}{powerText}</size>\n";
             }
             movesText.text = movesStr;
         }
