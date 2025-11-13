@@ -172,6 +172,26 @@ public class DrawingManager : MonoBehaviour
         bool usingSimpleCanvas = (simpleCanvas != null);
         bool usingLegacyCanvas = (drawingCanvas != null);
 
+        // Check if we have any strokes BEFORE hiding anything
+        int strokeCount = 0;
+        if (usingSimpleCanvas)
+        {
+            strokeCount = simpleCanvas.allStrokes.Count;
+        }
+        else if (usingLegacyCanvas)
+        {
+            strokeCount = drawingCanvas.allStrokes.Count;
+        }
+
+        // If no strokes, show error and don't proceed
+        if (strokeCount == 0)
+        {
+            Debug.LogError("❌ No strokes drawn! Please draw something before clicking Finish.");
+            Debug.LogError("❌ Make sure SimpleDrawingCanvas references are set up correctly.");
+            Debug.LogError("❌ Run: Tools > Sketch Blossom > Setup Drawing System (Auto)");
+            return;
+        }
+
         // End any in-progress stroke first
         if (usingSimpleCanvas)
         {
@@ -184,7 +204,17 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("Using legacy DrawingCanvas - forced end stroke");
         }
 
-        // Hide the drawn strokes so they don't render over the result panel
+        // Analyze the drawing BEFORE hiding strokes
+        AnalyzeAndStoreDrawing();
+
+        // Check if analysis produced a result
+        if (lastRecognitionResult == null)
+        {
+            Debug.LogError("❌ Analysis failed! No result produced.");
+            return;
+        }
+
+        // NOW hide the drawn strokes since we have a valid result
         if (usingSimpleCanvas && simpleCanvas.strokeContainer != null)
         {
             simpleCanvas.strokeContainer.gameObject.SetActive(false);
@@ -196,11 +226,8 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("Hidden legacy canvas stroke container to show result panel");
         }
 
-        // Analyze the drawing using the new recognition system
-        AnalyzeAndStoreDrawing();
-
         // Show result panel
-        if (plantResultPanel != null && lastRecognitionResult != null)
+        if (plantResultPanel != null)
         {
             Debug.Log("===== SHOWING RESULT PANEL =====");
             // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
@@ -208,26 +235,8 @@ public class DrawingManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Cannot show results - panel or result is null!");
-            Debug.LogError($"Panel: {(plantResultPanel != null ? "OK" : "NULL")}");
-            Debug.LogError($"Result: {(lastRecognitionResult != null ? "OK" : "NULL")}");
-
-            // Try to find the panel
-            if (plantResultPanel == null)
-            {
-                plantResultPanel = FindFirstObjectByType<PlantResultPanel>();
-                if (plantResultPanel != null)
-                {
-                    Debug.Log("Found PlantResultPanel via FindFirstObjectByType, retrying...");
-                    // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
-                    plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
-                    return;
-                }
-            }
-
-            // BATTLE SCENE DISABLED FOR TESTING
-            Debug.LogWarning("BATTLE SCENE TRANSITION DISABLED - Stay in drawing scene for testing");
-            // Invoke("LoadBattleScene", 3f);
+            Debug.LogError("❌ PlantResultPanel is NULL! Cannot show results.");
+            Debug.LogError("❌ Run: Tools > Sketch Blossom > Setup Drawing System (Auto)");
         }
     }
 
