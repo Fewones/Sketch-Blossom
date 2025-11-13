@@ -10,15 +10,10 @@ public class DrawingManager : MonoBehaviour
     [Header("References")]
     public DrawingCanvas drawingCanvas;
     public PlantAnalyzer plantAnalyzer;
-    public PlantDetectionFeedback detectionFeedback; // Optional UI feedback
-    public PlantAnalysisResultPanel analysisResultPanel; // Main result display
-    public SimpleResultDisplay simpleResultDisplay; // Simple text display
+    public PlantResultPanel plantResultPanel; // NEW: Proper result panel
 
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
-    public bool showDetectionFeedback = true; // Show plant type before battle
-    public bool showAnalysisPanel = true; // Show detailed analysis panel
-    public float resultDisplayDelay = 3f; // Delay before transitioning to battle
 
     private DrawnUnitData unitData;
     private PlantAnalyzer.PlantAnalysisResult lastPlantResult;
@@ -54,21 +49,14 @@ public class DrawingManager : MonoBehaviour
             }
         }
 
-        // Auto-find analysis result panel
-        if (analysisResultPanel == null)
+        // Auto-find result panel
+        if (plantResultPanel == null)
         {
-            analysisResultPanel = FindObjectOfType<PlantAnalysisResultPanel>();
-        }
-
-        // Auto-find simple result display
-        if (simpleResultDisplay == null)
-        {
-            simpleResultDisplay = FindObjectOfType<SimpleResultDisplay>();
-        }
-
-        if (analysisResultPanel == null && simpleResultDisplay == null && showAnalysisPanel)
-        {
-            Debug.LogWarning("No result display found in scene. Analysis results will only show in console.");
+            plantResultPanel = FindObjectOfType<PlantResultPanel>();
+            if (plantResultPanel == null)
+            {
+                Debug.LogWarning("PlantResultPanel not found! Run: Tools > Sketch Blossom > Setup Plant Result Panel");
+            }
         }
 
         // Hook into the existing finish button
@@ -91,40 +79,20 @@ public class DrawingManager : MonoBehaviour
         // Analyze the drawing using the existing DrawingCanvas data
         AnalyzeAndStoreDrawing();
 
-        // Show analysis results - try multiple display methods
-        bool resultShown = false;
-
-        // Try full panel first
-        if (showAnalysisPanel && analysisResultPanel != null && lastPlantResult != null)
+        // Show result panel
+        if (plantResultPanel != null && lastPlantResult != null)
         {
-            Debug.Log("Showing analysis result panel...");
-            analysisResultPanel.ShowResult(lastPlantResult, lastDominantColor, LoadBattleScene);
-            resultShown = true;
+            Debug.Log("===== SHOWING RESULT PANEL =====");
+            plantResultPanel.ShowResults(lastPlantResult, lastDominantColor, unitData, LoadBattleScene);
         }
-        // Try simple text display
-        else if (simpleResultDisplay != null && lastPlantResult != null)
+        else
         {
-            Debug.Log("Showing simple result display...");
-            simpleResultDisplay.ShowResult(lastPlantResult, lastDominantColor);
-            StartCoroutine(DelayedBattleTransition());
-            resultShown = true;
+            Debug.LogError("Cannot show results - panel or result is null!");
+            Debug.LogError($"Panel: {(plantResultPanel != null ? "OK" : "NULL")}");
+            Debug.LogError($"Result: {(lastPlantResult != null ? "OK" : "NULL")}");
+            // Fallback - just transition after delay
+            Invoke("LoadBattleScene", 3f);
         }
-
-        // If nothing worked, just show in console and transition
-        if (!resultShown)
-        {
-            Debug.LogWarning("No UI display available - results shown in console only");
-            StartCoroutine(DelayedBattleTransition());
-        }
-    }
-
-    /// <summary>
-    /// Delayed battle transition (gives time to read console logs)
-    /// </summary>
-    private System.Collections.IEnumerator DelayedBattleTransition()
-    {
-        yield return new WaitForSeconds(resultDisplayDelay);
-        LoadBattleScene();
     }
 
     /// <summary>
@@ -202,20 +170,10 @@ public class DrawingManager : MonoBehaviour
             {
                 Debug.Log($"  - {move.moveName} ({move.element}, Power: {move.basePower})");
             }
-
-            // Show visual feedback if enabled (old system, still supported)
-            if (showDetectionFeedback && !showAnalysisPanel)
-            {
-                if (detectionFeedback != null)
-                {
-                    detectionFeedback.ShowDetectionResult(plantResult);
-                }
-                else
-                {
-                    // Try to find it in scene
-                    PlantDetectionFeedback.ShowResult(plantResult);
-                }
-            }
+        }
+        else
+        {
+            Debug.LogError("Plant analysis failed - no result!");
         }
     }
 
