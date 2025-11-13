@@ -22,8 +22,18 @@ public class DrawingCanvas : MonoBehaviour
     [Tooltip("Set to true to enable drawing. False by default to prevent drawing before Start button")]
     public bool isDrawingEnabled = false;
 
+    [Header("Color Selection")]
+    public Color redColor = Color.red;
+    public Color greenColor = Color.green;
+    public Color blueColor = Color.blue;
+    public Color currentDrawingColor = Color.green; // Default to green
+
     public int currentStrokeCount = 0;
     public List<LineRenderer> allStrokes = new List<LineRenderer>();
+
+    // Color tracking for plant analysis
+    public Dictionary<Color, int> colorUsageCount = new Dictionary<Color, int>();
+    public Dictionary<Color, float> colorUsageLength = new Dictionary<Color, float>();
 
     private LineRenderer currentLine;
     private List<Vector3> currentStrokePoints = new List<Vector3>();
@@ -143,7 +153,26 @@ public class DrawingCanvas : MonoBehaviour
             finishButton.interactable = false;
         }
 
+        // Initialize color tracking dictionaries
+        InitializeColorTracking();
+
         Debug.Log("=== DRAWINGCANVAS READY ===");
+    }
+
+    void InitializeColorTracking()
+    {
+        colorUsageCount.Clear();
+        colorUsageLength.Clear();
+
+        colorUsageCount[redColor] = 0;
+        colorUsageCount[greenColor] = 0;
+        colorUsageCount[blueColor] = 0;
+
+        colorUsageLength[redColor] = 0f;
+        colorUsageLength[greenColor] = 0f;
+        colorUsageLength[blueColor] = 0f;
+
+        Debug.Log("Color tracking initialized");
     }
 
     void Update()
@@ -228,6 +257,10 @@ public class DrawingCanvas : MonoBehaviour
         // Create new LineRenderer for this stroke
         currentLine = Instantiate(lineRendererPrefab, strokeContainer);
         currentLine.positionCount = 0;
+
+        // Apply current color to the line
+        currentLine.startColor = currentDrawingColor;
+        currentLine.endColor = currentDrawingColor;
     }
 
     void AddPointToStroke(Vector2 screenPos)
@@ -268,6 +301,10 @@ public class DrawingCanvas : MonoBehaviour
         isDrawing = false;
         currentStrokeCount++;
         allStrokes.Add(currentLine);
+
+        // Track color usage
+        TrackColorUsage(currentLine, currentDrawingColor);
+
         UpdateStrokeUI();
 
         // Enable finish button after at least 1 stroke (only if button exists)
@@ -275,6 +312,55 @@ public class DrawingCanvas : MonoBehaviour
         {
             finishButton.interactable = true;
         }
+    }
+
+    void TrackColorUsage(LineRenderer stroke, Color usedColor)
+    {
+        // Find the matching base color (red, green, or blue)
+        Color baseColor = GetClosestBaseColor(usedColor);
+
+        // Increment stroke count for this color
+        if (colorUsageCount.ContainsKey(baseColor))
+        {
+            colorUsageCount[baseColor]++;
+        }
+
+        // Calculate and add stroke length
+        float strokeLength = 0f;
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        for (int i = 1; i < positions.Length; i++)
+        {
+            strokeLength += Vector3.Distance(positions[i - 1], positions[i]);
+        }
+
+        if (colorUsageLength.ContainsKey(baseColor))
+        {
+            colorUsageLength[baseColor] += strokeLength;
+        }
+
+        Debug.Log($"Color Usage: {baseColor} - Count: {colorUsageCount[baseColor]}, Length: {colorUsageLength[baseColor]:F2}");
+    }
+
+    Color GetClosestBaseColor(Color color)
+    {
+        // Determine which base color (red, green, blue) is closest
+        float redDist = ColorDistance(color, redColor);
+        float greenDist = ColorDistance(color, greenColor);
+        float blueDist = ColorDistance(color, blueColor);
+
+        if (redDist <= greenDist && redDist <= blueDist)
+            return redColor;
+        else if (greenDist <= blueDist)
+            return greenColor;
+        else
+            return blueColor;
+    }
+
+    float ColorDistance(Color a, Color b)
+    {
+        return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
     }
 
     void UpdateStrokeUI()
@@ -352,6 +438,99 @@ public class DrawingCanvas : MonoBehaviour
     }
 
     /// <summary>
+    /// Set drawing color to red (for UI button)
+    /// </summary>
+    public void SelectRedColor()
+    {
+        currentDrawingColor = redColor;
+        Debug.Log("Selected RED color for drawing (Sunflower)");
+    }
+
+    /// <summary>
+    /// Set drawing color to green (for UI button)
+    /// </summary>
+    public void SelectGreenColor()
+    {
+        currentDrawingColor = greenColor;
+        Debug.Log("Selected GREEN color for drawing (Cactus)");
+    }
+
+    /// <summary>
+    /// Set drawing color to blue (for UI button)
+    /// </summary>
+    public void SelectBlueColor()
+    {
+        currentDrawingColor = blueColor;
+        Debug.Log("Selected BLUE color for drawing (Water Lily)");
+    }
+
+    /// <summary>
+    /// Get the dominant color used in the drawing (by stroke count)
+    /// </summary>
+    public Color GetDominantColorByCount()
+    {
+        Color dominant = greenColor;
+        int maxCount = 0;
+
+        foreach (var kvp in colorUsageCount)
+        {
+            if (kvp.Value > maxCount)
+            {
+                maxCount = kvp.Value;
+                dominant = kvp.Key;
+            }
+        }
+
+        Debug.Log($"Dominant color by count: {dominant} ({maxCount} strokes)");
+        return dominant;
+    }
+
+    /// <summary>
+    /// Get the dominant color used in the drawing (by total length)
+    /// </summary>
+    public Color GetDominantColorByLength()
+    {
+        Color dominant = greenColor;
+        float maxLength = 0f;
+
+        foreach (var kvp in colorUsageLength)
+        {
+            if (kvp.Value > maxLength)
+            {
+                maxLength = kvp.Value;
+                dominant = kvp.Key;
+            }
+        }
+
+        Debug.Log($"Dominant color by length: {dominant} ({maxLength:F2} units)");
+        return dominant;
+    }
+
+    /// <summary>
+    /// Get color usage percentages (by stroke count)
+    /// </summary>
+    public Dictionary<Color, float> GetColorPercentages()
+    {
+        Dictionary<Color, float> percentages = new Dictionary<Color, float>();
+        int totalStrokes = currentStrokeCount;
+
+        if (totalStrokes == 0)
+        {
+            percentages[redColor] = 0f;
+            percentages[greenColor] = 0f;
+            percentages[blueColor] = 0f;
+            return percentages;
+        }
+
+        foreach (var kvp in colorUsageCount)
+        {
+            percentages[kvp.Key] = (float)kvp.Value / totalStrokes;
+        }
+
+        return percentages;
+    }
+
+    /// <summary>
     /// Get all strokes for move detection
     /// </summary>
     public List<LineRenderer> GetAllStrokes()
@@ -387,6 +566,9 @@ public class DrawingCanvas : MonoBehaviour
         currentStrokePoints.Clear();
         currentStrokeCount = 0;
         isDrawing = false;
+
+        // Reset color tracking
+        InitializeColorTracking();
 
         // Update UI
         UpdateStrokeUI();

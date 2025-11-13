@@ -108,11 +108,16 @@ public class DrawingManager : MonoBehaviour
 
         Debug.Log($"Drawing Analysis: {strokeCount} strokes, {totalLength:F2} length, {totalPoints} points");
 
-        // ===== NEW: ANALYZE PLANT TYPE =====
+        // ===== NEW: ANALYZE PLANT TYPE WITH COLOR =====
         PlantAnalyzer.PlantAnalysisResult plantResult = null;
         if (plantAnalyzer != null)
         {
-            plantResult = plantAnalyzer.AnalyzeDrawing(drawingCanvas.allStrokes);
+            // Get dominant color from drawing
+            Color dominantColor = drawingCanvas.GetDominantColorByCount();
+            Debug.Log($"Passing dominant color to analyzer: {dominantColor}");
+
+            // Analyze with color influence
+            plantResult = plantAnalyzer.AnalyzeDrawing(drawingCanvas.allStrokes, dominantColor);
             unitData.SetPlantType(plantResult);
         }
         else

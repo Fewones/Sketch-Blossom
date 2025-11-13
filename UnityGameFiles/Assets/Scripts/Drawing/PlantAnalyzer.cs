@@ -38,7 +38,7 @@ public class PlantAnalyzer : MonoBehaviour
     /// <summary>
     /// Analyze all strokes from DrawingCanvas and detect plant type
     /// </summary>
-    public PlantAnalysisResult AnalyzeDrawing(List<LineRenderer> strokes)
+    public PlantAnalysisResult AnalyzeDrawing(List<LineRenderer> strokes, Color dominantColor = default(Color))
     {
         if (strokes == null || strokes.Count == 0)
         {
@@ -52,11 +52,20 @@ public class PlantAnalyzer : MonoBehaviour
         // Extract geometric features from all strokes
         DrawingFeatures features = ExtractFeatures(strokes);
 
-        // Calculate scores for each plant type
+        // Calculate base scores for each plant type (geometric analysis)
         PlantAnalysisResult result = new PlantAnalysisResult();
         result.scores[PlantType.Sunflower] = CalculateSunflowerScore(features);
         result.scores[PlantType.Cactus] = CalculateCactusScore(features);
         result.scores[PlantType.WaterLily] = CalculateWaterLilyScore(features);
+
+        Debug.Log($"Base Scores (Geometric) - Sunflower: {result.scores[PlantType.Sunflower]:F2}, Cactus: {result.scores[PlantType.Cactus]:F2}, Water Lily: {result.scores[PlantType.WaterLily]:F2}");
+
+        // Apply color influence if color data provided
+        if (dominantColor != default(Color))
+        {
+            ApplyColorInfluence(result, dominantColor);
+            Debug.Log($"Color Adjusted Scores - Sunflower: {result.scores[PlantType.Sunflower]:F2}, Cactus: {result.scores[PlantType.Cactus]:F2}, Water Lily: {result.scores[PlantType.WaterLily]:F2}");
+        }
 
         // Determine best match
         var bestMatch = result.scores.OrderByDescending(x => x.Value).First();
@@ -65,12 +74,53 @@ public class PlantAnalyzer : MonoBehaviour
         result.elementType = GetElementType(result.detectedType);
 
         Debug.Log($"=== ANALYSIS COMPLETE ===");
-        Debug.Log($"Sunflower Score: {result.scores[PlantType.Sunflower]:F2}");
-        Debug.Log($"Cactus Score: {result.scores[PlantType.Cactus]:F2}");
-        Debug.Log($"Water Lily Score: {result.scores[PlantType.WaterLily]:F2}");
+        Debug.Log($"Final Scores - Sunflower: {result.scores[PlantType.Sunflower]:F2}, Cactus: {result.scores[PlantType.Cactus]:F2}, Water Lily: {result.scores[PlantType.WaterLily]:F2}");
         Debug.Log($"Result: {result}");
 
         return result;
+    }
+
+    /// <summary>
+    /// Apply color influence to plant type scores
+    /// Majority Red = Sunflower, Majority Green = Cactus, Majority Blue = Water Lily
+    /// </summary>
+    private void ApplyColorInfluence(PlantAnalysisResult result, Color dominantColor)
+    {
+        float colorWeight = 0.4f; // Color contributes 40% to final decision
+        float colorBonus = 0.35f; // Bonus for matching color
+
+        Debug.Log($"Dominant Color: R={dominantColor.r:F2}, G={dominantColor.g:F2}, B={dominantColor.b:F2}");
+
+        // Determine which color component is dominant
+        if (dominantColor.r > dominantColor.g && dominantColor.r > dominantColor.b)
+        {
+            // Red dominant = Sunflower preference
+            Debug.Log("Color suggests: SUNFLOWER (Red majority)");
+            result.scores[PlantType.Sunflower] = result.scores[PlantType.Sunflower] * (1f - colorWeight) + colorBonus * colorWeight + result.scores[PlantType.Sunflower] * colorWeight;
+            result.scores[PlantType.Cactus] *= (1f - colorWeight * 0.5f);
+            result.scores[PlantType.WaterLily] *= (1f - colorWeight * 0.5f);
+        }
+        else if (dominantColor.g > dominantColor.r && dominantColor.g > dominantColor.b)
+        {
+            // Green dominant = Cactus preference
+            Debug.Log("Color suggests: CACTUS (Green majority)");
+            result.scores[PlantType.Cactus] = result.scores[PlantType.Cactus] * (1f - colorWeight) + colorBonus * colorWeight + result.scores[PlantType.Cactus] * colorWeight;
+            result.scores[PlantType.Sunflower] *= (1f - colorWeight * 0.5f);
+            result.scores[PlantType.WaterLily] *= (1f - colorWeight * 0.5f);
+        }
+        else if (dominantColor.b > dominantColor.r && dominantColor.b > dominantColor.g)
+        {
+            // Blue dominant = Water Lily preference
+            Debug.Log("Color suggests: WATER LILY (Blue majority)");
+            result.scores[PlantType.WaterLily] = result.scores[PlantType.WaterLily] * (1f - colorWeight) + colorBonus * colorWeight + result.scores[PlantType.WaterLily] * colorWeight;
+            result.scores[PlantType.Sunflower] *= (1f - colorWeight * 0.5f);
+            result.scores[PlantType.Cactus] *= (1f - colorWeight * 0.5f);
+        }
+
+        // Ensure scores stay in valid range
+        result.scores[PlantType.Sunflower] = Mathf.Clamp01(result.scores[PlantType.Sunflower]);
+        result.scores[PlantType.Cactus] = Mathf.Clamp01(result.scores[PlantType.Cactus]);
+        result.scores[PlantType.WaterLily] = Mathf.Clamp01(result.scores[PlantType.WaterLily]);
     }
 
     /// <summary>
