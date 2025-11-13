@@ -29,16 +29,31 @@ public class DrawingColorSelector : MonoBehaviour
 
     [Header("References")]
     public DrawingCanvas drawingCanvas;
+    public SimpleDrawingCanvas simpleDrawingCanvas;
 
     private void Start()
     {
-        // Auto-find DrawingCanvas if not assigned
-        if (drawingCanvas == null)
+        // Auto-find SimpleDrawingCanvas first (preferred)
+        if (simpleDrawingCanvas == null)
+        {
+            simpleDrawingCanvas = FindFirstObjectByType<SimpleDrawingCanvas>();
+            if (simpleDrawingCanvas != null)
+            {
+                Debug.Log("DrawingColorSelector: Using SimpleDrawingCanvas");
+            }
+        }
+
+        // Fall back to DrawingCanvas if SimpleDrawingCanvas not found
+        if (simpleDrawingCanvas == null && drawingCanvas == null)
         {
             drawingCanvas = FindFirstObjectByType<DrawingCanvas>();
-            if (drawingCanvas == null)
+            if (drawingCanvas != null)
             {
-                Debug.LogError("DrawingColorSelector: Could not find DrawingCanvas!");
+                Debug.Log("DrawingColorSelector: Using legacy DrawingCanvas");
+            }
+            else
+            {
+                Debug.LogError("DrawingColorSelector: Could not find any drawing canvas!");
             }
         }
 
@@ -72,7 +87,13 @@ public class DrawingColorSelector : MonoBehaviour
 
     private void OnRedButtonClicked()
     {
-        if (drawingCanvas != null)
+        if (simpleDrawingCanvas != null)
+        {
+            simpleDrawingCanvas.SetColor(Color.red);
+            UpdateButtonVisuals("red");
+            Debug.Log("Color selector: Red selected (Sunflower)");
+        }
+        else if (drawingCanvas != null)
         {
             drawingCanvas.SelectRedColor();
             UpdateButtonVisuals("red");
@@ -82,7 +103,13 @@ public class DrawingColorSelector : MonoBehaviour
 
     private void OnGreenButtonClicked()
     {
-        if (drawingCanvas != null)
+        if (simpleDrawingCanvas != null)
+        {
+            simpleDrawingCanvas.SetColor(Color.green);
+            UpdateButtonVisuals("green");
+            Debug.Log("Color selector: Green selected (Cactus)");
+        }
+        else if (drawingCanvas != null)
         {
             drawingCanvas.SelectGreenColor();
             UpdateButtonVisuals("green");
@@ -92,7 +119,13 @@ public class DrawingColorSelector : MonoBehaviour
 
     private void OnBlueButtonClicked()
     {
-        if (drawingCanvas != null)
+        if (simpleDrawingCanvas != null)
+        {
+            simpleDrawingCanvas.SetColor(Color.blue);
+            UpdateButtonVisuals("blue");
+            Debug.Log("Color selector: Blue selected (Water Lily)");
+        }
+        else if (drawingCanvas != null)
         {
             drawingCanvas.SelectBlueColor();
             UpdateButtonVisuals("blue");

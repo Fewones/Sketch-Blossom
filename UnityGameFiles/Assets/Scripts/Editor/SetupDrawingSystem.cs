@@ -62,19 +62,34 @@ public class SetupDrawingSystem : EditorWindow
         // Find UI elements
         SetupUIReferences(manager);
 
+        // Link color selector to SimpleDrawingCanvas
+        SetupColorSelector(canvas);
+
         // Mark objects as dirty
         EditorUtility.SetDirty(manager);
         EditorUtility.SetDirty(canvas);
         EditorUtility.SetDirty(recognitionSystem);
 
         Debug.Log("========== SETUP COMPLETE ==========");
-        EditorUtility.DisplayDialog("Setup Complete",
-            "Drawing system has been set up!\n\n" +
-            "Next steps:\n" +
-            "1. Assign line renderer prefab to SimpleDrawingCanvas\n" +
-            "2. Create color buttons and link them\n" +
-            "3. Test drawing in Play mode",
-            "OK");
+
+        string message = "Drawing system has been set up!\n\n";
+        if (canvas.lineRendererPrefab != null)
+        {
+            message += "✓ All references configured!\n\n";
+            message += "Ready to test:\n";
+            message += "1. Enter Play mode\n";
+            message += "2. Draw in the DrawingPanel\n";
+            message += "3. Use color buttons to change colors\n";
+            message += "4. Click Finish to analyze drawing";
+        }
+        else
+        {
+            message += "⚠️ Action required:\n";
+            message += "Please assign LineRenderer prefab manually\n";
+            message += "to SimpleDrawingCanvas in the Inspector.";
+        }
+
+        EditorUtility.DisplayDialog("Setup Complete", message, "OK");
     }
 
     static void SetupSimpleCanvas(SimpleDrawingCanvas canvas)
@@ -85,6 +100,8 @@ public class SetupDrawingSystem : EditorWindow
             canvas.mainCamera = Camera.main;
             if (canvas.mainCamera != null)
                 Debug.Log("  ✓ Assigned main camera");
+            else
+                Debug.LogWarning("  ⚠️ Main camera not found! Please assign manually.");
         }
 
         // Find or create stroke container
@@ -106,6 +123,36 @@ public class SetupDrawingSystem : EditorWindow
             }
         }
 
+        // Find LineRenderer prefab
+        if (canvas.lineRendererPrefab == null)
+        {
+            // Try to find existing prefabs
+            string[] prefabPaths = {
+                "Assets/Prefabs/LineRenderer.prefab",
+                "Assets/StrokeLine.prefab"
+            };
+
+            foreach (string path in prefabPaths)
+            {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab != null)
+                {
+                    LineRenderer lr = prefab.GetComponent<LineRenderer>();
+                    if (lr != null)
+                    {
+                        canvas.lineRendererPrefab = lr;
+                        Debug.Log($"  ✓ Assigned LineRenderer prefab from {path}");
+                        break;
+                    }
+                }
+            }
+
+            if (canvas.lineRendererPrefab == null)
+            {
+                Debug.LogWarning("  ⚠️ LineRenderer prefab not found! Please assign manually from Assets/Prefabs/LineRenderer.prefab");
+            }
+        }
+
         // Find drawing area
         if (canvas.drawingArea == null)
         {
@@ -116,8 +163,16 @@ public class SetupDrawingSystem : EditorWindow
                 if (drawingPanel != null)
                 {
                     canvas.drawingArea = drawingPanel.GetComponent<RectTransform>();
-                    Debug.Log("  ✓ Found DrawingPanel");
+                    Debug.Log("  ✓ Found DrawingPanel as drawing area");
                 }
+                else
+                {
+                    Debug.LogWarning("  ⚠️ DrawingPanel not found in Canvas! Drawing area not set.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("  ⚠️ No Canvas found in scene!");
             }
         }
 
@@ -172,6 +227,30 @@ public class SetupDrawingSystem : EditorWindow
         }
 
         EditorUtility.SetDirty(manager);
+    }
+
+    static void SetupColorSelector(SimpleDrawingCanvas canvas)
+    {
+        // Find existing DrawingColorSelector
+        DrawingColorSelector colorSelector = FindObjectOfType<DrawingColorSelector>();
+        if (colorSelector != null)
+        {
+            // Link SimpleDrawingCanvas to color selector
+            var field = typeof(DrawingColorSelector).GetField("simpleDrawingCanvas",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
+            if (field != null)
+            {
+                field.SetValue(colorSelector, canvas);
+                Debug.Log("  ✓ Linked SimpleDrawingCanvas to DrawingColorSelector");
+            }
+
+            EditorUtility.SetDirty(colorSelector);
+        }
+        else
+        {
+            Debug.LogWarning("  ⚠️ DrawingColorSelector not found in scene - color buttons won't work");
+        }
     }
 
     [MenuItem("Tools/Sketch Blossom/Create Color Buttons")]
