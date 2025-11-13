@@ -341,14 +341,9 @@ public class ColorSelectionSetup : EditorWindow
 
         displayComponent.resultText = text;
 
-        // Link to DrawingManager
-        DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-        if (drawingManager != null)
-        {
-            drawingManager.simpleResultDisplay = displayComponent;
-            EditorUtility.SetDirty(drawingManager);
-            Debug.Log("Linked SimpleResultDisplay to DrawingManager");
-        }
+        // Note: This display method is deprecated - use PlantResultPanel instead
+        // The setup is kept for backwards compatibility but won't be linked to DrawingManager
+        Debug.Log("SimpleResultDisplay created (deprecated - use PlantResultPanel instead)");
 
         // Mark objects as dirty
         EditorUtility.SetDirty(resultTextObj);
@@ -414,14 +409,9 @@ public class ColorSelectionSetup : EditorWindow
         panelComponent.movesText = panelBackground.transform.Find("MovesText")?.GetComponent<TextMeshProUGUI>();
         panelComponent.continueButton = panelBackground.transform.Find("ContinueButton")?.GetComponent<Button>();
 
-        // Link to DrawingManager
-        DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
-        if (drawingManager != null)
-        {
-            drawingManager.analysisResultPanel = panelComponent;
-            EditorUtility.SetDirty(drawingManager);
-            Debug.Log("Linked AnalysisResultPanel to DrawingManager");
-        }
+        // Note: This panel method is deprecated - use PlantResultPanel instead
+        // The setup is kept for backwards compatibility but won't be linked to DrawingManager
+        Debug.Log("AnalysisResultPanel created (deprecated - use PlantResultPanel instead)");
 
         // Mark objects as dirty
         EditorUtility.SetDirty(resultPanel);
