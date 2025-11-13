@@ -9,9 +9,12 @@ public class DrawingManager : MonoBehaviour
 {
     [Header("References")]
     public DrawingCanvas drawingCanvas;
-    
+    public PlantAnalyzer plantAnalyzer;
+    public PlantDetectionFeedback detectionFeedback; // Optional UI feedback
+
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
+    public bool showDetectionFeedback = true; // Show plant type before battle
 
     private DrawnUnitData unitData;
 
@@ -32,6 +35,17 @@ public class DrawingManager : MonoBehaviour
         if (drawingCanvas == null)
         {
             drawingCanvas = FindObjectOfType<DrawingCanvas>();
+        }
+
+        if (plantAnalyzer == null)
+        {
+            plantAnalyzer = FindObjectOfType<PlantAnalyzer>();
+            if (plantAnalyzer == null)
+            {
+                // Create PlantAnalyzer if it doesn't exist
+                GameObject analyzerObj = new GameObject("PlantAnalyzer");
+                plantAnalyzer = analyzerObj.AddComponent<PlantAnalyzer>();
+            }
         }
 
         // Hook into the existing finish button
@@ -71,7 +85,7 @@ public class DrawingManager : MonoBehaviour
 
         // Get drawing data
         int strokeCount = drawingCanvas.currentStrokeCount;
-        
+
         // Calculate total length and points from all strokes
         float totalLength = 0f;
         int totalPoints = 0;
@@ -88,14 +102,46 @@ public class DrawingManager : MonoBehaviour
             {
                 totalLength += Vector3.Distance(positions[i - 1], positions[i]);
             }
-            
+
             totalPoints += positions.Length;
         }
 
         Debug.Log($"Drawing Analysis: {strokeCount} strokes, {totalLength:F2} length, {totalPoints} points");
 
+        // ===== NEW: ANALYZE PLANT TYPE =====
+        PlantAnalyzer.PlantAnalysisResult plantResult = null;
+        if (plantAnalyzer != null)
+        {
+            plantResult = plantAnalyzer.AnalyzeDrawing(drawingCanvas.allStrokes);
+            unitData.SetPlantType(plantResult);
+        }
+        else
+        {
+            Debug.LogWarning("PlantAnalyzer not found! Plant type will be Unknown.");
+        }
+
         // Store in DrawnUnitData
         unitData.SetStatsFromDrawing(strokeCount, totalLength, totalPoints);
+
+        // Log final result
+        if (plantResult != null)
+        {
+            Debug.Log($"🌱 Plant Detected: {plantResult.detectedType} ({plantResult.elementType}) - Confidence: {plantResult.confidence:P0}");
+
+            // Show visual feedback if enabled
+            if (showDetectionFeedback)
+            {
+                if (detectionFeedback != null)
+                {
+                    detectionFeedback.ShowDetectionResult(plantResult);
+                }
+                else
+                {
+                    // Try to find it in scene
+                    PlantDetectionFeedback.ShowResult(plantResult);
+                }
+            }
+        }
     }
 
     /// <summary>

@@ -12,7 +12,12 @@ public class DrawnUnitData : MonoBehaviour
     public int attack = 10;
     public int defense = 10;
     public int health = 30;
-    
+
+    [Header("Plant Type")]
+    public PlantAnalyzer.PlantType plantType = PlantAnalyzer.PlantType.Unknown;
+    public string elementType = "Unknown"; // "Fire", "Grass", "Water"
+    public float detectionConfidence = 0f;
+
     [Header("Drawing Properties")]
     public int strokeCount = 0;
     public float totalDrawingLength = 0f;
@@ -64,6 +69,21 @@ public class DrawnUnitData : MonoBehaviour
     }
 
     /// <summary>
+    /// Set plant type from analysis
+    /// </summary>
+    public void SetPlantType(PlantAnalyzer.PlantAnalysisResult result)
+    {
+        if (result != null)
+        {
+            plantType = result.detectedType;
+            elementType = result.elementType;
+            detectionConfidence = result.confidence;
+
+            Debug.Log($"Plant Type Set: {plantType} ({elementType}) - {detectionConfidence:P0} confidence");
+        }
+    }
+
+    /// <summary>
     /// Clear data when starting a new run
     /// </summary>
     public void ClearData()
@@ -75,5 +95,8 @@ public class DrawnUnitData : MonoBehaviour
         totalDrawingLength = 0f;
         totalPoints = 0;
         drawingTexture = null;
+        plantType = PlantAnalyzer.PlantType.Unknown;
+        elementType = "Unknown";
+        detectionConfidence = 0f;
     }
 }
