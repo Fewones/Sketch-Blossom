@@ -351,6 +351,23 @@ public class DrawingCanvas : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Force end any in-progress stroke
+    /// Called by DrawingManager before analyzing
+    /// </summary>
+    public void ForceEndStroke()
+    {
+        if (isDrawing && currentLine != null)
+        {
+            Debug.Log("ForceEndStroke: Ending in-progress stroke");
+            EndStroke();
+        }
+        else
+        {
+            Debug.Log("ForceEndStroke: No stroke in progress");
+        }
+    }
+
     void TrackColorUsage(LineRenderer stroke, Color usedColor)
     {
         // Find the matching base color (red, green, or blue)

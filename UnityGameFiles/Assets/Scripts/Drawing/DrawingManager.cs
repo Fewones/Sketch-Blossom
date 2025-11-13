@@ -157,6 +157,20 @@ public class DrawingManager : MonoBehaviour
     {
         Debug.Log("DrawingManager: Finish button pressed!");
 
+        // End any in-progress stroke first
+        if (drawingCanvas != null)
+        {
+            // Force end current stroke if one is being drawn
+            drawingCanvas.ForceEndStroke();
+        }
+
+        // Hide the drawn strokes so they don't render over the result panel
+        if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
+        {
+            drawingCanvas.strokeContainer.gameObject.SetActive(false);
+            Debug.Log("Hidden stroke container to show result panel");
+        }
+
         // Analyze the drawing using the existing DrawingCanvas data
         AnalyzeAndStoreDrawing();
 
@@ -197,6 +211,13 @@ public class DrawingManager : MonoBehaviour
     {
         Debug.Log("DrawingManager: Redraw requested");
 
+        // Show the stroke container again
+        if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
+        {
+            drawingCanvas.strokeContainer.gameObject.SetActive(true);
+            Debug.Log("Showed stroke container for redrawing");
+        }
+
         // Clear the canvas
         if (drawingCanvas != null)
         {
@@ -225,6 +246,9 @@ public class DrawingManager : MonoBehaviour
 
         // Get drawing data
         int strokeCount = drawingCanvas.currentStrokeCount;
+        int allStrokesCount = drawingCanvas.allStrokes.Count;
+
+        Debug.Log($"DrawingCanvas state: currentStrokeCount={strokeCount}, allStrokes.Count={allStrokesCount}");
 
         // Calculate total length and points from all strokes
         float totalLength = 0f;
