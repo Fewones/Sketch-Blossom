@@ -12,12 +12,13 @@ public class DrawingManager : MonoBehaviour
     public PlantAnalyzer plantAnalyzer;
     public PlantDetectionFeedback detectionFeedback; // Optional UI feedback
     public PlantAnalysisResultPanel analysisResultPanel; // Main result display
+    public SimpleResultDisplay simpleResultDisplay; // Simple text display
 
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
     public bool showDetectionFeedback = true; // Show plant type before battle
     public bool showAnalysisPanel = true; // Show detailed analysis panel
-    public float resultDisplayDelay = 2f; // Delay before transitioning to battle
+    public float resultDisplayDelay = 3f; // Delay before transitioning to battle
 
     private DrawnUnitData unitData;
     private PlantAnalyzer.PlantAnalysisResult lastPlantResult;
@@ -57,10 +58,17 @@ public class DrawingManager : MonoBehaviour
         if (analysisResultPanel == null)
         {
             analysisResultPanel = FindObjectOfType<PlantAnalysisResultPanel>();
-            if (analysisResultPanel == null && showAnalysisPanel)
-            {
-                Debug.LogWarning("PlantAnalysisResultPanel not found in scene. Analysis results will only show in console.");
-            }
+        }
+
+        // Auto-find simple result display
+        if (simpleResultDisplay == null)
+        {
+            simpleResultDisplay = FindObjectOfType<SimpleResultDisplay>();
+        }
+
+        if (analysisResultPanel == null && simpleResultDisplay == null && showAnalysisPanel)
+        {
+            Debug.LogWarning("No result display found in scene. Analysis results will only show in console.");
         }
 
         // Hook into the existing finish button
@@ -83,15 +91,29 @@ public class DrawingManager : MonoBehaviour
         // Analyze the drawing using the existing DrawingCanvas data
         AnalyzeAndStoreDrawing();
 
-        // Show analysis panel or transition directly
+        // Show analysis results - try multiple display methods
+        bool resultShown = false;
+
+        // Try full panel first
         if (showAnalysisPanel && analysisResultPanel != null && lastPlantResult != null)
         {
             Debug.Log("Showing analysis result panel...");
             analysisResultPanel.ShowResult(lastPlantResult, lastDominantColor, LoadBattleScene);
+            resultShown = true;
         }
-        else
+        // Try simple text display
+        else if (simpleResultDisplay != null && lastPlantResult != null)
         {
-            // No panel or disabled - transition immediately (with small delay for console reading)
+            Debug.Log("Showing simple result display...");
+            simpleResultDisplay.ShowResult(lastPlantResult, lastDominantColor);
+            StartCoroutine(DelayedBattleTransition());
+            resultShown = true;
+        }
+
+        // If nothing worked, just show in console and transition
+        if (!resultShown)
+        {
+            Debug.LogWarning("No UI display available - results shown in console only");
             StartCoroutine(DelayedBattleTransition());
         }
     }

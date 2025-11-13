@@ -250,6 +250,119 @@ public class ColorSelectionSetup : EditorWindow
         }
     }
 
+    [MenuItem("Tools/Sketch Blossom/Setup Simple Result Display")]
+    public static void SetupSimpleResultDisplay()
+    {
+        Debug.Log("=== SIMPLE RESULT DISPLAY SETUP START ===");
+
+        // Find Canvas
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            EditorUtility.DisplayDialog("Error", "No Canvas found in scene!", "OK");
+            return;
+        }
+
+        // Find DrawingPanel
+        Transform drawingPanelTransform = canvas.transform.Find("DrawingPanel");
+        if (drawingPanelTransform == null)
+        {
+            EditorUtility.DisplayDialog("Error", "DrawingPanel not found in Canvas!", "OK");
+            return;
+        }
+
+        // Create or find ResultText
+        Transform existingText = drawingPanelTransform.Find("ResultText");
+        GameObject resultTextObj;
+
+        if (existingText == null)
+        {
+            resultTextObj = new GameObject("ResultText");
+            resultTextObj.transform.SetParent(drawingPanelTransform, false);
+            Debug.Log("Created ResultText GameObject");
+        }
+        else
+        {
+            resultTextObj = existingText.gameObject;
+            Debug.Log("Found existing ResultText");
+        }
+
+        // Configure RectTransform
+        RectTransform rect = resultTextObj.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            rect = resultTextObj.AddComponent<RectTransform>();
+        }
+
+        // Position in center of drawing panel
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(500f, 400f);
+
+        // Add TextMeshProUGUI
+        TextMeshProUGUI text = resultTextObj.GetComponent<TextMeshProUGUI>();
+        if (text == null)
+        {
+            text = resultTextObj.AddComponent<TextMeshProUGUI>();
+        }
+
+        text.text = "Plant Analysis Results";
+        text.fontSize = 24;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.enableWordWrapping = true;
+
+        // Add background
+        Image bg = resultTextObj.GetComponent<Image>();
+        if (bg == null)
+        {
+            bg = resultTextObj.AddComponent<Image>();
+        }
+        bg.color = new Color(0f, 0f, 0f, 0.8f);
+
+        // Add outline for readability
+        Outline outline = resultTextObj.GetComponent<Outline>();
+        if (outline == null)
+        {
+            outline = resultTextObj.AddComponent<Outline>();
+        }
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(2, -2);
+
+        // Create or get SimpleResultDisplay component on DrawingPanel
+        SimpleResultDisplay displayComponent = drawingPanelTransform.GetComponent<SimpleResultDisplay>();
+        if (displayComponent == null)
+        {
+            displayComponent = drawingPanelTransform.gameObject.AddComponent<SimpleResultDisplay>();
+            Debug.Log("Added SimpleResultDisplay component to DrawingPanel");
+        }
+
+        displayComponent.resultText = text;
+
+        // Link to DrawingManager
+        DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
+        if (drawingManager != null)
+        {
+            drawingManager.simpleResultDisplay = displayComponent;
+            EditorUtility.SetDirty(drawingManager);
+            Debug.Log("Linked SimpleResultDisplay to DrawingManager");
+        }
+
+        // Mark objects as dirty
+        EditorUtility.SetDirty(resultTextObj);
+        EditorUtility.SetDirty(drawingPanelTransform.gameObject);
+
+        Debug.Log("=== SIMPLE RESULT DISPLAY SETUP COMPLETE ===");
+        EditorUtility.DisplayDialog("Success",
+            "Simple Result Display setup complete!\n\n" +
+            "A text display has been added to show plant analysis results.",
+            "OK");
+
+        Selection.activeGameObject = resultTextObj;
+    }
+
     [MenuItem("Tools/Sketch Blossom/Setup Analysis Result Panel")]
     public static void SetupAnalysisResultPanel()
     {
