@@ -274,6 +274,15 @@ public class DrawingCanvas : MonoBehaviour
         currentLine.startColor = currentDrawingColor;
         currentLine.endColor = currentDrawingColor;
 
+        // ADD INITIAL POINT IMMEDIATELY - This ensures even quick clicks create valid strokes
+        if (mainCamera != null)
+        {
+            Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+            currentStrokePoints.Add(worldPos);
+            currentLine.positionCount = 1;
+            currentLine.SetPosition(0, worldPos);
+        }
+
         // Create material instance and try multiple ways to set color
         if (currentLine.material != null)
         {
