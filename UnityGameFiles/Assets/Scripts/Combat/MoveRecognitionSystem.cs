@@ -84,29 +84,22 @@ public class MoveRecognitionSystem : MonoBehaviour
                 return CalculateBlockQuality(features);
 
             case MoveData.MoveType.Fireball:
-            case MoveData.MoveType.WaterBall:
+            case MoveData.MoveType.Bubble:
                 return CalculateBallQuality(features);
 
             case MoveData.MoveType.FlameWave:
-            case MoveData.MoveType.WaterWave:
             case MoveData.MoveType.VineWhip:
                 return CalculateWaveQuality(features);
 
             case MoveData.MoveType.Burn:
-            case MoveData.MoveType.Ember:
-            case MoveData.MoveType.Inferno:
                 return CalculateFireQuality(features);
 
-            case MoveData.MoveType.GrowthSpurt:
-            case MoveData.MoveType.PhotoSynthesis:
-            case MoveData.MoveType.RootStrike:
+            case MoveData.MoveType.RootAttack:
             case MoveData.MoveType.LeafStorm:
                 return CalculatePlantGrowthQuality(features);
 
-            case MoveData.MoveType.AquaJet:
-            case MoveData.MoveType.BubbleBeam:
-            case MoveData.MoveType.Tsunami:
-            case MoveData.MoveType.CoralSpike:
+            case MoveData.MoveType.WaterSplash:
+            case MoveData.MoveType.HealingWave:
                 return CalculateWaterAttackQuality(features);
 
             default:
