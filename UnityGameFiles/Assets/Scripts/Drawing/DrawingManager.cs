@@ -11,12 +11,17 @@ public class DrawingManager : MonoBehaviour
     public DrawingCanvas drawingCanvas;
     public PlantAnalyzer plantAnalyzer;
     public PlantDetectionFeedback detectionFeedback; // Optional UI feedback
+    public PlantAnalysisResultPanel analysisResultPanel; // Main result display
 
     [Header("Scene Management")]
     public string battleSceneName = "BattleScene";
     public bool showDetectionFeedback = true; // Show plant type before battle
+    public bool showAnalysisPanel = true; // Show detailed analysis panel
+    public float resultDisplayDelay = 2f; // Delay before transitioning to battle
 
     private DrawnUnitData unitData;
+    private PlantAnalyzer.PlantAnalysisResult lastPlantResult;
+    private Color lastDominantColor;
 
     private void Start()
     {
@@ -48,6 +53,16 @@ public class DrawingManager : MonoBehaviour
             }
         }
 
+        // Auto-find analysis result panel
+        if (analysisResultPanel == null)
+        {
+            analysisResultPanel = FindObjectOfType<PlantAnalysisResultPanel>();
+            if (analysisResultPanel == null && showAnalysisPanel)
+            {
+                Debug.LogWarning("PlantAnalysisResultPanel not found in scene. Analysis results will only show in console.");
+            }
+        }
+
         // Hook into the existing finish button
         if (drawingCanvas != null && drawingCanvas.finishButton != null)
         {
@@ -68,7 +83,25 @@ public class DrawingManager : MonoBehaviour
         // Analyze the drawing using the existing DrawingCanvas data
         AnalyzeAndStoreDrawing();
 
-        // Transition to battle
+        // Show analysis panel or transition directly
+        if (showAnalysisPanel && analysisResultPanel != null && lastPlantResult != null)
+        {
+            Debug.Log("Showing analysis result panel...");
+            analysisResultPanel.ShowResult(lastPlantResult, lastDominantColor, LoadBattleScene);
+        }
+        else
+        {
+            // No panel or disabled - transition immediately (with small delay for console reading)
+            StartCoroutine(DelayedBattleTransition());
+        }
+    }
+
+    /// <summary>
+    /// Delayed battle transition (gives time to read console logs)
+    /// </summary>
+    private System.Collections.IEnumerator DelayedBattleTransition()
+    {
+        yield return new WaitForSeconds(resultDisplayDelay);
         LoadBattleScene();
     }
 
@@ -110,15 +143,21 @@ public class DrawingManager : MonoBehaviour
 
         // ===== NEW: ANALYZE PLANT TYPE WITH COLOR =====
         PlantAnalyzer.PlantAnalysisResult plantResult = null;
+        Color dominantColor = Color.green;
+
         if (plantAnalyzer != null)
         {
             // Get dominant color from drawing
-            Color dominantColor = drawingCanvas.GetDominantColorByCount();
+            dominantColor = drawingCanvas.GetDominantColorByCount();
             Debug.Log($"Passing dominant color to analyzer: {dominantColor}");
 
             // Analyze with color influence
             plantResult = plantAnalyzer.AnalyzeDrawing(drawingCanvas.allStrokes, dominantColor);
             unitData.SetPlantType(plantResult);
+
+            // Store for panel display
+            lastPlantResult = plantResult;
+            lastDominantColor = dominantColor;
         }
         else
         {
@@ -132,9 +171,18 @@ public class DrawingManager : MonoBehaviour
         if (plantResult != null)
         {
             Debug.Log($"🌱 Plant Detected: {plantResult.detectedType} ({plantResult.elementType}) - Confidence: {plantResult.confidence:P0}");
+            Debug.Log($"📊 Stats: ATK={unitData.attack}, DEF={unitData.defense}, HP={unitData.health}");
 
-            // Show visual feedback if enabled
-            if (showDetectionFeedback)
+            // Get available moves for this plant type
+            MoveData[] moves = MoveData.GetMovesForPlant(plantResult.detectedType);
+            Debug.Log($"⚔️ Available Moves:");
+            foreach (var move in moves)
+            {
+                Debug.Log($"  - {move.moveName} ({move.element}, Power: {move.basePower})");
+            }
+
+            // Show visual feedback if enabled (old system, still supported)
+            if (showDetectionFeedback && !showAnalysisPanel)
             {
                 if (detectionFeedback != null)
                 {

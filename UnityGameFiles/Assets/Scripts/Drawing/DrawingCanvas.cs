@@ -258,9 +258,18 @@ public class DrawingCanvas : MonoBehaviour
         currentLine = Instantiate(lineRendererPrefab, strokeContainer);
         currentLine.positionCount = 0;
 
-        // Apply current color to the line
+        // Apply current color to the line (both vertex colors and material color)
         currentLine.startColor = currentDrawingColor;
         currentLine.endColor = currentDrawingColor;
+
+        // Also set the material color to ensure visibility
+        if (currentLine.material != null)
+        {
+            currentLine.material = new Material(currentLine.material); // Create instance to avoid modifying prefab
+            currentLine.material.color = currentDrawingColor;
+        }
+
+        Debug.Log($"Created new stroke with color: {currentDrawingColor}");
     }
 
     void AddPointToStroke(Vector2 screenPos)

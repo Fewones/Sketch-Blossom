@@ -250,6 +250,186 @@ public class ColorSelectionSetup : EditorWindow
         }
     }
 
+    [MenuItem("Tools/Sketch Blossom/Setup Analysis Result Panel")]
+    public static void SetupAnalysisResultPanel()
+    {
+        Debug.Log("=== ANALYSIS RESULT PANEL SETUP START ===");
+
+        // Find Canvas
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            EditorUtility.DisplayDialog("Error", "No Canvas found in scene! Please create a Canvas first.", "OK");
+            Debug.LogError("No Canvas found!");
+            return;
+        }
+
+        // Create or find AnalysisResultPanel
+        Transform existingPanel = canvas.transform.Find("AnalysisResultPanel");
+        GameObject resultPanel;
+
+        if (existingPanel == null)
+        {
+            resultPanel = new GameObject("AnalysisResultPanel");
+            resultPanel.transform.SetParent(canvas.transform, false);
+            Debug.Log("Created AnalysisResultPanel GameObject");
+        }
+        else
+        {
+            resultPanel = existingPanel.gameObject;
+            Debug.Log("Found existing AnalysisResultPanel");
+        }
+
+        // Add PlantAnalysisResultPanel component
+        PlantAnalysisResultPanel panelComponent = resultPanel.GetComponent<PlantAnalysisResultPanel>();
+        if (panelComponent == null)
+        {
+            panelComponent = resultPanel.AddComponent<PlantAnalysisResultPanel>();
+            Debug.Log("Added PlantAnalysisResultPanel component");
+        }
+
+        // Create panel UI structure
+        GameObject panelBackground = CreateAnalysisPanelUI(resultPanel.transform);
+        panelComponent.resultPanel = panelBackground;
+
+        // Assign UI references
+        panelComponent.titleText = panelBackground.transform.Find("TitleText")?.GetComponent<TextMeshProUGUI>();
+        panelComponent.plantTypeText = panelBackground.transform.Find("PlantTypeText")?.GetComponent<TextMeshProUGUI>();
+        panelComponent.elementTypeText = panelBackground.transform.Find("ElementTypeText")?.GetComponent<TextMeshProUGUI>();
+        panelComponent.confidenceText = panelBackground.transform.Find("ConfidenceText")?.GetComponent<TextMeshProUGUI>();
+        panelComponent.colorInfoText = panelBackground.transform.Find("ColorInfoText")?.GetComponent<TextMeshProUGUI>();
+        panelComponent.movesText = panelBackground.transform.Find("MovesText")?.GetComponent<TextMeshProUGUI>();
+        panelComponent.continueButton = panelBackground.transform.Find("ContinueButton")?.GetComponent<Button>();
+
+        // Link to DrawingManager
+        DrawingManager drawingManager = FindObjectOfType<DrawingManager>();
+        if (drawingManager != null)
+        {
+            drawingManager.analysisResultPanel = panelComponent;
+            EditorUtility.SetDirty(drawingManager);
+            Debug.Log("Linked AnalysisResultPanel to DrawingManager");
+        }
+
+        // Mark objects as dirty
+        EditorUtility.SetDirty(resultPanel);
+        EditorUtility.SetDirty(panelComponent);
+
+        Debug.Log("=== ANALYSIS RESULT PANEL SETUP COMPLETE ===");
+        EditorUtility.DisplayDialog("Success",
+            "Analysis Result Panel setup complete!\n\n" +
+            "The panel will display plant detection results before transitioning to battle.",
+            "OK");
+
+        Selection.activeGameObject = resultPanel;
+    }
+
+    private static GameObject CreateAnalysisPanelUI(Transform parent)
+    {
+        // Check if Background already exists
+        Transform existingBg = parent.Find("Background");
+        if (existingBg != null)
+        {
+            Debug.Log("Panel Background already exists, reconfiguring...");
+            return existingBg.gameObject;
+        }
+
+        // Create background panel
+        GameObject background = new GameObject("Background");
+        background.transform.SetParent(parent, false);
+
+        RectTransform bgRect = background.AddComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.sizeDelta = Vector2.zero;
+
+        Image bgImage = background.AddComponent<Image>();
+        bgImage.color = new Color(0, 0, 0, 0.85f); // Dark semi-transparent background
+
+        // Create content panel (centered box)
+        GameObject contentPanel = new GameObject("ContentPanel");
+        contentPanel.transform.SetParent(background.transform, false);
+
+        RectTransform contentRect = contentPanel.AddComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+        contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+        contentRect.pivot = new Vector2(0.5f, 0.5f);
+        contentRect.sizeDelta = new Vector2(600f, 500f);
+
+        Image contentImage = contentPanel.AddComponent<Image>();
+        contentImage.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+
+        // Create text elements
+        CreateResultText(background.transform, "TitleText", new Vector2(0, 200), 32, "Plant Analysis Complete!");
+        CreateResultText(background.transform, "PlantTypeText", new Vector2(0, 130), 48, "Sunflower");
+        CreateResultText(background.transform, "ElementTypeText", new Vector2(0, 70), 24, "Fire Type");
+        CreateResultText(background.transform, "ConfidenceText", new Vector2(0, 20), 20, "Confidence: ★★★★★");
+        CreateResultText(background.transform, "ColorInfoText", new Vector2(0, -40), 18, "Color: Red");
+        CreateResultText(background.transform, "MovesText", new Vector2(0, -120), 18, "Available Moves:\n• Fireball\n• Flame Wave\n• Burn");
+
+        // Create continue button
+        GameObject continueButton = new GameObject("ContinueButton");
+        continueButton.transform.SetParent(background.transform, false);
+
+        RectTransform buttonRect = continueButton.AddComponent<RectTransform>();
+        buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
+        buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
+        buttonRect.pivot = new Vector2(0.5f, 0.5f);
+        buttonRect.anchoredPosition = new Vector2(0, -200);
+        buttonRect.sizeDelta = new Vector2(200, 50);
+
+        Image buttonImage = continueButton.AddComponent<Image>();
+        buttonImage.color = new Color(0.2f, 0.8f, 0.2f, 1f);
+
+        Button button = continueButton.AddComponent<Button>();
+
+        // Button text
+        GameObject buttonTextObj = new GameObject("Text");
+        buttonTextObj.transform.SetParent(continueButton.transform, false);
+
+        RectTransform buttonTextRect = buttonTextObj.AddComponent<RectTransform>();
+        buttonTextRect.anchorMin = Vector2.zero;
+        buttonTextRect.anchorMax = Vector2.one;
+        buttonTextRect.sizeDelta = Vector2.zero;
+
+        TextMeshProUGUI buttonText = buttonTextObj.AddComponent<TextMeshProUGUI>();
+        buttonText.text = "Continue to Battle";
+        buttonText.fontSize = 18;
+        buttonText.alignment = TextAlignmentOptions.Center;
+        buttonText.color = Color.white;
+
+        // Initially hide the panel
+        background.SetActive(false);
+
+        return background;
+    }
+
+    private static void CreateResultText(Transform parent, string name, Vector2 position, float fontSize, string defaultText)
+    {
+        GameObject textObj = new GameObject(name);
+        textObj.transform.SetParent(parent, false);
+
+        RectTransform rect = textObj.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = new Vector2(550, fontSize * 3);
+
+        TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
+        text.text = defaultText;
+        text.fontSize = fontSize;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+
+        // Add outline for readability
+        if (text.GetComponent<Outline>() == null)
+        {
+            Outline outline = textObj.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(2, -2);
+        }
+    }
+
     [MenuItem("Tools/Sketch Blossom/Remove Color Selection UI")]
     public static void RemoveColorSelectionUI()
     {
