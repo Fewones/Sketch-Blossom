@@ -105,6 +105,7 @@ public class PlantResultPanel : MonoBehaviour
         }
         Debug.Log($"🎨 Dominant Color: {GetColorName(dominantColor)}");
 
+        // Get moves once and use for both console and UI
         MoveData[] moves = MoveData.GetMovesForPlant(result.detectedType);
         Debug.Log("⚔️ Available Moves:");
         foreach (var move in moves)
@@ -158,10 +159,9 @@ public class PlantResultPanel : MonoBehaviour
             colorInfoText.text = $"<b>Drawing Color:</b>\n{colorName}";
         }
 
-        // Update moves
+        // Update moves (reuse moves array declared above)
         if (movesText != null)
         {
-            MoveData[] moves = MoveData.GetMovesForPlant(result.detectedType);
             string movesStr = "<b>Available Moves:</b>\n";
             foreach (var move in moves)
             {
