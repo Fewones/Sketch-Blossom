@@ -260,10 +260,20 @@ public class DrawingManager : MonoBehaviour
         }
 
         // HIDE the stroke container so strokes don't show over result panel
-        if (usingSimpleCanvas && simpleCanvas != null && simpleCanvas.strokeContainer != null)
+        if (usingSimpleCanvas && simpleCanvas != null)
         {
-            simpleCanvas.strokeContainer.gameObject.SetActive(false);
-            Debug.Log("✓ Hidden stroke container (strokes won't show over results)");
+            if (simpleCanvas.strokeContainer != null)
+            {
+                Debug.Log($"SimpleCanvas strokeContainer found: {simpleCanvas.strokeContainer.name}");
+                Debug.Log($"Stroke count before hiding: {simpleCanvas.allStrokes.Count}");
+
+                simpleCanvas.strokeContainer.gameObject.SetActive(false);
+                Debug.Log("✓ Hidden stroke container (strokes won't show over results)");
+            }
+            else
+            {
+                Debug.LogError("❌ SimpleCanvas.strokeContainer is NULL! Strokes will show over results!");
+            }
         }
         else if (usingLegacyCanvas && drawingCanvas != null)
         {
@@ -273,6 +283,10 @@ public class DrawingManager : MonoBehaviour
             {
                 strokeParent.gameObject.SetActive(false);
                 Debug.Log("✓ Hidden legacy stroke container");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ Legacy stroke container 'Strokes' not found");
             }
         }
 
