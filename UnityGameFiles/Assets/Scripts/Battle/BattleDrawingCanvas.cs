@@ -13,7 +13,7 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 0.15f; // Increased for better visibility
+        [SerializeField] private float lineWidth = 5f; // Much thicker for canvas local space visibility
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("Line Rendering")]
@@ -68,7 +68,8 @@ namespace SketchBlossom.Battle
             }
             if (drawingArea != null)
             {
-                Debug.Log($"DrawingArea: Position={drawingArea.position}, LocalPosition={drawingArea.localPosition}");
+                Debug.Log($"DrawingArea: Position={drawingArea.position}, LocalPosition={drawingArea.localPosition}, " +
+                         $"Rect={drawingArea.rect}, Size={drawingArea.rect.size}");
             }
 
             // Create default line material if none provided
@@ -254,7 +255,9 @@ namespace SketchBlossom.Battle
             currentLine.sortingLayerName = "Default";
             currentLine.sortingOrder = 1000; // High value to ensure it's on top
 
-            Debug.Log($"Created LineRenderer - Color: {currentLine.startColor}, Width: {currentLine.startWidth}, Material: {currentLine.material?.name}");
+            Debug.Log($"Created LineRenderer - Color: {currentLine.startColor}, Width: {currentLine.startWidth}, Material: {currentLine.material?.name}, " +
+                     $"GameObject: {lineObj.name}, Active: {lineObj.activeInHierarchy}, Parent: {lineObj.transform.parent?.name}, " +
+                     $"LocalPos: {lineObj.transform.localPosition}, LocalScale: {lineObj.transform.localScale}");
 
             // Add first point
             Vector2 localPoint = ScreenToCanvasPoint(screenPosition);
@@ -319,8 +322,12 @@ namespace SketchBlossom.Battle
                 // Debug first and every 10th point to verify visibility
                 if (currentLine.positionCount == 1 || currentLine.positionCount % 10 == 0)
                 {
+                    Rect bounds = drawingArea != null ? drawingArea.rect : new Rect();
+                    bool inBounds = bounds.Contains(localPos);
                     Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → Local({localPos.x:F2}, {localPos.y:F2}, {localPos.z:F2}) | " +
-                             $"Visible: {currentLine.enabled} | Color: {currentLine.startColor} | UseWorldSpace: {currentLine.useWorldSpace}");
+                             $"InBounds: {inBounds} | CanvasBounds: {bounds} | " +
+                             $"Enabled: {currentLine.enabled} | Active: {currentLine.gameObject.activeInHierarchy} | " +
+                             $"Width: {currentLine.startWidth} | Color: {currentLine.startColor}");
                 }
             }
         }
