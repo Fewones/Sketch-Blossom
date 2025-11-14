@@ -192,6 +192,11 @@ namespace SketchBlossom.Battle
                 lineObj.transform.SetParent(transform);
             }
 
+            // CRITICAL: Reset local position to (0,0,0) to prevent offset
+            lineObj.transform.localPosition = Vector3.zero;
+            lineObj.transform.localRotation = Quaternion.identity;
+            lineObj.transform.localScale = Vector3.one;
+
             currentLine = lineObj.GetComponent<LineRenderer>();
             if (currentLine == null)
                 currentLine = lineObj.AddComponent<LineRenderer>();
@@ -200,7 +205,7 @@ namespace SketchBlossom.Battle
             currentLine.startWidth = lineWidth;
             currentLine.endWidth = lineWidth;
             currentLine.positionCount = 0;
-            currentLine.useWorldSpace = true; // Use world space for accurate positioning
+            currentLine.useWorldSpace = false; // Use local space for UI canvas
 
             // Set material
             if (lineMaterial != null)
@@ -271,14 +276,11 @@ namespace SketchBlossom.Battle
             {
                 currentLine.positionCount = currentStrokePoints.Count;
 
-                // Convert to Vector3 for LineRenderer (world space)
-                // Use the drawing area's Z position to ensure proper layering
-                float zPosition = drawingArea.position.z;
-
+                // Convert to Vector3 for LineRenderer (local space)
                 Vector3[] positions = new Vector3[currentStrokePoints.Count];
                 for (int i = 0; i < currentStrokePoints.Count; i++)
                 {
-                    positions[i] = new Vector3(currentStrokePoints[i].x, currentStrokePoints[i].y, zPosition);
+                    positions[i] = new Vector3(currentStrokePoints[i].x, currentStrokePoints[i].y, 0);
                 }
 
                 currentLine.SetPositions(positions);
@@ -302,7 +304,6 @@ namespace SketchBlossom.Battle
 
         private Vector2 ScreenToCanvasPoint(Vector2 screenPosition)
         {
-            // Convert screen position to world position on the drawing area
             Vector2 localPoint;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 drawingArea,
@@ -311,10 +312,7 @@ namespace SketchBlossom.Battle
                 out localPoint
             );
 
-            // Convert local point to world position
-            Vector3 worldPoint = drawingArea.TransformPoint(localPoint);
-
-            return new Vector2(worldPoint.x, worldPoint.y);
+            return localPoint;
         }
 
         /// <summary>
