@@ -30,6 +30,17 @@ public class DrawingManager : MonoBehaviour
     {
         Debug.Log("========== DRAWING MANAGER START ==========");
 
+        // Only run in DrawingScene - prevent errors in BattleScene
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        if (currentSceneName != "DrawingScene")
+        {
+            Debug.Log($"DrawingManager: Not in DrawingScene (current: {currentSceneName}), skipping setup");
+            enabled = false; // Disable this component
+            return;
+        }
+
+        Debug.Log("✓ Confirmed we're in DrawingScene - proceeding with setup");
+
         // Create or get the unit data object
         if (DrawnUnitData.Instance == null)
         {
