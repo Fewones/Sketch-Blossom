@@ -769,7 +769,7 @@ namespace SketchBlossom.Battle
             nameRT.anchorMax = new Vector2(0.4f, 1f);
             nameRT.offsetMin = new Vector2(10, 0);
             nameRT.offsetMax = new Vector2(0, -5);
-            nameObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MiddleLeft;
+            nameObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
             nameObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
             nameObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
 
@@ -780,7 +780,7 @@ namespace SketchBlossom.Battle
             descRT.anchorMax = new Vector2(1, 1f);
             descRT.offsetMin = new Vector2(10, 5);
             descRT.offsetMax = new Vector2(-10, -5);
-            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MiddleLeft;
+            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
             descObj.GetComponent<TextMeshProUGUI>().color = new Color(0.3f, 0.2f, 0.1f);
         }
 
