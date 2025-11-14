@@ -34,7 +34,7 @@ namespace SketchBlossom.Battle
         [SerializeField] private Canvas battleCanvas; // The canvas that contains battle UI
 
         [Header("Debug")]
-        [SerializeField] private bool useDebugSquare = true; // Use white square instead of drawing for testing
+        [SerializeField] private bool useDebugSquare = false; // Use white square instead of drawing for testing
 
         private void Awake()
         {
