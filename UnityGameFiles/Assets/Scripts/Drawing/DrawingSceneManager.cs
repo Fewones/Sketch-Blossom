@@ -395,10 +395,22 @@ namespace SketchBlossom.Drawing
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
             {
                 drawingCanvas.strokeContainer.gameObject.SetActive(true);
-                Debug.Log("✓ Strokes kept visible for results screen");
+                Debug.Log("✓ Stroke container activated for results screen");
+
+                // Ensure all parent GameObjects stay active so strokes are visible
+                Transform parent = drawingCanvas.strokeContainer.parent;
+                while (parent != null)
+                {
+                    if (!parent.gameObject.activeSelf)
+                    {
+                        Debug.Log($"Activating parent '{parent.name}' to keep strokes visible on results screen");
+                        parent.gameObject.SetActive(true);
+                    }
+                    parent = parent.parent;
+                }
             }
 
-            // Hide drawing UI controls (buttons, hints, etc.)
+            // Hide drawing UI controls (buttons, hints, etc.) but keep stroke container visible
             if (uiController != null)
             {
                 uiController.HideDrawingPanel();

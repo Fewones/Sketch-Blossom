@@ -168,15 +168,31 @@ namespace SketchBlossom.Drawing
             SetPanelActive(drawingOverlay, true);
             SetPanelActive(drawingPanel, true);
 
+            // Re-enable all drawing UI controls
+            if (finishButton != null) finishButton.gameObject.SetActive(true);
+            if (clearButton != null) clearButton.gameObject.SetActive(true);
+            if (guideBookButton != null) guideBookButton.gameObject.SetActive(true);
+            if (strokeCountText != null) strokeCountText.gameObject.SetActive(true);
+            if (hintText != null) hintText.gameObject.SetActive(true);
+
             UpdateHint("Draw your plant! Choose a color and start drawing.");
         }
 
         public void HideDrawingPanel()
         {
-            SetPanelActive(drawingOverlay, false);
-            SetPanelActive(drawingPanel, false);
+            // Instead of hiding entire panels (which would hide strokes),
+            // only hide specific UI elements (buttons, text, etc.)
+            if (finishButton != null) finishButton.gameObject.SetActive(false);
+            if (clearButton != null) clearButton.gameObject.SetActive(false);
+            if (guideBookButton != null) guideBookButton.gameObject.SetActive(false);
+            if (strokeCountText != null) strokeCountText.gameObject.SetActive(false);
+            if (hintText != null) hintText.gameObject.SetActive(false);
 
-            // Keep strokes visible
+            // Keep panels and strokes visible - only hide the controls
+            // This allows the drawing to remain visible in the background
+            Debug.Log("✓ Drawing UI controls hidden, but panels and strokes remain visible");
+
+            // Ensure strokes are explicitly kept visible
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
             {
                 drawingCanvas.strokeContainer.gameObject.SetActive(true);
