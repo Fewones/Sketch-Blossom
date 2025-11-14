@@ -32,7 +32,7 @@ public class PlantDetectionFeedback : MonoBehaviour
     /// <summary>
     /// Display the plant detection result
     /// </summary>
-    public void ShowDetectionResult(PlantAnalyzer.PlantAnalysisResult result)
+    public void ShowDetectionResult(PlantRecognitionSystem.RecognitionResult result)
     {
         if (result == null || feedbackPanel == null)
         {
@@ -43,13 +43,13 @@ public class PlantDetectionFeedback : MonoBehaviour
         // Update text
         if (plantNameText != null)
         {
-            plantNameText.text = GetPlantDisplayName(result.detectedType);
+            plantNameText.text = GetPlantDisplayName(result.plantType);
         }
 
         if (elementText != null)
         {
-            elementText.text = $"{result.elementType} Type";
-            elementText.color = GetElementColor(result.elementType);
+            elementText.text = $"{result.element} Type";
+            elementText.color = GetElementColor(result.element.ToString());
         }
 
         if (confidenceText != null)
@@ -68,7 +68,7 @@ public class PlantDetectionFeedback : MonoBehaviour
     /// <summary>
     /// Quick method to show result (can be called from DrawingManager)
     /// </summary>
-    public static void ShowResult(PlantAnalyzer.PlantAnalysisResult result)
+    public static void ShowResult(PlantRecognitionSystem.RecognitionResult result)
     {
         PlantDetectionFeedback feedback = FindObjectOfType<PlantDetectionFeedback>();
         if (feedback != null)
@@ -87,16 +87,34 @@ public class PlantDetectionFeedback : MonoBehaviour
         }
     }
 
-    private string GetPlantDisplayName(PlantAnalyzer.PlantType type)
+    private string GetPlantDisplayName(PlantRecognitionSystem.PlantType type)
     {
         switch (type)
         {
-            case PlantAnalyzer.PlantType.Sunflower:
-                return "🌻 Sunflower";
-            case PlantAnalyzer.PlantType.Cactus:
-                return "🌵 Cactus";
-            case PlantAnalyzer.PlantType.WaterLily:
-                return "🪷 Water Lily";
+            // Fire plants
+            case PlantRecognitionSystem.PlantType.Sunflower:
+                return "🔥 Sunflower";
+            case PlantRecognitionSystem.PlantType.FireRose:
+                return "🔥 Fire Rose";
+            case PlantRecognitionSystem.PlantType.FlameTulip:
+                return "🔥 Flame Tulip";
+
+            // Grass plants
+            case PlantRecognitionSystem.PlantType.Cactus:
+                return "🌿 Cactus";
+            case PlantRecognitionSystem.PlantType.VineFlower:
+                return "🌿 Vine Flower";
+            case PlantRecognitionSystem.PlantType.GrassSprout:
+                return "🌿 Grass Sprout";
+
+            // Water plants
+            case PlantRecognitionSystem.PlantType.WaterLily:
+                return "💧 Water Lily";
+            case PlantRecognitionSystem.PlantType.CoralBloom:
+                return "💧 Coral Bloom";
+            case PlantRecognitionSystem.PlantType.BubbleFlower:
+                return "💧 Bubble Flower";
+
             default:
                 return "❓ Unknown Plant";
         }
