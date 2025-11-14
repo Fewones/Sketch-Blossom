@@ -15,7 +15,7 @@ namespace SketchBlossom.Battle
         [SerializeField] private Transform playerAttackSpawnPoint;
         [SerializeField] private Transform enemyTargetPoint;
         [SerializeField] private float projectileDuration = 0.8f; // Fixed duration instead of speed
-        [SerializeField] private float projectileScale = 200f; // Size for UI (pixels)
+        [SerializeField] private float projectileScale = 400f; // Size for UI (pixels) - large for visibility
         [SerializeField] private Vector3 projectileRotation = Vector3.zero;
 
         [Header("Animation Settings")]
