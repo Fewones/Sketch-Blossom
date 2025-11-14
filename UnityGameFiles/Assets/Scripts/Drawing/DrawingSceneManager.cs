@@ -23,7 +23,7 @@ namespace SketchBlossom.Drawing
 
         [Header("Scene Settings")]
         [SerializeField] private string battleSceneName = "DrawingBattleScene";
-        [SerializeField] private bool enableBattleTransition = false;
+        [SerializeField] private bool enableBattleTransition = true;
 
         private PlantRecognitionSystem.RecognitionResult lastResult;
 
@@ -179,19 +179,20 @@ namespace SketchBlossom.Drawing
 
         private void HandleRedraw()
         {
-            Debug.Log("DrawingSceneManager: Redraw requested");
+            Debug.Log("DrawingSceneManager: Redraw requested - clearing strokes and resetting");
 
-            // Clear the drawing
+            // Clear the drawing (this removes all strokes from the canvas)
             if (drawingCanvas != null)
             {
                 drawingCanvas.ClearAll();
+                Debug.Log("✓ All strokes cleared for redraw");
             }
 
-            // Clear results
+            // Clear stored results
             lastResult = null;
             unitData.ClearData();
 
-            // Show drawing UI again
+            // Return to drawing panel to draw again
             if (uiController != null)
             {
                 uiController.ShowDrawingPanel();
@@ -200,7 +201,7 @@ namespace SketchBlossom.Drawing
 
         private void HandleContinue()
         {
-            Debug.Log("DrawingSceneManager: Continue to battle");
+            Debug.Log("DrawingSceneManager: Continue to battle - loading battle scene");
 
             if (enableBattleTransition)
             {
@@ -208,7 +209,7 @@ namespace SketchBlossom.Drawing
             }
             else
             {
-                Debug.LogWarning("Battle transition disabled. Enable in DrawingSceneManager settings.");
+                Debug.LogWarning("Battle transition disabled. Enable 'enableBattleTransition' in DrawingSceneManager inspector.");
             }
         }
 
@@ -279,19 +280,21 @@ namespace SketchBlossom.Drawing
                 return;
             }
 
-            // Keep strokes visible
+            // IMPORTANT: Keep strokes visible in the background behind results panel
+            // Strokes should remain visible until user clicks "Redraw"
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
             {
                 drawingCanvas.strokeContainer.gameObject.SetActive(true);
+                Debug.Log("✓ Strokes kept visible for results screen");
             }
 
-            // Hide drawing UI
+            // Hide drawing UI controls (buttons, hints, etc.)
             if (uiController != null)
             {
                 uiController.HideDrawingPanel();
             }
 
-            // Show result panel
+            // Show result panel with Continue (→ Battle) and Redraw options
             if (resultPanel != null)
             {
                 resultPanel.ShowResults(lastResult, unitData, HandleContinue, HandleRedraw);
