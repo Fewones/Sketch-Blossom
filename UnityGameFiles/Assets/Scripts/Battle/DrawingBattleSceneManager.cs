@@ -60,6 +60,8 @@ namespace SketchBlossom.Battle
         private PlantRecognitionSystem.PlantType enemyPlantType;
         private PlantRecognitionSystem.ElementType playerElement;
         private PlantRecognitionSystem.ElementType enemyElement;
+        private string playerPlantName;
+        private string enemyPlantName;
 
         // Stats
         private int playerMaxHP;
@@ -90,8 +92,8 @@ namespace SketchBlossom.Battle
             LoadEnemyUnit();
 
             // Initialize HP bars
-            playerHPBar.Initialize(playerPlantType.ToString(), playerMaxHP);
-            enemyHPBar.Initialize(enemyPlantType.ToString(), enemyMaxHP);
+            playerHPBar.Initialize(playerPlantName, playerMaxHP);
+            enemyHPBar.Initialize(enemyPlantName, enemyMaxHP);
 
             // Setup UI
             SetupUI();
@@ -114,11 +116,12 @@ namespace SketchBlossom.Battle
                 playerElement = DrawnUnitData.Instance.element;
 
                 var plantData = PlantRecognitionSystem.GetPlantData(playerPlantType);
+                playerPlantName = plantData.displayName;
                 playerMaxHP = plantData.baseHP;
                 playerAttack = plantData.baseAttack;
                 playerDefense = plantData.baseDefense;
 
-                Debug.Log($"Loaded player unit: {playerPlantType} (HP:{playerMaxHP}, ATK:{playerAttack}, DEF:{playerDefense})");
+                Debug.Log($"Loaded player unit: {playerPlantName} (HP:{playerMaxHP}, ATK:{playerAttack}, DEF:{playerDefense})");
             }
             else
             {
@@ -128,6 +131,7 @@ namespace SketchBlossom.Battle
                 playerElement = PlantRecognitionSystem.ElementType.Fire;
 
                 var plantData = PlantRecognitionSystem.GetPlantData(playerPlantType);
+                playerPlantName = plantData.displayName;
                 playerMaxHP = plantData.baseHP;
                 playerAttack = plantData.baseAttack;
                 playerDefense = plantData.baseDefense;
@@ -136,7 +140,7 @@ namespace SketchBlossom.Battle
             // Initialize player unit display
             if (playerUnit != null)
             {
-                playerUnit.Initialize(playerPlantType, playerElement);
+                playerUnit.Initialize(playerPlantType, playerElement, playerPlantName);
             }
         }
 
@@ -150,17 +154,18 @@ namespace SketchBlossom.Battle
             enemyPlantType = allPlants[Random.Range(0, allPlants.Length)];
 
             var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
+            enemyPlantName = plantData.displayName;
             enemyElement = plantData.element;
             enemyMaxHP = plantData.baseHP;
             enemyAttack = plantData.baseAttack;
             enemyDefense = plantData.baseDefense;
 
-            Debug.Log($"Enemy unit: {enemyPlantType} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
+            Debug.Log($"Enemy unit: {enemyPlantName} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
 
             // Initialize enemy unit display
             if (enemyUnit != null)
             {
-                enemyUnit.Initialize(enemyPlantType, enemyElement);
+                enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName);
             }
         }
 
@@ -314,7 +319,7 @@ namespace SketchBlossom.Battle
                 selectedMove = enemyMoves[0]; // Fallback to first move
             }
 
-            UpdateActionText($"{enemyPlantType} used {selectedMove.moveName}!");
+            UpdateActionText($"{enemyPlantName} used {selectedMove.moveName}!");
 
             // Execute enemy move
             ExecuteEnemyMove(selectedMove);
@@ -449,13 +454,13 @@ namespace SketchBlossom.Battle
             if (moveData.isDefensiveMove)
             {
                 enemyIsBlocking = true;
-                UpdateActionText($"{enemyPlantType} is defending!");
+                UpdateActionText($"{enemyPlantName} is defending!");
             }
             else if (moveData.isHealingMove)
             {
                 int healAmount = moveData.basePower;
                 enemyHPBar.ModifyHP(healAmount);
-                UpdateActionText($"{enemyPlantType} restored {healAmount} HP!");
+                UpdateActionText($"{enemyPlantName} restored {healAmount} HP!");
             }
             else
             {
@@ -472,7 +477,7 @@ namespace SketchBlossom.Battle
 
                 playerHPBar.ModifyHP(-damage);
                 playerHPBar.PlayDamageAnimation();
-                UpdateActionText($"{enemyPlantType} dealt {damage} damage!");
+                UpdateActionText($"{enemyPlantName} dealt {damage} damage!");
 
                 if (playerUnit != null)
                 {
@@ -630,11 +635,11 @@ namespace SketchBlossom.Battle
             [SerializeField] private TextMeshProUGUI unitNameText;
             [SerializeField] private Animator animator;
 
-            public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element)
+            public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName)
             {
                 if (unitNameText != null)
                 {
-                    unitNameText.text = plantType.ToString();
+                    unitNameText.text = displayName;
                 }
 
                 // TODO: Set sprite based on plant type
