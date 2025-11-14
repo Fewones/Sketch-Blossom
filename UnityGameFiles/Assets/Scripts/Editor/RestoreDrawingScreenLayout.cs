@@ -60,87 +60,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
             Debug.Log("✓ DrawingArea restored to 1700x950 centered");
         }
 
-        // Find and reposition/resize color buttons
-        DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
-        if (colorSelector != null)
-        {
-            // Position buttons below title text, next to stroke counter
-            // Red button - leftmost
-            if (colorSelector.redButton != null)
-            {
-                Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Restore Red Button");
-                RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(90f, 50f); // Wider buttons
-                rect.anchorMin = new Vector2(0.5f, 1f);
-                rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.pivot = new Vector2(0.5f, 1f);
-                rect.anchoredPosition = new Vector2(-200f, -60f); // Below title, to the left
-
-                // Increase text size
-                TextMeshProUGUI buttonText = colorSelector.redButton.GetComponentInChildren<TextMeshProUGUI>();
-                if (buttonText != null)
-                {
-                    Undo.RecordObject(buttonText, "Increase Red Button Text");
-                    buttonText.fontSize = 18f;
-                    EditorUtility.SetDirty(buttonText.gameObject);
-                }
-
-                EditorUtility.SetDirty(colorSelector.redButton.gameObject);
-                Debug.Log("✓ Red button repositioned to 90x50");
-            }
-
-            // Green button - middle
-            if (colorSelector.greenButton != null)
-            {
-                Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Restore Green Button");
-                RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(90f, 50f);
-                rect.anchorMin = new Vector2(0.5f, 1f);
-                rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.pivot = new Vector2(0.5f, 1f);
-                rect.anchoredPosition = new Vector2(-100f, -60f); // Below title, middle
-
-                // Increase text size
-                TextMeshProUGUI buttonText = colorSelector.greenButton.GetComponentInChildren<TextMeshProUGUI>();
-                if (buttonText != null)
-                {
-                    Undo.RecordObject(buttonText, "Increase Green Button Text");
-                    buttonText.fontSize = 18f;
-                    EditorUtility.SetDirty(buttonText.gameObject);
-                }
-
-                EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
-                Debug.Log("✓ Green button repositioned to 90x50");
-            }
-
-            // Blue button - rightmost
-            if (colorSelector.blueButton != null)
-            {
-                Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Restore Blue Button");
-                RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(90f, 50f);
-                rect.anchorMin = new Vector2(0.5f, 1f);
-                rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.pivot = new Vector2(0.5f, 1f);
-                rect.anchoredPosition = new Vector2(0f, -60f); // Below title, to the right
-
-                // Increase text size
-                TextMeshProUGUI buttonText = colorSelector.blueButton.GetComponentInChildren<TextMeshProUGUI>();
-                if (buttonText != null)
-                {
-                    Undo.RecordObject(buttonText, "Increase Blue Button Text");
-                    buttonText.fontSize = 18f;
-                    EditorUtility.SetDirty(buttonText.gameObject);
-                }
-
-                EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
-                Debug.Log("✓ Blue button repositioned to 90x50");
-            }
-
-            Debug.Log("✓ Color buttons repositioned and resized");
-        }
-
-        // Find and position stroke counter next to color buttons (reuse drawingPanelTransform)
+        // Find and position stroke counter at top-left
         if (drawingPanelTransform != null)
         {
             // Find StrokeCounter text
@@ -150,12 +70,12 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 RectTransform strokeRect = strokeCounterTransform.GetComponent<RectTransform>();
                 Undo.RecordObject(strokeRect, "Position Stroke Counter");
 
-                // Position to the right of the color buttons
-                strokeRect.anchorMin = new Vector2(0.5f, 1f);
-                strokeRect.anchorMax = new Vector2(0.5f, 1f);
-                strokeRect.pivot = new Vector2(0.5f, 1f);
-                strokeRect.anchoredPosition = new Vector2(150f, -70f); // To the right of buttons
-                strokeRect.sizeDelta = new Vector2(200f, 40f);
+                // Position at top-left corner
+                strokeRect.anchorMin = new Vector2(0f, 1f);
+                strokeRect.anchorMax = new Vector2(0f, 1f);
+                strokeRect.pivot = new Vector2(0f, 1f);
+                strokeRect.anchoredPosition = new Vector2(20f, -20f); // Top-left with padding
+                strokeRect.sizeDelta = new Vector2(150f, 40f);
 
                 // Increase font size if it has TextMeshProUGUI
                 TextMeshProUGUI strokeText = strokeCounterTransform.GetComponent<TextMeshProUGUI>();
@@ -163,34 +83,95 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 {
                     Undo.RecordObject(strokeText, "Increase Stroke Counter Text");
                     strokeText.fontSize = 20f;
+                    strokeText.alignment = TextAlignmentOptions.Left;
                     EditorUtility.SetDirty(strokeText.gameObject);
                 }
 
                 EditorUtility.SetDirty(strokeCounterTransform.gameObject);
-                Debug.Log("✓ Stroke counter positioned next to color buttons");
-            }
-
-            // Find and position title text if it exists
-            Transform titleTransform = drawingPanelTransform.Find("TitleText");
-            if (titleTransform == null)
-                titleTransform = drawingPanelTransform.Find("Title");
-
-            if (titleTransform != null)
-            {
-                RectTransform titleRect = titleTransform.GetComponent<RectTransform>();
-                Undo.RecordObject(titleRect, "Position Title Text");
-
-                // Position at the top
-                titleRect.anchorMin = new Vector2(0.5f, 1f);
-                titleRect.anchorMax = new Vector2(0.5f, 1f);
-                titleRect.pivot = new Vector2(0.5f, 1f);
-                titleRect.anchoredPosition = new Vector2(0f, -10f);
-                titleRect.sizeDelta = new Vector2(600f, 40f);
-
-                EditorUtility.SetDirty(titleTransform.gameObject);
-                Debug.Log("✓ Title text positioned at top");
+                Debug.Log("✓ Stroke counter positioned at top-left");
             }
         }
+
+        // Find and reposition color buttons horizontally next to stroke counter
+        DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
+        if (colorSelector != null)
+        {
+            // Position buttons horizontally in a row, next to stroke counter
+            // Red button - first in row
+            if (colorSelector.redButton != null)
+            {
+                Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Restore Red Button");
+                RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(90f, 50f); // Wider buttons
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.anchoredPosition = new Vector2(180f, -15f); // Next to stroke counter
+
+                // Increase text size
+                TextMeshProUGUI buttonText = colorSelector.redButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                {
+                    Undo.RecordObject(buttonText, "Increase Red Button Text");
+                    buttonText.fontSize = 16f;
+                    EditorUtility.SetDirty(buttonText.gameObject);
+                }
+
+                EditorUtility.SetDirty(colorSelector.redButton.gameObject);
+                Debug.Log("✓ Red button repositioned to 90x50");
+            }
+
+            // Green button - second in row
+            if (colorSelector.greenButton != null)
+            {
+                Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Restore Green Button");
+                RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(90f, 50f);
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.anchoredPosition = new Vector2(280f, -15f); // Next to red button
+
+                // Increase text size
+                TextMeshProUGUI buttonText = colorSelector.greenButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                {
+                    Undo.RecordObject(buttonText, "Increase Green Button Text");
+                    buttonText.fontSize = 16f;
+                    EditorUtility.SetDirty(buttonText.gameObject);
+                }
+
+                EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
+                Debug.Log("✓ Green button repositioned to 90x50");
+            }
+
+            // Blue button - third in row
+            if (colorSelector.blueButton != null)
+            {
+                Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Restore Blue Button");
+                RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(90f, 50f);
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.anchoredPosition = new Vector2(380f, -15f); // Next to green button
+
+                // Increase text size
+                TextMeshProUGUI buttonText = colorSelector.blueButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                {
+                    Undo.RecordObject(buttonText, "Increase Blue Button Text");
+                    buttonText.fontSize = 16f;
+                    EditorUtility.SetDirty(buttonText.gameObject);
+                }
+
+                EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
+                Debug.Log("✓ Blue button repositioned to 90x50");
+            }
+
+            Debug.Log("✓ Color buttons repositioned horizontally");
+        }
+
 
         // Find and restore result panel to simple centered layout
         PlantResultPanel resultPanel = FindFirstObjectByType<PlantResultPanel>(FindObjectsInactive.Include);
@@ -390,9 +371,10 @@ public class RestoreDrawingScreenLayout : EditorWindow
             "Drawing screen layout has been updated!\n\n" +
             "✓ DrawingPanel: Full screen\n" +
             "✓ DrawingArea: 1700x950 (wider for better screen fit)\n" +
-            "✓ Color Buttons: 90x50, positioned below title\n" +
-            "✓ Button Text: Increased to 18pt\n" +
-            "✓ Stroke Counter: Positioned next to buttons\n" +
+            "✓ Stroke Counter: Top-left corner\n" +
+            "✓ Color Buttons: 90x50, horizontal row next to stroke counter\n" +
+            "✓ Button Text: Increased to 16pt\n" +
+            "✓ Horizontal toolbar layout at top-left\n" +
             "✓ Result Panel: Simple centered layout\n" +
             "✓ All extra backgrounds removed",
             "OK");
