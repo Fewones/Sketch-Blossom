@@ -175,29 +175,47 @@ namespace SketchBlossom.Drawing
             if (strokeCountText != null) strokeCountText.gameObject.SetActive(true);
             if (hintText != null) hintText.gameObject.SetActive(true);
 
+            // Re-enable any title elements that were hidden
+            if (drawingPanel != null)
+            {
+                foreach (Transform child in drawingPanel.transform)
+                {
+                    if (child.name.ToLower().Contains("title"))
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                }
+            }
+
             UpdateHint("Draw your plant! Choose a color and start drawing.");
         }
 
         public void HideDrawingPanel()
         {
-            // Instead of hiding entire panels (which would hide strokes),
-            // only hide specific UI elements (buttons, text, etc.)
+            // Hide specific UI controls but keep panels active
+            // This allows the drawing strokes to remain visible
             if (finishButton != null) finishButton.gameObject.SetActive(false);
             if (clearButton != null) clearButton.gameObject.SetActive(false);
             if (guideBookButton != null) guideBookButton.gameObject.SetActive(false);
             if (strokeCountText != null) strokeCountText.gameObject.SetActive(false);
             if (hintText != null) hintText.gameObject.SetActive(false);
 
-            // Hide the drawing panel overlay (UI background) but keep stroke container
+            // If there's a title element in the drawing panel, find and hide it
             if (drawingPanel != null)
             {
-                drawingPanel.SetActive(false);
-                Debug.Log("✓ Drawing panel overlay hidden");
+                // Look for any TextMeshProUGUI with "title" in the name and hide it
+                foreach (Transform child in drawingPanel.transform)
+                {
+                    if (child.name.ToLower().Contains("title"))
+                    {
+                        child.gameObject.SetActive(false);
+                        Debug.Log($"✓ Hidden title element: {child.name}");
+                    }
+                }
             }
 
-            // Keep drawing overlay active if it contains the stroke container
-            // This allows the drawing to remain visible in the background
-            Debug.Log("✓ Drawing UI controls hidden, strokes remain visible");
+            // Keep panels active - only controls are hidden
+            Debug.Log("✓ Drawing UI controls hidden, panels and strokes remain visible");
 
             // Ensure strokes are explicitly kept visible
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
