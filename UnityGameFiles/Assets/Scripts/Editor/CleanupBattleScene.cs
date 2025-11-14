@@ -30,12 +30,15 @@ public class CleanupBattleScene : EditorWindow
         Debug.Log("========== CLEANING UP BATTLE SCENE ==========");
         int itemsRemoved = 0;
 
+        // Find the Canvas once
+        Canvas canvas = FindObjectOfType<Canvas>();
+
         // Find and remove old DrawingCanvas components
         DrawingCanvas[] oldCanvases = FindObjectsOfType<DrawingCanvas>();
-        foreach (var canvas in oldCanvases)
+        foreach (var oldCanvas in oldCanvases)
         {
-            Debug.Log($"Removing old DrawingCanvas: {canvas.gameObject.name}");
-            Undo.DestroyObjectImmediate(canvas);
+            Debug.Log($"Removing old DrawingCanvas: {oldCanvas.gameObject.name}");
+            Undo.DestroyObjectImmediate(oldCanvas);
             itemsRemoved++;
         }
 
@@ -49,7 +52,6 @@ public class CleanupBattleScene : EditorWindow
         }
 
         // Find and remove old drawing panels (not BattleDrawingPanel)
-        Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas != null)
         {
             List<GameObject> toRemove = new List<GameObject>();
