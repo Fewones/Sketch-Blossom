@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 namespace SketchBlossom.Battle
@@ -14,9 +15,8 @@ namespace SketchBlossom.Battle
         [SerializeField] private Transform playerAttackSpawnPoint;
         [SerializeField] private Transform enemyTargetPoint;
         [SerializeField] private float projectileDuration = 0.8f; // Fixed duration instead of speed
-        [SerializeField] private float projectileScale = 2f; // Increased from 0.5 for visibility
+        [SerializeField] private float projectileScale = 200f; // Size for UI (pixels)
         [SerializeField] private Vector3 projectileRotation = Vector3.zero;
-        [SerializeField] private float projectileZOffset = -5f; // Z offset from camera
 
         [Header("Animation Settings")]
         [SerializeField] private float fadeInDuration = 0.2f;
@@ -31,6 +31,7 @@ namespace SketchBlossom.Battle
 
         [Header("References")]
         [SerializeField] private DrawnMoveStorage moveStorage;
+        [SerializeField] private Canvas battleCanvas; // The canvas that contains battle UI
 
         [Header("Debug")]
         [SerializeField] private bool useDebugSquare = true; // Use white square instead of drawing for testing
@@ -44,6 +45,20 @@ namespace SketchBlossom.Battle
                 if (moveStorage == null)
                 {
                     Debug.LogWarning("AttackAnimationManager: DrawnMoveStorage not found!");
+                }
+            }
+
+            // Auto-find battle canvas
+            if (battleCanvas == null)
+            {
+                battleCanvas = FindFirstObjectByType<Canvas>();
+                if (battleCanvas != null)
+                {
+                    Debug.Log($"AttackAnimationManager: Found canvas '{battleCanvas.name}' with renderMode: {battleCanvas.renderMode}");
+                }
+                else
+                {
+                    Debug.LogError("AttackAnimationManager: No Canvas found in scene!");
                 }
             }
 
@@ -92,8 +107,8 @@ namespace SketchBlossom.Battle
                 Debug.Log("AttackAnimationManager: Using DEBUG WHITE SQUARE instead of drawing");
             }
 
-            // Create projectile
-            GameObject projectile = CreateProjectile(projectileTexture, source.position);
+            // Create projectile as UI element
+            GameObject projectile = CreateUIProjectile(projectileTexture, source.position);
 
             if (projectile == null)
             {
@@ -105,7 +120,7 @@ namespace SketchBlossom.Battle
             Debug.Log("AttackAnimationManager: Projectile created successfully, starting animation");
 
             // Animate projectile from source to target
-            yield return StartCoroutine(AnimateProjectile(projectile, source.position, target.position));
+            yield return StartCoroutine(AnimateUIProjectile(projectile, source, target));
 
             Debug.Log("AttackAnimationManager: Animation completed, cleaning up");
 
@@ -117,32 +132,46 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Create a projectile GameObject with the move drawing as its sprite using SpriteRenderer
+        /// Create a projectile GameObject as a UI Image element
         /// </summary>
-        private GameObject CreateProjectile(Texture2D moveTexture, Vector3 spawnPosition)
+        private GameObject CreateUIProjectile(Texture2D moveTexture, Vector3 spawnPosition)
         {
             try
             {
-                Debug.Log($"AttackAnimationManager: CreateProjectile at {spawnPosition}");
+                Debug.Log($"AttackAnimationManager: CreateUIProjectile at {spawnPosition}");
 
+                if (battleCanvas == null)
+                {
+                    Debug.LogError("AttackAnimationManager: No battle canvas available!");
+                    return null;
+                }
+
+                // Create projectile GameObject as child of canvas
                 GameObject projectile = new GameObject("AttackProjectile");
+                projectile.transform.SetParent(battleCanvas.transform, false);
 
-                // Adjust Z position to be in front of camera but behind UI
-                Vector3 adjustedPosition = spawnPosition;
-                adjustedPosition.z = projectileZOffset;
-                projectile.transform.position = adjustedPosition;
+                // Add RectTransform for UI positioning
+                RectTransform rectTransform = projectile.AddComponent<RectTransform>();
+                rectTransform.sizeDelta = new Vector2(projectileScale, projectileScale);
+                rectTransform.anchorMin = new Vector2(0, 0);
+                rectTransform.anchorMax = new Vector2(0, 0);
+                rectTransform.pivot = new Vector2(0.5f, 0.5f);
 
-                Debug.Log($"AttackAnimationManager: Adjusted position to {adjustedPosition} (Z offset: {projectileZOffset})");
+                // Set position to spawn point (will be the source unit's UI position)
+                rectTransform.position = spawnPosition;
 
-                // Use SpriteRenderer instead of Canvas/Image for reliable world-space rendering
-                SpriteRenderer spriteRenderer = projectile.AddComponent<SpriteRenderer>();
+                Debug.Log($"AttackAnimationManager: UI position set to {rectTransform.position}, anchoredPosition: {rectTransform.anchoredPosition}");
+
+                // Add Image component
+                Image image = projectile.AddComponent<Image>();
 
                 // Convert texture to sprite
                 Sprite moveSprite = Texture2DToSprite(moveTexture);
                 if (moveSprite != null)
                 {
-                    spriteRenderer.sprite = moveSprite;
-                    Debug.Log("AttackAnimationManager: Sprite assigned to SpriteRenderer");
+                    image.sprite = moveSprite;
+                    image.preserveAspect = true;
+                    Debug.Log("AttackAnimationManager: Sprite assigned to UI Image");
                 }
                 else
                 {
@@ -151,61 +180,51 @@ namespace SketchBlossom.Battle
                     return null;
                 }
 
-                // Set sorting layer to render above battle elements
-                spriteRenderer.sortingLayerName = "Default";
-                spriteRenderer.sortingOrder = 1000; // Very high to ensure visibility
-
-                // Set initial scale and rotation
-                projectile.transform.localScale = Vector3.one * projectileScale;
-                projectile.transform.rotation = Quaternion.Euler(projectileRotation);
-
                 // Set initial alpha to 0 for fade-in
-                Color color = spriteRenderer.color;
+                Color color = image.color;
                 color.a = 0f;
-                spriteRenderer.color = color;
+                image.color = color;
 
-                Debug.Log($"AttackAnimationManager: Projectile setup complete - Position: {projectile.transform.position}, Scale: {projectileScale}, SortingOrder: {spriteRenderer.sortingOrder}, Color: {color}");
-                Debug.Log($"AttackAnimationManager: Sprite bounds: {spriteRenderer.sprite.bounds}, Sprite size: {spriteRenderer.sprite.rect.size}");
+                Debug.Log($"AttackAnimationManager: UI Projectile setup complete - Size: {projectileScale}x{projectileScale}, Color: {color}");
+                Debug.Log($"AttackAnimationManager: Sprite size: {moveSprite.rect.size}");
 
                 return projectile;
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"AttackAnimationManager: Exception creating projectile: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"AttackAnimationManager: Exception creating UI projectile: {e.Message}\n{e.StackTrace}");
                 return null;
             }
         }
 
         /// <summary>
-        /// Animate the projectile from source to target
+        /// Animate the UI projectile from source to target
         /// </summary>
-        private IEnumerator AnimateProjectile(GameObject projectile, Vector3 startPos, Vector3 endPos)
+        private IEnumerator AnimateUIProjectile(GameObject projectile, Transform source, Transform target)
         {
-            // Adjust Z positions
-            startPos.z = projectileZOffset;
-            endPos.z = projectileZOffset;
+            RectTransform rectTransform = projectile.GetComponent<RectTransform>();
+            Image image = projectile.GetComponent<Image>();
 
-            Debug.Log($"AttackAnimationManager: AnimateProjectile from {startPos} to {endPos}");
-
-            SpriteRenderer spriteRenderer = projectile.GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null)
+            if (rectTransform == null || image == null)
             {
-                Debug.LogError("AttackAnimationManager: No SpriteRenderer on projectile!");
+                Debug.LogError("AttackAnimationManager: Missing RectTransform or Image!");
                 yield break;
             }
 
-            // Verify sprite is actually assigned and visible
-            Debug.Log($"AttackAnimationManager: Sprite check - Assigned: {spriteRenderer.sprite != null}, Enabled: {spriteRenderer.enabled}, GameObject active: {projectile.activeSelf}");
+            Vector3 startPos = source.position;
+            Vector3 endPos = target.position;
 
-            float distance = Vector3.Distance(startPos, endPos);
-            float duration = projectileDuration; // Use fixed duration regardless of distance
-            Vector3 initialScale = projectile.transform.localScale;
+            Debug.Log($"AttackAnimationManager: AnimateUIProjectile from {startPos} to {endPos}");
+            Debug.Log($"AttackAnimationManager: Image check - Assigned: {image.sprite != null}, Enabled: {image.enabled}, GameObject active: {projectile.activeSelf}");
 
-            Debug.Log($"AttackAnimationManager: Distance: {distance}, Duration: {duration}s (fixed)");
+            float duration = projectileDuration;
+            Vector3 initialScale = rectTransform.localScale;
+
+            Debug.Log($"AttackAnimationManager: Distance: {Vector3.Distance(startPos, endPos)}, Duration: {duration}s (fixed)");
 
             // Fade in
             Debug.Log("AttackAnimationManager: Starting fade in");
-            yield return StartCoroutine(FadeProjectile(spriteRenderer, 0f, 1f, fadeInDuration));
+            yield return StartCoroutine(FadeUIImage(image, 0f, 1f, fadeInDuration));
 
             // Move from start to end
             Debug.Log("AttackAnimationManager: Starting movement");
@@ -216,25 +235,25 @@ namespace SketchBlossom.Battle
                 float t = elapsed / duration;
 
                 // Position
-                projectile.transform.position = Vector3.Lerp(startPos, endPos, t);
+                rectTransform.position = Vector3.Lerp(startPos, endPos, t);
 
                 // Log position every 10 frames for debugging
                 if (frameCount % 10 == 0)
                 {
-                    Debug.Log($"AttackAnimationManager: Frame {frameCount}, Position: {projectile.transform.position}, Alpha: {spriteRenderer.color.a}");
+                    Debug.Log($"AttackAnimationManager: Frame {frameCount}, Position: {rectTransform.position}, Alpha: {image.color.a}");
                 }
 
                 // Rotation (optional)
                 if (rotateProjectile)
                 {
-                    projectile.transform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime);
+                    rectTransform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime);
                 }
 
                 // Scale animation (optional)
                 if (scaleAnimation)
                 {
                     float scaleMultiplier = Mathf.Lerp(1f, maxScale, scaleCurve.Evaluate(t));
-                    projectile.transform.localScale = initialScale * scaleMultiplier;
+                    rectTransform.localScale = initialScale * scaleMultiplier;
                 }
 
                 elapsed += Time.deltaTime;
@@ -243,41 +262,41 @@ namespace SketchBlossom.Battle
             }
 
             // Ensure final position
-            projectile.transform.position = endPos;
+            rectTransform.position = endPos;
             Debug.Log($"AttackAnimationManager: Reached target position: {endPos}");
 
             // Fade out
             Debug.Log("AttackAnimationManager: Starting fade out");
-            yield return StartCoroutine(FadeProjectile(spriteRenderer, 1f, 0f, fadeOutDuration));
+            yield return StartCoroutine(FadeUIImage(image, 1f, 0f, fadeOutDuration));
 
-            Debug.Log("AttackAnimationManager: AnimateProjectile complete");
+            Debug.Log("AttackAnimationManager: AnimateUIProjectile complete");
         }
 
         /// <summary>
-        /// Fade projectile sprite from startAlpha to endAlpha
+        /// Fade UI image from startAlpha to endAlpha
         /// </summary>
-        private IEnumerator FadeProjectile(SpriteRenderer spriteRenderer, float startAlpha, float endAlpha, float duration)
+        private IEnumerator FadeUIImage(Image image, float startAlpha, float endAlpha, float duration)
         {
-            if (spriteRenderer == null)
+            if (image == null)
             {
-                Debug.LogWarning("AttackAnimationManager: FadeProjectile - spriteRenderer is null");
+                Debug.LogWarning("AttackAnimationManager: FadeUIImage - image is null");
                 yield break;
             }
 
             float elapsed = 0f;
-            Color color = spriteRenderer.color;
+            Color color = image.color;
 
             while (elapsed < duration)
             {
                 float t = elapsed / duration;
                 color.a = Mathf.Lerp(startAlpha, endAlpha, t);
-                spriteRenderer.color = color;
+                image.color = color;
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
             color.a = endAlpha;
-            spriteRenderer.color = color;
+            image.color = color;
         }
 
         /// <summary>
