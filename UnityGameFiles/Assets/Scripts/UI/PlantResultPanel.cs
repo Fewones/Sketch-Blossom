@@ -266,6 +266,15 @@ public class PlantResultPanel : MonoBehaviour
         Debug.Log("========== CONTINUE CALLBACK INVOKED ==========");
     }
 
+    /// <summary>
+    /// Public method that can be called from Unity Inspector or code
+    /// </summary>
+    public void OnRedrawButton()
+    {
+        Debug.Log("========== OnRedrawButton() PUBLIC METHOD CALLED ==========");
+        OnRedraw();
+    }
+
     private void OnRedraw()
     {
         Debug.Log("PlantResultPanel: Redraw button clicked");
