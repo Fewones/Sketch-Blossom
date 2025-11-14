@@ -30,7 +30,7 @@ namespace SketchBlossom.Battle.Editor
             }
 
             // Find the guide panel
-            GameObject guidePanel = GameObject.Find("GuidePanel");
+            GameObject guidePanel = GameObject.Find("GuideBookPanel");
             if (guidePanel == null)
             {
                 Debug.LogError("❌ GuidePanel not found! Please create the guide panel first.");
@@ -75,10 +75,10 @@ namespace SketchBlossom.Battle.Editor
             Debug.Log("=== FIXING GUIDE BOOK PAGES ===");
 
             // Find guide panel
-            GameObject guidePanel = GameObject.Find("GuidePanel");
+            GameObject guidePanel = GameObject.Find("GuideBookPanel");
             if (guidePanel == null)
             {
-                Debug.LogError("❌ GuidePanel not found!");
+                Debug.LogError("❌ GuideBookPanel not found!");
                 return;
             }
 
