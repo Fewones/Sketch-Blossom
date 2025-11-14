@@ -26,6 +26,7 @@ namespace SketchBlossom.Battle
         private Button createdClearButton;
         private Button createdGuideButton;
         private GameObject createdGuidePanel;
+        private GuideBookManager createdGuideBookManager;
         private TextMeshProUGUI createdTurnIndicator;
         private TextMeshProUGUI createdActionText;
         private TextMeshProUGUI createdAvailableMovesText;
@@ -136,6 +137,32 @@ namespace SketchBlossom.Battle
             {
                 battleManager = managerObj.GetComponent<DrawingBattleSceneManager>();
                 Debug.Log("Using existing BattleManager");
+            }
+
+            // Create GuideBookManager
+            CreateGuideBookManager();
+        }
+
+        /// <summary>
+        /// Create the GuideBookManager GameObject and component
+        /// </summary>
+        private void CreateGuideBookManager()
+        {
+            GameObject guideManagerObj = GameObject.Find("GuideBookManager");
+            if (guideManagerObj == null)
+            {
+                guideManagerObj = new GameObject("GuideBookManager");
+                createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                Debug.Log("Created GuideBookManager");
+            }
+            else
+            {
+                createdGuideBookManager = guideManagerObj.GetComponent<GuideBookManager>();
+                if (createdGuideBookManager == null)
+                {
+                    createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                }
+                Debug.Log("Using existing GuideBookManager");
             }
         }
 
@@ -519,6 +546,66 @@ namespace SketchBlossom.Battle
             guidePanel.SetActive(false); // Hidden by default
 
             Debug.Log("Created GuidePanel");
+
+            // Wire up the GuideBookManager if it exists
+            WireUpGuideBookManager();
+        }
+
+        /// <summary>
+        /// Wire up the GuideBookManager with all necessary references
+        /// </summary>
+        private void WireUpGuideBookManager()
+        {
+            if (createdGuideBookManager == null)
+            {
+                Debug.LogWarning("GuideBookManager not found, cannot wire up references");
+                return;
+            }
+
+            // Use reflection to set the private fields
+            var managerType = typeof(GuideBookManager);
+
+            SetPrivateFieldForManager(managerType, createdGuideBookManager, "openGuideButton", createdGuideButton);
+            SetPrivateFieldForManager(managerType, createdGuideBookManager, "guidePanel", createdGuidePanel);
+
+            // Find the close button
+            if (createdGuidePanel != null)
+            {
+                Button closeButton = null;
+                Button[] buttons = createdGuidePanel.GetComponentsInChildren<Button>(true);
+                foreach (Button btn in buttons)
+                {
+                    if (btn.name == "CloseButton")
+                    {
+                        closeButton = btn;
+                        break;
+                    }
+                }
+
+                if (closeButton != null)
+                {
+                    SetPrivateFieldForManager(managerType, createdGuideBookManager, "closeGuideButton", closeButton);
+                }
+            }
+
+            Debug.Log("✅ GuideBookManager wired up successfully!");
+        }
+
+        /// <summary>
+        /// Helper to set private serialized fields for GuideBookManager using reflection
+        /// </summary>
+        private void SetPrivateFieldForManager(System.Type type, object instance, string fieldName, object value)
+        {
+            var field = type.GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(instance, value);
+                Debug.Log($"  ✅ Set {fieldName} = {value != null}");
+            }
+            else
+            {
+                Debug.LogWarning($"Field '{fieldName}' not found in {type.Name}");
+            }
         }
 
         /// <summary>
@@ -613,8 +700,6 @@ namespace SketchBlossom.Battle
             SetPrivateField(managerType, "drawingCanvas", createdDrawingCanvas);
             SetPrivateField(managerType, "finishDrawingButton", createdFinishButton);
             SetPrivateField(managerType, "clearDrawingButton", createdClearButton);
-            SetPrivateField(managerType, "guideBookButton", createdGuideButton);
-            SetPrivateField(managerType, "guidePanel", createdGuidePanel);
 
             // HP Bars
             SetPrivateField(managerType, "playerHPBar", createdPlayerHPBar);
@@ -690,8 +775,24 @@ namespace SketchBlossom.Battle
                 Debug.Log("✅ Found GuidePanel");
             }
 
+            // Find or create GuideBookManager
+            createdGuideBookManager = FindObjectOfType<GuideBookManager>();
+            if (createdGuideBookManager == null)
+            {
+                GameObject guideManagerObj = new GameObject("GuideBookManager");
+                createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                Debug.Log("✅ Created new GuideBookManager");
+            }
+            else
+            {
+                Debug.Log("✅ Found existing GuideBookManager");
+            }
+
             // Wire them all up
             WireUpReferences();
+
+            // Wire up GuideBookManager
+            WireUpGuideBookManager();
 
             Debug.Log("✅ EXISTING SCENE FIXED!");
             Debug.Log("All references connected. Drawing and action text should now work!");
@@ -753,6 +854,44 @@ namespace SketchBlossom.Battle
                 cam.backgroundColor = new Color(0.8f, 0.9f, 1f); // Light blue sky
                 Debug.Log("Created Main Camera");
             }
+        }
+
+        /// <summary>
+        /// Fix guide book setup and wire up GuideBookManager
+        /// </summary>
+        [ContextMenu("Fix Guide Book Setup")]
+        public void FixGuideBookSetup()
+        {
+            Debug.Log("=== FIXING GUIDE BOOK SETUP ===");
+
+            // Find guide button
+            createdGuideButton = FindComponentByName<Button>("GuideBookButton");
+
+            // Find guide panel
+            GameObject guidePanelObj = GameObject.Find("GuidePanel");
+            if (guidePanelObj != null)
+            {
+                createdGuidePanel = guidePanelObj;
+                Debug.Log("✅ Found GuidePanel");
+            }
+
+            // Find or create GuideBookManager
+            createdGuideBookManager = FindObjectOfType<GuideBookManager>();
+            if (createdGuideBookManager == null)
+            {
+                GameObject guideManagerObj = new GameObject("GuideBookManager");
+                createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                Debug.Log("✅ Created new GuideBookManager");
+            }
+            else
+            {
+                Debug.Log("✅ Found existing GuideBookManager");
+            }
+
+            // Wire up GuideBookManager
+            WireUpGuideBookManager();
+
+            Debug.Log("✅ GUIDE BOOK SETUP FIXED!");
         }
     }
 }

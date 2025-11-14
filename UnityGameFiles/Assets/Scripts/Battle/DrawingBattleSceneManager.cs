@@ -25,8 +25,6 @@ namespace SketchBlossom.Battle
         [SerializeField] private BattleDrawingCanvas drawingCanvas;
         [SerializeField] private Button finishDrawingButton;
         [SerializeField] private Button clearDrawingButton;
-        [SerializeField] private Button guideBookButton;
-        [SerializeField] private GameObject guidePanel;
 
         [Header("Move Detection")]
         [SerializeField] private MovesetDetector movesetDetector;
@@ -179,22 +177,6 @@ namespace SketchBlossom.Battle
             if (clearDrawingButton != null)
             {
                 clearDrawingButton.onClick.AddListener(OnClearDrawingClicked);
-            }
-
-            if (guideBookButton != null)
-            {
-                guideBookButton.onClick.AddListener(OnGuideBookClicked);
-            }
-
-            // Setup guide panel close button
-            if (guidePanel != null)
-            {
-                Button closeButton = guidePanel.GetComponentInChildren<Button>();
-                if (closeButton != null && closeButton.name == "CloseButton")
-                {
-                    closeButton.onClick.AddListener(OnCloseGuideClicked);
-                }
-                guidePanel.SetActive(false); // Initially hidden
             }
 
             // Display available moves
@@ -392,30 +374,6 @@ namespace SketchBlossom.Battle
             if (currentState == BattleState.PlayerDrawing)
             {
                 drawingCanvas.ClearCanvas();
-            }
-        }
-
-        /// <summary>
-        /// Called when guide book button is clicked
-        /// </summary>
-        private void OnGuideBookClicked()
-        {
-            if (guidePanel != null)
-            {
-                guidePanel.SetActive(true);
-                Debug.Log("Opened Drawing Guide");
-            }
-        }
-
-        /// <summary>
-        /// Called when guide book close button is clicked
-        /// </summary>
-        private void OnCloseGuideClicked()
-        {
-            if (guidePanel != null)
-            {
-                guidePanel.SetActive(false);
-                Debug.Log("Closed Drawing Guide");
             }
         }
 
