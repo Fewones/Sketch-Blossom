@@ -54,10 +54,10 @@ public class RestoreDrawingScreenLayout : EditorWindow
             drawingAreaRect.anchorMax = new Vector2(0.5f, 0.5f);
             drawingAreaRect.pivot = new Vector2(0.5f, 0.5f);
             drawingAreaRect.anchoredPosition = new Vector2(0f, -30f); // Slightly down to leave room for UI
-            drawingAreaRect.sizeDelta = new Vector2(1200f, 800f); // Larger size for better screen fit
+            drawingAreaRect.sizeDelta = new Vector2(1500f, 950f); // Even larger for more drawing space
 
             EditorUtility.SetDirty(drawingAreaRect.gameObject);
-            Debug.Log("✓ DrawingArea restored to 1200x800 centered");
+            Debug.Log("✓ DrawingArea restored to 1500x950 centered");
         }
 
         // Find and resize color buttons to normal size
