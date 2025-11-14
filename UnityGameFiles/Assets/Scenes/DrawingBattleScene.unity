@@ -1868,6 +1868,59 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 845460656}
   m_CullTransparentMesh: 1
+--- !u!1 &858726434
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 858726436}
+  - component: {fileID: 858726435}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &858726435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 858726434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31e77816deaae4098810ece576b65841, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.Battle.GuideBookManager
+  openGuideButton: {fileID: 876618863}
+  guidePanel: {fileID: 2128280116}
+  closeGuideButton: {fileID: 2080874885}
+  previousPageButton: {fileID: 1395271907}
+  nextPageButton: {fileID: 1125477571}
+  pageIndicatorText: {fileID: 1157633629}
+  pages: []
+  currentPageIndex: 0
+  debugMode: 1
+--- !u!4 &858726436
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 858726434}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -538.5086, y: 1313.2821, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &876618861
 GameObject:
   m_ObjectHideFlags: 0
@@ -2413,8 +2466,6 @@ MonoBehaviour:
   drawingCanvas: {fileID: 217268114}
   finishDrawingButton: {fileID: 1369759735}
   clearDrawingButton: {fileID: 2086528223}
-  guideBookButton: {fileID: 0}
-  guidePanel: {fileID: 0}
   movesetDetector: {fileID: 948641824}
   moveRecognitionSystem: {fileID: 948641823}
   turnIndicatorText: {fileID: 95599891}
@@ -3063,6 +3114,7 @@ RectTransform:
   - {fileID: 1369759734}
   - {fileID: 2086528222}
   - {fileID: 876618862}
+  - {fileID: 2128280119}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -4328,8 +4380,8 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2128280116}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 90}
-  m_LocalScale: {x: 0.00926, y: 0.00926, z: 0.00926}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 908590719}
@@ -4338,12 +4390,12 @@ RectTransform:
   - {fileID: 2080874884}
   - {fileID: 1395271906}
   - {fileID: 1125477570}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1329619948}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.55, y: 0.1}
   m_AnchorMax: {x: 0.95, y: 0.9}
-  m_AnchoredPosition: {x: 4.444445, y: 0}
-  m_SizeDelta: {x: 768, y: 864}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -4351,6 +4403,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 1202669235}
   - {fileID: 1329619948}
-  - {fileID: 2128280119}
   - {fileID: 948641826}
   - {fileID: 359237795}
+  - {fileID: 858726436}
