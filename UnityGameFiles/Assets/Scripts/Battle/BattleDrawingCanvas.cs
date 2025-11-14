@@ -14,6 +14,7 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform _drawingArea;
         [SerializeField] private Canvas canvas;
+        [Range(1f, 100f)]
         [SerializeField] private float lineWidth = 50f; // Very thick strokes for visible attack animations
         [SerializeField] private Color drawingColor = Color.black;
 
@@ -126,6 +127,7 @@ namespace SketchBlossom.Battle
             drawingImage.color = Color.white; // Ensure image is visible
 
             Debug.Log($"BattleDrawingCanvas: Initialized texture-based drawing ({textureWidth}x{textureHeight}) on UI canvas. RenderMode: {canvas?.renderMode}");
+            Debug.Log($"BattleDrawingCanvas: Line width set to {lineWidth} pixels");
         }
 
         private void Update()
@@ -283,7 +285,7 @@ namespace SketchBlossom.Battle
             // Draw initial point
             DrawPoint(texturePoint);
 
-            Debug.Log($"Started drawing at screen: {screenPosition}, texture: {texturePoint}");
+            Debug.Log($"Started drawing at screen: {screenPosition}, texture: {texturePoint}, lineWidth: {lineWidth}");
         }
 
         private void ContinueDrawing(Vector2 screenPosition)
