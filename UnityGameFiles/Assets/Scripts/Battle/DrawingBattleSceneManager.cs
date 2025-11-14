@@ -114,9 +114,9 @@ namespace SketchBlossom.Battle
             {
                 playerPlantType = DrawnUnitData.Instance.plantType;
                 playerElement = DrawnUnitData.Instance.element;
+                playerPlantName = DrawnUnitData.Instance.plantDisplayName;
 
                 var plantData = PlantRecognitionSystem.GetPlantData(playerPlantType);
-                playerPlantName = plantData.displayName;
                 playerMaxHP = plantData.baseHP;
                 playerAttack = plantData.baseAttack;
                 playerDefense = plantData.baseDefense;
