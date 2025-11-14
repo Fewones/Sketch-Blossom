@@ -353,9 +353,12 @@ namespace SketchBlossom.Battle.Editor
             GameObject entry = new GameObject($"Guide_{moveName}");
             entry.transform.SetParent(parent);
             RectTransform entryRT = entry.AddComponent<RectTransform>();
-            entryRT.anchorMin = new Vector2(xPos, yPos);
-            entryRT.anchorMax = new Vector2(xPos, yPos);
-            entryRT.sizeDelta = new Vector2(600, 80);
+
+            // Use stretch anchors for better sizing within parent
+            entryRT.anchorMin = new Vector2(0.05f, yPos - 0.05f);
+            entryRT.anchorMax = new Vector2(0.95f, yPos + 0.05f);
+            entryRT.offsetMin = Vector2.zero;
+            entryRT.offsetMax = Vector2.zero;
 
             // Background
             UnityEngine.UI.Image entryBg = entry.AddComponent<UnityEngine.UI.Image>();
@@ -364,10 +367,10 @@ namespace SketchBlossom.Battle.Editor
             // Move name (bold)
             GameObject nameObj = CreateTextElement("Name", entry.transform, moveName, 18);
             RectTransform nameRT = nameObj.GetComponent<RectTransform>();
-            nameRT.anchorMin = new Vector2(0, 0.5f);
-            nameRT.anchorMax = new Vector2(0.4f, 1f);
-            nameRT.offsetMin = new Vector2(10, 0);
-            nameRT.offsetMax = new Vector2(0, -5);
+            nameRT.anchorMin = new Vector2(0, 0);
+            nameRT.anchorMax = new Vector2(0.35f, 1f);
+            nameRT.offsetMin = new Vector2(10, 5);
+            nameRT.offsetMax = new Vector2(-5, -5);
             nameObj.GetComponent<TMPro.TextMeshProUGUI>().alignment = TMPro.TextAlignmentOptions.MidlineLeft;
             nameObj.GetComponent<TMPro.TextMeshProUGUI>().fontStyle = TMPro.FontStyles.Bold;
             nameObj.GetComponent<TMPro.TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
@@ -375,7 +378,7 @@ namespace SketchBlossom.Battle.Editor
             // Description
             GameObject descObj = CreateTextElement("Description", entry.transform, description, 14);
             RectTransform descRT = descObj.GetComponent<RectTransform>();
-            descRT.anchorMin = new Vector2(0.4f, 0f);
+            descRT.anchorMin = new Vector2(0.35f, 0f);
             descRT.anchorMax = new Vector2(1, 1f);
             descRT.offsetMin = new Vector2(10, 5);
             descRT.offsetMax = new Vector2(-10, -5);
