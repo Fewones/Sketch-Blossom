@@ -1458,6 +1458,7 @@ MonoBehaviour:
   uiController: {fileID: 553741604}
   resultPanel: {fileID: 879836866}
   guideBook: {fileID: 0}
+  captureHandler: {fileID: 0}
   battleSceneName: DrawingBattleScene
   enableBattleTransition: 1
 --- !u!4 &532746218
@@ -6667,8 +6668,8 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 1879217796}
   - {fileID: 487772903}
-  - {fileID: 1709098662}
+  - {fileID: 532746218}
   - {fileID: 34142894}
   - {fileID: 1935590027}
-  - {fileID: 532746218}
+  - {fileID: 1709098662}
   - {fileID: 553741605}
