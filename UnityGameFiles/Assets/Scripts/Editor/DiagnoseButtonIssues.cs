@@ -166,8 +166,8 @@ public class DiagnoseButtonIssues : EditorWindow
                 if (img.raycastTarget && img != buttonImage)
                 {
                     RectTransform imgRect = img.GetComponent<RectTransform>();
-                    // Check if this image might be covering the button
-                    if (imgRect != null && imgRect.IsParentOf(rectTransform))
+                    // Check if this image might be covering the button (is parent of button)
+                    if (imgRect != null && rectTransform.IsChildOf(imgRect.transform))
                     {
                         Debug.LogWarning($"⚠️ Potential blocker: {img.gameObject.name} (parent with raycastTarget)");
                     }
