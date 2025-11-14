@@ -15,7 +15,7 @@ namespace SketchBlossom.Battle.Editor
             Debug.Log("=== SETTING UP GUIDE BOOK MANAGER ===");
 
             // Find or create GuideBookManager
-            GuideBookManager manager = FindObjectOfType<GuideBookManager>();
+            GuideBookManager manager = UnityEngine.Object.FindObjectOfType<GuideBookManager>();
 
             if (manager == null)
             {
@@ -53,7 +53,7 @@ namespace SketchBlossom.Battle.Editor
         {
             Debug.Log("=== TESTING GUIDE BOOK NAVIGATION ===");
 
-            GuideBookManager manager = FindObjectOfType<GuideBookManager>();
+            GuideBookManager manager = UnityEngine.Object.FindObjectOfType<GuideBookManager>();
 
             if (manager == null)
             {
@@ -99,7 +99,7 @@ namespace SketchBlossom.Battle.Editor
             }
 
             // Find GuideBookManager and force setup
-            GuideBookManager manager = FindObjectOfType<GuideBookManager>();
+            GuideBookManager manager = UnityEngine.Object.FindObjectOfType<GuideBookManager>();
             if (manager != null)
             {
                 manager.ForceReWire();
