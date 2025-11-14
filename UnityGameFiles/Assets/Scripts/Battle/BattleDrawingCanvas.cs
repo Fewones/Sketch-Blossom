@@ -14,8 +14,8 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform _drawingArea;
         [SerializeField] private Canvas canvas;
-        [Range(1f, 100f)]
-        [SerializeField] private float lineWidth = 50f; // Very thick strokes for visible attack animations
+        [Range(1f, 200f)]
+        [SerializeField] private float lineWidth = 80f; // Very thick strokes for visible attack animations
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("UI Drawing")]
@@ -162,6 +162,8 @@ namespace SketchBlossom.Battle
 
             isDrawingEnabled = true;
             gameObject.SetActive(true);
+
+            Debug.Log($"BattleDrawingCanvas: Drawing enabled with lineWidth = {lineWidth}");
         }
 
         /// <summary>
@@ -361,7 +363,7 @@ namespace SketchBlossom.Battle
             int x = Mathf.RoundToInt(point.x);
             int y = Mathf.RoundToInt(point.y);
 
-            int radius = Mathf.RoundToInt(lineWidth);
+            int radius = Mathf.Max(1, Mathf.RoundToInt(lineWidth)); // Ensure at least 1 pixel
 
             for (int i = -radius; i <= radius; i++)
             {
@@ -381,6 +383,15 @@ namespace SketchBlossom.Battle
             }
 
             drawingTexture.Apply();
+        }
+
+        /// <summary>
+        /// Force set the line width (useful for runtime adjustments)
+        /// </summary>
+        public void SetLineWidth(float width)
+        {
+            lineWidth = Mathf.Clamp(width, 1f, 200f);
+            Debug.Log($"BattleDrawingCanvas: Line width set to {lineWidth}");
         }
 
         /// <summary>

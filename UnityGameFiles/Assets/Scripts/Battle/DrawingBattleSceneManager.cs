@@ -213,6 +213,10 @@ namespace SketchBlossom.Battle
             {
                 drawingCanvas.OnDrawingCompleted += OnDrawingCompleted;
                 drawingCanvas.DisableDrawing();
+
+                // Force thick line width for battle moves
+                drawingCanvas.SetLineWidth(80f);
+                Debug.Log("DrawingBattleSceneManager: Set battle canvas line width to 80 pixels");
             }
         }
 
