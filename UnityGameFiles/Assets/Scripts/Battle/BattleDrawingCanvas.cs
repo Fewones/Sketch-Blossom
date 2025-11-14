@@ -59,9 +59,16 @@ namespace SketchBlossom.Battle
             // Create default line material if none provided
             if (lineMaterial == null)
             {
-                lineMaterial = new Material(Shader.Find("Sprites/Default"));
+                // Use Unlit/Color shader which works better for LineRenderer
+                Shader lineShader = Shader.Find("Unlit/Color");
+                if (lineShader == null)
+                {
+                    // Fallback to Sprites/Default if Unlit/Color not found
+                    lineShader = Shader.Find("Sprites/Default");
+                }
+                lineMaterial = new Material(lineShader);
                 lineMaterial.color = Color.black; // BLACK so lines are visible on white background!
-                Debug.Log("BattleDrawingCanvas: Created default line material (BLACK)");
+                Debug.Log($"BattleDrawingCanvas: Created default line material (BLACK) with shader: {lineShader.name}");
             }
         }
 
@@ -192,6 +199,11 @@ namespace SketchBlossom.Battle
                 lineObj.transform.SetParent(transform);
             }
 
+            // CRITICAL: Reset local position to (0,0,0) to prevent offset
+            lineObj.transform.localPosition = Vector3.zero;
+            lineObj.transform.localRotation = Quaternion.identity;
+            lineObj.transform.localScale = Vector3.one;
+
             currentLine = lineObj.GetComponent<LineRenderer>();
             if (currentLine == null)
                 currentLine = lineObj.AddComponent<LineRenderer>();
@@ -200,13 +212,16 @@ namespace SketchBlossom.Battle
             currentLine.startWidth = lineWidth;
             currentLine.endWidth = lineWidth;
             currentLine.positionCount = 0;
-            currentLine.useWorldSpace = false;
+            currentLine.useWorldSpace = false; // Use local space for UI canvas
 
-            // Set material
+            // Set material and ensure it's applied correctly
             if (lineMaterial != null)
+            {
                 currentLine.material = lineMaterial;
+                currentLine.sharedMaterial = lineMaterial;
+            }
 
-            // Set colors
+            // Set colors - CRITICAL for visibility
             currentLine.startColor = drawingColor;
             currentLine.endColor = drawingColor;
 
@@ -214,9 +229,15 @@ namespace SketchBlossom.Battle
             currentLine.alignment = LineAlignment.TransformZ;
             currentLine.textureMode = LineTextureMode.Tile;
 
-            // Set sorting order to render on top
+            // Enable shadow casting OFF for UI rendering
+            currentLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            currentLine.receiveShadows = false;
+
+            // Set sorting order to render on top of the canvas
             currentLine.sortingLayerName = "Default";
-            currentLine.sortingOrder = 100;
+            currentLine.sortingOrder = 1000; // High value to ensure it's on top
+
+            Debug.Log($"Created LineRenderer - Color: {currentLine.startColor}, Width: {currentLine.startWidth}, Material: {currentLine.material?.name}");
 
             // Add first point
             Vector2 localPoint = ScreenToCanvasPoint(screenPosition);
@@ -271,7 +292,7 @@ namespace SketchBlossom.Battle
             {
                 currentLine.positionCount = currentStrokePoints.Count;
 
-                // Convert to Vector3 for LineRenderer
+                // Convert to Vector3 for LineRenderer (local space)
                 Vector3[] positions = new Vector3[currentStrokePoints.Count];
                 for (int i = 0; i < currentStrokePoints.Count; i++)
                 {
@@ -279,6 +300,12 @@ namespace SketchBlossom.Battle
                 }
 
                 currentLine.SetPositions(positions);
+
+                // Debug first and every 10th point to verify visibility
+                if (currentStrokePoints.Count == 1 || currentStrokePoints.Count % 10 == 0)
+                {
+                    Debug.Log($"Line point {currentStrokePoints.Count}: {point} | LineRenderer visible: {currentLine.enabled} | Color: {currentLine.startColor}");
+                }
             }
         }
 
