@@ -69,6 +69,49 @@ namespace SketchBlossom.Battle.Editor
             manager.DebugCurrentState();
         }
 
+        [UnityEditor.MenuItem("Tools/Debug Guide Panel Structure")]
+        public static void DebugGuidePanelStructure()
+        {
+            Debug.Log("=== GUIDE PANEL STRUCTURE DEBUG ===");
+
+            // Try to find guide panel (try both names for compatibility)
+            GameObject guidePanel = GameObject.Find("GuideBookPanel");
+            if (guidePanel == null)
+            {
+                guidePanel = GameObject.Find("GuidePanel");
+            }
+
+            if (guidePanel == null)
+            {
+                Debug.LogError("❌ GuidePanel/GuideBookPanel not found in scene!");
+                Debug.LogError("   Please create the guide panel using DrawingBattleSceneBuilder");
+                return;
+            }
+
+            Debug.Log($"✅ Found {guidePanel.name}");
+            Debug.Log($"{guidePanel.name} has {guidePanel.transform.childCount} direct children:");
+
+            // List all direct children
+            for (int i = 0; i < guidePanel.transform.childCount; i++)
+            {
+                Transform child = guidePanel.transform.GetChild(i);
+                Debug.Log($"  {i}: {child.name}");
+
+                // If this child has children, list them too
+                if (child.childCount > 0)
+                {
+                    Debug.Log($"    └─ {child.name} has {child.childCount} children:");
+                    for (int j = 0; j < child.childCount; j++)
+                    {
+                        Transform grandchild = child.GetChild(j);
+                        Debug.Log($"       {j}: {grandchild.name}");
+                    }
+                }
+            }
+
+            Debug.Log("=== END DEBUG ===");
+        }
+
         [UnityEditor.MenuItem("Tools/Fix Guide Book Pages")]
         public static void FixGuideBookPages()
         {
@@ -79,22 +122,29 @@ namespace SketchBlossom.Battle.Editor
             if (guidePanel == null)
             {
                 Debug.LogError("❌ GuideBookPanel not found!");
+                Debug.LogError("   Please use 'Tools > Create Full Drawing Battle Scene' or DrawingBattleSceneBuilder to create the scene first.");
                 return;
             }
 
-            // Find content panel
+            // Find content panel (it may be the guide panel itself if created manually)
             Transform contentPanel = guidePanel.transform.Find("ContentPanel");
+            Transform panelToSearch = contentPanel != null ? contentPanel : guidePanel.transform;
+
             if (contentPanel == null)
             {
-                Debug.LogError("❌ ContentPanel not found!");
-                return;
+                Debug.LogWarning("⚠ ContentPanel not found - searching for pages directly in GuideBookPanel");
+                Debug.LogWarning("   For best results, recreate the scene using DrawingBattleSceneBuilder");
+            }
+            else
+            {
+                Debug.Log("✅ Found ContentPanel");
             }
 
             // List all pages
-            Debug.Log($"ContentPanel has {contentPanel.childCount} children:");
-            for (int i = 0; i < contentPanel.childCount; i++)
+            Debug.Log($"{panelToSearch.name} has {panelToSearch.childCount} children:");
+            for (int i = 0; i < panelToSearch.childCount; i++)
             {
-                Transform child = contentPanel.GetChild(i);
+                Transform child = panelToSearch.GetChild(i);
                 Debug.Log($"  {i}: {child.name} (starts with Page: {child.name.StartsWith("Page")})");
             }
 
@@ -109,6 +159,7 @@ namespace SketchBlossom.Battle.Editor
             else
             {
                 Debug.LogError("❌ GuideBookManager not found!");
+                Debug.LogError("   Run 'Tools > Setup Guide Book Manager' to create it.");
             }
         }
     }
