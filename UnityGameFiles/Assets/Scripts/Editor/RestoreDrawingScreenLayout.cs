@@ -366,6 +366,9 @@ public class RestoreDrawingScreenLayout : EditorWindow
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
+        // Clear selection to prevent accessing destroyed objects
+        UnityEditor.Selection.activeObject = null;
+
         Debug.Log("========== DRAWING SCREEN RESTORED ==========");
         EditorUtility.DisplayDialog("Success",
             "Drawing screen layout has been updated!\n\n" +
