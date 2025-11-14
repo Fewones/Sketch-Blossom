@@ -30,6 +30,11 @@ namespace SketchBlossom.Battle
         [SerializeField] private MovesetDetector movesetDetector;
         [SerializeField] private MoveRecognitionSystem moveRecognitionSystem;
 
+        [Header("Attack Animations")]
+        [SerializeField] private AttackAnimationManager attackAnimationManager;
+        [SerializeField] private DrawnMoveStorage drawnMoveStorage;
+        [SerializeField] private DrawingCaptureHandler moveDrawingCapture;
+
         [Header("UI Elements")]
         [SerializeField] private TextMeshProUGUI turnIndicatorText;
         [SerializeField] private TextMeshProUGUI actionText;
@@ -100,6 +105,9 @@ namespace SketchBlossom.Battle
 
             // Setup drawing canvas
             SetupDrawingCanvas();
+
+            // Setup attack animation system
+            SetupAttackAnimationSystem();
 
             // Start battle
             StartCoroutine(BattleSequence());
@@ -206,6 +214,67 @@ namespace SketchBlossom.Battle
                 drawingCanvas.OnDrawingCompleted += OnDrawingCompleted;
                 drawingCanvas.DisableDrawing();
             }
+        }
+
+        /// <summary>
+        /// Setup attack animation system components
+        /// </summary>
+        private void SetupAttackAnimationSystem()
+        {
+            // Auto-find or create DrawnMoveStorage
+            if (drawnMoveStorage == null)
+            {
+                drawnMoveStorage = FindFirstObjectByType<DrawnMoveStorage>();
+                if (drawnMoveStorage == null)
+                {
+                    GameObject storageObj = new GameObject("DrawnMoveStorage");
+                    drawnMoveStorage = storageObj.AddComponent<DrawnMoveStorage>();
+                    Debug.Log("DrawingBattleSceneManager: Created DrawnMoveStorage");
+                }
+            }
+
+            // Auto-find or create AttackAnimationManager
+            if (attackAnimationManager == null)
+            {
+                attackAnimationManager = FindFirstObjectByType<AttackAnimationManager>();
+                if (attackAnimationManager == null)
+                {
+                    GameObject animManagerObj = new GameObject("AttackAnimationManager");
+                    attackAnimationManager = animManagerObj.AddComponent<AttackAnimationManager>();
+                    Debug.Log("DrawingBattleSceneManager: Created AttackAnimationManager");
+                }
+            }
+
+            // Auto-find or create DrawingCaptureHandler for moves
+            if (moveDrawingCapture == null)
+            {
+                moveDrawingCapture = FindFirstObjectByType<DrawingCaptureHandler>();
+                if (moveDrawingCapture == null)
+                {
+                    GameObject captureObj = new GameObject("MoveDrawingCapture");
+                    moveDrawingCapture = captureObj.AddComponent<DrawingCaptureHandler>();
+                    Debug.Log("DrawingBattleSceneManager: Created DrawingCaptureHandler for moves");
+                }
+            }
+
+            // Set attack points for animations (player unit to enemy unit)
+            if (attackAnimationManager != null && playerUnit != null && enemyUnit != null)
+            {
+                // Get transforms from the unit displays' images
+                Transform playerTransform = playerUnit.GetTransform();
+                Transform enemyTransform = enemyUnit.GetTransform();
+
+                if (playerTransform != null && enemyTransform != null)
+                {
+                    attackAnimationManager.SetAttackPoints(playerTransform, enemyTransform);
+                }
+                else
+                {
+                    Debug.LogWarning("Could not get unit transforms for attack animations");
+                }
+            }
+
+            Debug.Log("✓ Attack animation system initialized");
         }
 
         /// <summary>
@@ -368,6 +437,9 @@ namespace SketchBlossom.Battle
 
             if (result.wasRecognized)
             {
+                // CAPTURE THE MOVE DRAWING before clearing the canvas
+                CaptureMoveDrawing(lineRenderers);
+
                 // Execute the move
                 StartCoroutine(ExecutePlayerMove(result));
             }
@@ -391,6 +463,55 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
+        /// Capture the current move drawing and store it for use in attack animations
+        /// </summary>
+        private void CaptureMoveDrawing(List<LineRenderer> strokes)
+        {
+            if (moveDrawingCapture == null || drawnMoveStorage == null)
+            {
+                Debug.LogWarning("DrawingBattleSceneManager: Move drawing capture system not initialized!");
+                return;
+            }
+
+            if (strokes == null || strokes.Count == 0)
+            {
+                Debug.LogWarning("DrawingBattleSceneManager: No strokes to capture!");
+                return;
+            }
+
+            Debug.Log("========== CAPTURING MOVE DRAWING ==========");
+
+            // Get the camera for rendering
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null)
+            {
+                Debug.LogError("DrawingBattleSceneManager: No main camera found for move capture!");
+                return;
+            }
+
+            // Capture the move drawing as a texture
+            Texture2D moveTexture = moveDrawingCapture.CaptureDrawing(
+                strokes,
+                mainCamera,
+                drawingCanvas.drawingArea
+            );
+
+            if (moveTexture != null)
+            {
+                // Store the captured move drawing
+                drawnMoveStorage.AddMoveDrawing(moveTexture);
+                Debug.Log($"✓ Move drawing captured! Texture size: {moveTexture.width}x{moveTexture.height}");
+                Debug.Log($"   Total stored move drawings: {drawnMoveStorage.GetDrawingCount()}");
+            }
+            else
+            {
+                Debug.LogError("Failed to capture move drawing texture!");
+            }
+
+            Debug.Log("============================================");
+        }
+
+        /// <summary>
         /// Execute player's detected move
         /// </summary>
         private IEnumerator ExecutePlayerMove(MovesetDetector.MoveDetectionResult result)
@@ -409,9 +530,30 @@ namespace SketchBlossom.Battle
             }
 
             UpdateActionText($"You used {moveData.moveName}! (Quality: {result.qualityRating})");
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.5f);
 
-            // Calculate damage
+            // PLAY ATTACK ANIMATION WITH THE CAPTURED MOVE DRAWING
+            if (attackAnimationManager != null && !moveData.isDefensiveMove && !moveData.isHealingMove)
+            {
+                Transform playerTransform = playerUnit.GetTransform();
+                Transform enemyTransform = enemyUnit.GetTransform();
+
+                if (playerTransform != null && enemyTransform != null)
+                {
+                    // Play the attack animation using the drawn move
+                    yield return StartCoroutine(attackAnimationManager.PlayAttackAnimation(
+                        playerTransform,
+                        enemyTransform,
+                        moveData
+                    ));
+                }
+                else
+                {
+                    Debug.LogWarning("Could not get unit transforms for attack animation");
+                }
+            }
+
+            // Calculate and apply move effects
             if (moveData.isDefensiveMove)
             {
                 playerIsBlocking = true;
@@ -447,6 +589,9 @@ namespace SketchBlossom.Battle
             }
 
             yield return new WaitForSeconds(actionTextDelay);
+
+            // Clear the canvas for the next turn
+            drawingCanvas.ClearCanvas();
 
             // Reset blocking state
             enemyIsBlocking = false;
@@ -751,6 +896,18 @@ namespace SketchBlossom.Battle
                 {
                     // Would need MonoBehaviour context for coroutine
                 }
+            }
+
+            /// <summary>
+            /// Get the transform of this unit display (from the unit image)
+            /// </summary>
+            public Transform GetTransform()
+            {
+                if (unitImage != null)
+                {
+                    return unitImage.transform;
+                }
+                return null;
             }
         }
     }
