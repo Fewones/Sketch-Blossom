@@ -44,6 +44,28 @@ public class RestoreDrawingScreenLayout : EditorWindow
 
         // Find and fix DrawingArea (the white rectangle where you draw)
         SimpleDrawingCanvas drawingCanvas = FindFirstObjectByType<SimpleDrawingCanvas>(FindObjectsInactive.Include);
+
+        // Verify drawingArea is assigned to the correct white rectangle GameObject
+        if (drawingCanvas != null && drawingPanelTransform != null)
+        {
+            Transform drawingAreaTransform = drawingPanelTransform.Find("DrawingArea");
+            if (drawingAreaTransform != null)
+            {
+                RectTransform drawingAreaRect = drawingAreaTransform.GetComponent<RectTransform>();
+                if (drawingCanvas.drawingArea != drawingAreaRect)
+                {
+                    Undo.RecordObject(drawingCanvas, "Assign DrawingArea Reference");
+                    drawingCanvas.drawingArea = drawingAreaRect;
+                    EditorUtility.SetDirty(drawingCanvas);
+                    Debug.Log("✓ Assigned white DrawingArea rectangle to SimpleDrawingCanvas");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ Could not find 'DrawingArea' GameObject in DrawingPanel! Please ensure the white rectangle is named 'DrawingArea'");
+            }
+        }
+
         if (drawingCanvas != null && drawingCanvas.drawingArea != null)
         {
             RectTransform drawingAreaRect = drawingCanvas.drawingArea;
@@ -78,7 +100,18 @@ public class RestoreDrawingScreenLayout : EditorWindow
             }
         }
 
-        // Find and position stroke counter centered above the drawing area
+        // Calculate position above the white DrawingArea rectangle
+        float uiYPosition = 0f;
+        if (drawingCanvas != null && drawingCanvas.drawingArea != null)
+        {
+            RectTransform drawingAreaRect = drawingCanvas.drawingArea;
+            // Calculate the top edge of the drawing area: center Y + half height
+            float drawingAreaTop = drawingAreaRect.anchoredPosition.y + (drawingAreaRect.sizeDelta.y / 2f);
+            uiYPosition = drawingAreaTop + 40f; // 40 pixels above the white rectangle
+            Debug.Log($"DrawingArea top edge at Y={drawingAreaTop}, positioning UI at Y={uiYPosition}");
+        }
+
+        // Find and position stroke counter centered above the WHITE drawing area rectangle
         if (drawingPanelTransform != null)
         {
             // Find StrokeCounter text
@@ -88,12 +121,11 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 RectTransform strokeRect = strokeCounterTransform.GetComponent<RectTransform>();
                 Undo.RecordObject(strokeRect, "Position Stroke Counter");
 
-                // Position centered, above drawing area (not screen)
-                // Using center anchor and positioning relative to drawing area position
+                // Position above the white DrawingArea rectangle
                 strokeRect.anchorMin = new Vector2(0.5f, 0.5f);
                 strokeRect.anchorMax = new Vector2(0.5f, 0.5f);
                 strokeRect.pivot = new Vector2(1f, 0.5f); // Right-aligned pivot for stroke counter
-                strokeRect.anchoredPosition = new Vector2(-180f, 515f); // Above drawing area (1700x950 → top is at +475, add 40 for spacing)
+                strokeRect.anchoredPosition = new Vector2(-180f, uiYPosition);
                 strokeRect.sizeDelta = new Vector2(150f, 40f);
 
                 // Increase font size if it has TextMeshProUGUI
@@ -107,15 +139,15 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 }
 
                 EditorUtility.SetDirty(strokeCounterTransform.gameObject);
-                Debug.Log("✓ Stroke counter positioned above drawing area");
+                Debug.Log("✓ Stroke counter positioned above white DrawingArea rectangle");
             }
         }
 
-        // Find and reposition color buttons horizontally above and centered on drawing area
+        // Find and reposition color buttons horizontally above the WHITE drawing area rectangle
         DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
         if (colorSelector != null)
         {
-            // Position buttons horizontally in a row, centered above the drawing area
+            // Position buttons horizontally in a row, centered above the white DrawingArea
             // Red button - first in row
             if (colorSelector.redButton != null)
             {
@@ -125,7 +157,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(-145f, 515f); // Above drawing area, left of center
+                rect.anchoredPosition = new Vector2(-145f, uiYPosition); // Above white DrawingArea, left of center
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.redButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -149,7 +181,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(-45f, 515f); // Above drawing area, center
+                rect.anchoredPosition = new Vector2(-45f, uiYPosition); // Above white DrawingArea, center
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.greenButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -173,7 +205,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(55f, 515f); // Above drawing area, right of center
+                rect.anchoredPosition = new Vector2(55f, uiYPosition); // Above white DrawingArea, right of center
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.blueButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -188,7 +220,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 Debug.Log("✓ Blue button repositioned to 90x50");
             }
 
-            Debug.Log("✓ Color buttons repositioned horizontally above drawing area");
+            Debug.Log("✓ Color buttons repositioned horizontally above white DrawingArea rectangle");
         }
 
 
