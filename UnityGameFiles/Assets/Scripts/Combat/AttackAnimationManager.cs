@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
 
 namespace SketchBlossom.Battle
@@ -15,7 +14,7 @@ namespace SketchBlossom.Battle
         [SerializeField] private Transform playerAttackSpawnPoint;
         [SerializeField] private Transform enemyTargetPoint;
         [SerializeField] private float projectileSpeed = 5f;
-        [SerializeField] private float projectileScale = 1f;
+        [SerializeField] private float projectileScale = 0.5f;
         [SerializeField] private Vector3 projectileRotation = Vector3.zero;
 
         [Header("Animation Settings")]
@@ -44,11 +43,7 @@ namespace SketchBlossom.Battle
                 }
             }
 
-            // Create default projectile prefab if none assigned
-            if (projectilePrefab == null)
-            {
-                CreateDefaultProjectilePrefab();
-            }
+            Debug.Log("AttackAnimationManager: Initialized");
         }
 
         /// <summary>
@@ -57,6 +52,15 @@ namespace SketchBlossom.Battle
         /// </summary>
         public IEnumerator PlayAttackAnimation(Transform source, Transform target, MoveData moveData)
         {
+            Debug.Log($"AttackAnimationManager: PlayAttackAnimation called - Source: {source?.position}, Target: {target?.position}");
+
+            if (source == null || target == null)
+            {
+                Debug.LogError("AttackAnimationManager: Source or target transform is null!");
+                yield return new WaitForSeconds(0.5f);
+                yield break;
+            }
+
             if (moveStorage == null || !moveStorage.HasDrawings())
             {
                 Debug.LogWarning("AttackAnimationManager: No move drawings available for animation!");
@@ -74,77 +78,82 @@ namespace SketchBlossom.Battle
                 yield break;
             }
 
-            Debug.Log($"AttackAnimationManager: Playing attack animation with move drawing");
+            Debug.Log($"AttackAnimationManager: Creating projectile with texture {moveTexture.width}x{moveTexture.height}");
 
             // Create projectile
-            GameObject projectile = CreateProjectile(moveTexture, source.position);
+            GameObject projectile = null;
+            try
+            {
+                projectile = CreateProjectile(moveTexture, source.position);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"AttackAnimationManager: Exception creating projectile: {e.Message}\n{e.StackTrace}");
+                yield return PlayFallbackAnimation(source, target, moveData);
+                yield break;
+            }
 
             if (projectile == null)
             {
                 Debug.LogError("AttackAnimationManager: Failed to create projectile!");
+                yield return PlayFallbackAnimation(source, target, moveData);
                 yield break;
             }
 
+            Debug.Log("AttackAnimationManager: Projectile created successfully, starting animation");
+
             // Animate projectile from source to target
-            yield return AnimateProjectile(projectile, source.position, target.position);
+            yield return StartCoroutine(AnimateProjectile(projectile, source.position, target.position));
+
+            Debug.Log("AttackAnimationManager: Animation completed, cleaning up");
 
             // Clean up
-            Destroy(projectile);
+            if (projectile != null)
+            {
+                Destroy(projectile);
+            }
         }
 
         /// <summary>
-        /// Create a projectile GameObject with the move drawing as its sprite
+        /// Create a projectile GameObject with the move drawing as its sprite using SpriteRenderer
         /// </summary>
         private GameObject CreateProjectile(Texture2D moveTexture, Vector3 spawnPosition)
         {
-            GameObject projectile;
+            Debug.Log($"AttackAnimationManager: CreateProjectile at {spawnPosition}");
 
-            if (projectilePrefab != null)
-            {
-                projectile = Instantiate(projectilePrefab, spawnPosition, Quaternion.identity);
-            }
-            else
-            {
-                // Create simple projectile if no prefab
-                projectile = new GameObject("AttackProjectile");
-                projectile.transform.position = spawnPosition;
-            }
+            GameObject projectile = new GameObject("AttackProjectile");
+            projectile.transform.position = spawnPosition;
 
-            // Add or get Image component (for UI rendering)
-            Image projectileImage = projectile.GetComponent<Image>();
-            if (projectileImage == null)
-            {
-                Canvas canvas = projectile.GetComponent<Canvas>();
-                if (canvas == null)
-                {
-                    canvas = projectile.AddComponent<Canvas>();
-                    canvas.renderMode = RenderMode.WorldSpace;
-                    canvas.sortingOrder = 100; // Render above other battle elements
-                }
-
-                projectileImage = projectile.AddComponent<Image>();
-            }
+            // Use SpriteRenderer instead of Canvas/Image for reliable world-space rendering
+            SpriteRenderer spriteRenderer = projectile.AddComponent<SpriteRenderer>();
 
             // Convert texture to sprite
             Sprite moveSprite = Texture2DToSprite(moveTexture);
             if (moveSprite != null)
             {
-                projectileImage.sprite = moveSprite;
-                projectileImage.preserveAspect = true;
+                spriteRenderer.sprite = moveSprite;
+                Debug.Log("AttackAnimationManager: Sprite assigned to SpriteRenderer");
             }
             else
             {
                 Debug.LogError("AttackAnimationManager: Failed to create sprite from texture!");
+                Destroy(projectile);
+                return null;
             }
+
+            // Set sorting layer to render above battle elements
+            spriteRenderer.sortingOrder = 100;
 
             // Set initial scale and rotation
             projectile.transform.localScale = Vector3.one * projectileScale;
             projectile.transform.rotation = Quaternion.Euler(projectileRotation);
 
             // Set initial alpha to 0 for fade-in
-            Color color = projectileImage.color;
+            Color color = spriteRenderer.color;
             color.a = 0f;
-            projectileImage.color = color;
+            spriteRenderer.color = color;
+
+            Debug.Log($"AttackAnimationManager: Projectile setup complete - Scale: {projectileScale}, Color: {color}");
 
             return projectile;
         }
@@ -154,18 +163,28 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator AnimateProjectile(GameObject projectile, Vector3 startPos, Vector3 endPos)
         {
-            Image projectileImage = projectile.GetComponent<Image>();
-            float elapsed = 0f;
+            Debug.Log($"AttackAnimationManager: AnimateProjectile from {startPos} to {endPos}");
+
+            SpriteRenderer spriteRenderer = projectile.GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null)
+            {
+                Debug.LogError("AttackAnimationManager: No SpriteRenderer on projectile!");
+                yield break;
+            }
+
             float distance = Vector3.Distance(startPos, endPos);
             float duration = distance / projectileSpeed;
-
             Vector3 initialScale = projectile.transform.localScale;
 
+            Debug.Log($"AttackAnimationManager: Distance: {distance}, Duration: {duration}s, Speed: {projectileSpeed}");
+
             // Fade in
-            yield return StartCoroutine(FadeProjectile(projectileImage, 0f, 1f, fadeInDuration));
+            Debug.Log("AttackAnimationManager: Starting fade in");
+            yield return StartCoroutine(FadeProjectile(spriteRenderer, 0f, 1f, fadeInDuration));
 
             // Move from start to end
-            elapsed = 0f;
+            Debug.Log("AttackAnimationManager: Starting movement");
+            float elapsed = 0f;
             while (elapsed < duration)
             {
                 float t = elapsed / duration;
@@ -192,32 +211,40 @@ namespace SketchBlossom.Battle
 
             // Ensure final position
             projectile.transform.position = endPos;
+            Debug.Log($"AttackAnimationManager: Reached target position: {endPos}");
 
             // Fade out
-            yield return StartCoroutine(FadeProjectile(projectileImage, 1f, 0f, fadeOutDuration));
+            Debug.Log("AttackAnimationManager: Starting fade out");
+            yield return StartCoroutine(FadeProjectile(spriteRenderer, 1f, 0f, fadeOutDuration));
+
+            Debug.Log("AttackAnimationManager: AnimateProjectile complete");
         }
 
         /// <summary>
-        /// Fade projectile image from startAlpha to endAlpha
+        /// Fade projectile sprite from startAlpha to endAlpha
         /// </summary>
-        private IEnumerator FadeProjectile(Image image, float startAlpha, float endAlpha, float duration)
+        private IEnumerator FadeProjectile(SpriteRenderer spriteRenderer, float startAlpha, float endAlpha, float duration)
         {
-            if (image == null) yield break;
+            if (spriteRenderer == null)
+            {
+                Debug.LogWarning("AttackAnimationManager: FadeProjectile - spriteRenderer is null");
+                yield break;
+            }
 
             float elapsed = 0f;
-            Color color = image.color;
+            Color color = spriteRenderer.color;
 
             while (elapsed < duration)
             {
                 float t = elapsed / duration;
                 color.a = Mathf.Lerp(startAlpha, endAlpha, t);
-                image.color = color;
+                spriteRenderer.color = color;
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
             color.a = endAlpha;
-            image.color = color;
+            spriteRenderer.color = color;
         }
 
         /// <summary>
@@ -230,6 +257,8 @@ namespace SketchBlossom.Battle
             // Simple flash effect or placeholder animation
             // For now, just wait a short duration
             yield return new WaitForSeconds(0.5f);
+
+            Debug.Log("AttackAnimationManager: Fallback animation complete");
         }
 
         /// <summary>
@@ -237,25 +266,29 @@ namespace SketchBlossom.Battle
         /// </summary>
         private Sprite Texture2DToSprite(Texture2D texture)
         {
-            if (texture == null) return null;
+            if (texture == null)
+            {
+                Debug.LogError("AttackAnimationManager: Texture2DToSprite - texture is null");
+                return null;
+            }
 
-            Sprite sprite = Sprite.Create(
-                texture,
-                new Rect(0, 0, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f), // Pivot at center
-                100f // Pixels per unit
-            );
+            try
+            {
+                Sprite sprite = Sprite.Create(
+                    texture,
+                    new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f), // Pivot at center
+                    100f // Pixels per unit
+                );
 
-            return sprite;
-        }
-
-        /// <summary>
-        /// Create a default projectile prefab if none is assigned
-        /// </summary>
-        private void CreateDefaultProjectilePrefab()
-        {
-            Debug.Log("AttackAnimationManager: No projectile prefab assigned, using runtime creation");
-            // Projectiles will be created at runtime
+                Debug.Log($"AttackAnimationManager: Created sprite {sprite.bounds.size}");
+                return sprite;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"AttackAnimationManager: Exception creating sprite: {e.Message}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -265,6 +298,7 @@ namespace SketchBlossom.Battle
         {
             playerAttackSpawnPoint = spawnPoint;
             enemyTargetPoint = targetPoint;
+            Debug.Log($"AttackAnimationManager: Attack points set - Spawn: {spawnPoint?.position}, Target: {targetPoint?.position}");
         }
     }
 }
