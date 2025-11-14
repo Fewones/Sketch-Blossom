@@ -10,8 +10,7 @@ using System.Collections.Generic;
 public class BattleDrawingManager : MonoBehaviour
 {
     [Header("Drawing Canvas")]
-    public SimpleDrawingCanvas drawingCanvas;
-    public DrawingCanvas legacyDrawingCanvas; // Fallback to legacy if SimpleDrawingCanvas not available
+    public BattleDrawingCanvas drawingCanvas; // Battle-specific canvas
 
     [Header("Drawing UI")]
     public GameObject drawingPanel;
@@ -68,22 +67,11 @@ public class BattleDrawingManager : MonoBehaviour
         // Try to find drawing canvas
         if (drawingCanvas == null)
         {
-            drawingCanvas = FindObjectOfType<SimpleDrawingCanvas>();
+            drawingCanvas = FindObjectOfType<BattleDrawingCanvas>();
             if (drawingCanvas != null)
-                Debug.Log("✓ Found SimpleDrawingCanvas");
-        }
-
-        // Fallback to legacy canvas
-        if (drawingCanvas == null && legacyDrawingCanvas == null)
-        {
-            legacyDrawingCanvas = FindObjectOfType<DrawingCanvas>();
-            if (legacyDrawingCanvas != null)
-                Debug.Log("✓ Found legacy DrawingCanvas");
-        }
-
-        if (drawingCanvas == null && legacyDrawingCanvas == null)
-        {
-            Debug.LogError("❌ No drawing canvas found! Please add SimpleDrawingCanvas or DrawingCanvas to the scene.");
+                Debug.Log("✓ Found BattleDrawingCanvas");
+            else
+                Debug.LogError("❌ BattleDrawingCanvas not found! Please run the rebuild script.");
         }
 
         // Setup buttons if assigned
@@ -124,12 +112,11 @@ public class BattleDrawingManager : MonoBehaviour
         if (drawingCanvas != null)
         {
             drawingCanvas.enabled = true;
-            Debug.Log("✓ Drawing canvas enabled");
+            Debug.Log("✓ BattleDrawingCanvas enabled");
         }
-        else if (legacyDrawingCanvas != null)
+        else
         {
-            legacyDrawingCanvas.enabled = true;
-            Debug.Log("✓ Legacy drawing canvas enabled");
+            Debug.LogError("❌ BattleDrawingCanvas is null! Cannot enable drawing.");
         }
 
         // Show the panel
@@ -175,12 +162,7 @@ public class BattleDrawingManager : MonoBehaviour
         if (drawingCanvas != null)
         {
             drawingCanvas.enabled = false;
-            Debug.Log("✓ Drawing canvas disabled");
-        }
-        else if (legacyDrawingCanvas != null)
-        {
-            legacyDrawingCanvas.enabled = false;
-            Debug.Log("✓ Legacy drawing canvas disabled");
+            Debug.Log("✓ BattleDrawingCanvas disabled");
         }
 
         if (drawingPanel != null)
@@ -208,7 +190,7 @@ public class BattleDrawingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get current stroke count from active canvas
+    /// Get current stroke count from canvas
     /// </summary>
     private int GetStrokeCount()
     {
@@ -216,25 +198,17 @@ public class BattleDrawingManager : MonoBehaviour
         {
             return drawingCanvas.allStrokes.Count;
         }
-        else if (legacyDrawingCanvas != null)
-        {
-            return legacyDrawingCanvas.currentStrokeCount;
-        }
         return 0;
     }
 
     /// <summary>
-    /// Get all strokes from active canvas
+    /// Get all strokes from canvas
     /// </summary>
     private List<LineRenderer> GetAllStrokes()
     {
         if (drawingCanvas != null)
         {
             return drawingCanvas.allStrokes;
-        }
-        else if (legacyDrawingCanvas != null)
-        {
-            return legacyDrawingCanvas.GetAllStrokes();
         }
         return new List<LineRenderer>();
     }
@@ -248,10 +222,6 @@ public class BattleDrawingManager : MonoBehaviour
         {
             drawingCanvas.ClearAll();
         }
-        else if (legacyDrawingCanvas != null)
-        {
-            legacyDrawingCanvas.ClearCanvas();
-        }
     }
 
     /// <summary>
@@ -261,10 +231,10 @@ public class BattleDrawingManager : MonoBehaviour
     {
         Debug.Log("========== SUBMIT DRAWING CLICKED ==========");
 
-        // Verify we have the necessary components
-        if (drawingCanvas == null && legacyDrawingCanvas == null)
+        // Verify we have the canvas
+        if (drawingCanvas == null)
         {
-            Debug.LogError("❌ No drawing canvas found! Cannot submit drawing.");
+            Debug.LogError("❌ BattleDrawingCanvas is null! Cannot submit drawing.");
             return;
         }
 
@@ -281,16 +251,8 @@ public class BattleDrawingManager : MonoBehaviour
         }
 
         // Force end any in-progress stroke
-        if (drawingCanvas != null)
-        {
-            drawingCanvas.ForceEndStroke();
-            Debug.Log("✓ Forced end of any in-progress stroke");
-        }
-        else if (legacyDrawingCanvas != null)
-        {
-            legacyDrawingCanvas.ForceEndStroke();
-            Debug.Log("✓ Forced end of any in-progress stroke (legacy)");
-        }
+        drawingCanvas.ForceEndStroke();
+        Debug.Log("✓ Forced end of any in-progress stroke");
 
         // Analyze the move using MovesetDetector
         if (movesetDetector == null)

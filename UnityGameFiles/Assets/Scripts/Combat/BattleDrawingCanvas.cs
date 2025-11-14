@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 
 /// <summary>
-/// SIMPLIFIED drawing canvas - rebuilt from scratch for reliability
-/// Handles all drawing input and stroke management
+/// Battle-specific drawing canvas for combat moves
+/// Simplified version without color picking - only for battle scene
 /// </summary>
-public class SimpleDrawingCanvas : MonoBehaviour
+public class BattleDrawingCanvas : MonoBehaviour
 {
     [Header("Required References")]
     public Camera mainCamera;
@@ -15,12 +15,10 @@ public class SimpleDrawingCanvas : MonoBehaviour
     public RectTransform drawingArea;
 
     [Header("Drawing Settings")]
-    public float lineWidth = 0.1f;
-    public int maxStrokes = 20;
-    public float minPointDistance = 0.05f;
-
-    [Header("Current State")]
-    public Color currentColor = Color.green;  // Default to green (Grass/Cactus)
+    public float lineWidth = 0.05f;
+    public int maxStrokes = 30;
+    public float minPointDistance = 0.03f;
+    public Color strokeColor = Color.green;
 
     // All completed strokes
     public List<LineRenderer> allStrokes = new List<LineRenderer>();
@@ -29,9 +27,13 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private LineRenderer currentStroke;
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
+    private bool hasLoggedBounds = false;
 
     void Update()
     {
+        // Only handle input if this component is enabled
+        if (!enabled) return;
+
         HandleDrawingInput();
     }
 
@@ -57,7 +59,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
             }
             else
             {
-                // Mouse left the drawing area - end the stroke immediately
+                // Mouse left the drawing area - end the stroke
                 Debug.Log("Mouse left drawing area - ending stroke");
                 FinishStroke();
             }
@@ -77,34 +79,31 @@ public class SimpleDrawingCanvas : MonoBehaviour
             Debug.LogWarning("DrawingArea is null! Cannot restrict drawing bounds.");
             return true; // If no area defined, allow anywhere
         }
-        if (mainCamera == null)
-        {
-            Debug.LogWarning("MainCamera is null! Cannot check bounds.");
-            return false;
-        }
 
-        // Get world corners of the drawing area
-        Vector3[] corners = new Vector3[4];
-        drawingArea.GetWorldCorners(corners);
+        // Use RectTransformUtility for proper UI bounds checking (works with Screen Space - Overlay)
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            drawingArea,
+            screenPos,
+            null, // null for Screen Space - Overlay canvas
+            out localPoint
+        );
 
-        // Convert to screen space
-        Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
-        Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
-
-        bool isInside = screenPos.x >= min.x && screenPos.x <= max.x &&
-                        screenPos.y >= min.y && screenPos.y <= max.y;
+        // Check if local point is within the rect
+        Rect rect = drawingArea.rect;
+        bool isInside = rect.Contains(localPoint);
 
         // Debug log on first check
         if (!hasLoggedBounds)
         {
-            Debug.Log($"Drawing area bounds - Min: {min}, Max: {max}, Size: {max - min}");
+            Debug.Log($"[BattleDrawingCanvas] Drawing area rect: {rect}");
+            Debug.Log($"[BattleDrawingCanvas] Screen pos: {screenPos} -> Local pos: {localPoint}");
+            Debug.Log($"[BattleDrawingCanvas] Is inside: {isInside}");
             hasLoggedBounds = true;
         }
 
         return isInside;
     }
-
-    private bool hasLoggedBounds = false;
 
     void StartStroke(Vector2 screenPos)
     {
@@ -124,14 +123,14 @@ public class SimpleDrawingCanvas : MonoBehaviour
         currentStroke = Instantiate(lineRendererPrefab, strokeContainer);
         currentStroke.startWidth = lineWidth;
         currentStroke.endWidth = lineWidth;
-        currentStroke.startColor = currentColor;
-        currentStroke.endColor = currentColor;
+        currentStroke.startColor = strokeColor;
+        currentStroke.endColor = strokeColor;
 
         // Set material color
         if (currentStroke.material != null)
         {
             Material mat = new Material(currentStroke.material);
-            mat.color = currentColor;
+            mat.color = strokeColor;
             currentStroke.material = mat;
         }
 
@@ -143,7 +142,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         currentPoints.Add(worldPos);
         UpdateStrokeRenderer();
 
-        Debug.Log($"Started stroke #{allStrokes.Count + 1} with color {currentColor}");
+        Debug.Log($"[BattleDrawingCanvas] Started stroke #{allStrokes.Count + 1}");
     }
 
     void AddPoint(Vector2 screenPos)
@@ -171,7 +170,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (currentPoints.Count >= 1)
         {
             allStrokes.Add(currentStroke);
-            Debug.Log($"Finished stroke #{allStrokes.Count} with {currentPoints.Count} points");
+            Debug.Log($"[BattleDrawingCanvas] Finished stroke #{allStrokes.Count} with {currentPoints.Count} points");
         }
         else
         {
@@ -195,7 +194,21 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     Vector3 ScreenToWorld(Vector2 screenPos)
     {
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+        // Convert screen position to world position at a fixed Z distance
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
+
+        if (mainCamera != null)
+        {
+            return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+        }
+        else
+        {
+            // Fallback: use screen coordinates as world coordinates (scaled down)
+            return new Vector3(screenPos.x / 100f, screenPos.y / 100f, 0f);
+        }
     }
 
     /// <summary>
@@ -205,7 +218,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (isDrawing)
         {
-            Debug.Log("ForceEndStroke: Finishing in-progress stroke");
+            Debug.Log("[BattleDrawingCanvas] ForceEndStroke: Finishing in-progress stroke");
             FinishStroke();
         }
     }
@@ -232,60 +245,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         currentPoints.Clear();
-        Debug.Log("Cleared all strokes");
-    }
-
-    /// <summary>
-    /// Get dominant color based on number of strokes
-    /// </summary>
-    public Color GetDominantColor()
-    {
-        if (allStrokes.Count == 0) return Color.white;
-
-        // Count color usage by stroke count
-        Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
-
-        foreach (var stroke in allStrokes)
-        {
-            Color strokeColor = stroke.startColor;
-
-            // Round to nearest primary color
-            Color rounded = RoundToNearestPrimaryColor(strokeColor);
-
-            if (!colorCounts.ContainsKey(rounded))
-                colorCounts[rounded] = 0;
-
-            colorCounts[rounded]++;
-        }
-
-        // Find most used color
-        Color dominantColor = Color.white;
-        int maxCount = 0;
-
-        foreach (var pair in colorCounts)
-        {
-            if (pair.Value > maxCount)
-            {
-                maxCount = pair.Value;
-                dominantColor = pair.Key;
-            }
-        }
-
-        Debug.Log($"Dominant color: {dominantColor} (used in {maxCount}/{allStrokes.Count} strokes)");
-        return dominantColor;
-    }
-
-    Color RoundToNearestPrimaryColor(Color color)
-    {
-        // Find which primary color component is strongest
-        if (color.r > color.g && color.r > color.b)
-            return Color.red;
-        else if (color.g > color.r && color.g > color.b)
-            return Color.green;
-        else if (color.b > color.r && color.b > color.g)
-            return Color.blue;
-        else
-            return Color.white;
+        Debug.Log("[BattleDrawingCanvas] Cleared all strokes");
     }
 
     /// <summary>
@@ -294,15 +254,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
     public int GetStrokeCount()
     {
         return allStrokes.Count;
-    }
-
-    /// <summary>
-    /// Set drawing color
-    /// </summary>
-    public void SetColor(Color color)
-    {
-        currentColor = color;
-        Debug.Log($"Drawing color changed to: {color}");
     }
 
     void OnValidate()

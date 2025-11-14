@@ -98,15 +98,14 @@ public class CleanupBattleScene : EditorWindow
             itemsRemoved++;
         }
 
-        // Clean up old SimpleDrawingCanvas if it has conflicting references
-        SimpleDrawingCanvas[] simpleCanvases = FindObjectsOfType<SimpleDrawingCanvas>();
-        if (simpleCanvases.Length > 1)
+        // Clean up old BattleDrawingCanvas if it exists (will be recreated)
+        BattleDrawingCanvas[] battleCanvases = FindObjectsOfType<BattleDrawingCanvas>();
+        if (battleCanvases.Length > 0)
         {
-            Debug.LogWarning($"Found {simpleCanvases.Length} SimpleDrawingCanvas components! Removing extras...");
-            for (int i = 1; i < simpleCanvases.Length; i++)
+            Debug.Log("Removing existing BattleDrawingCanvas (will be recreated)");
+            foreach (var battleCanvas in battleCanvases)
             {
-                Debug.Log($"Removing duplicate SimpleDrawingCanvas: {simpleCanvases[i].gameObject.name}");
-                Undo.DestroyObjectImmediate(simpleCanvases[i].gameObject);
+                Undo.DestroyObjectImmediate(battleCanvas.gameObject);
                 itemsRemoved++;
             }
         }

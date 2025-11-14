@@ -52,8 +52,8 @@ public class RebuildBattleDrawingSystem : EditorWindow
         // Step 1: Create BattleDrawingManager
         BattleDrawingManager battleManager = CreateBattleDrawingManager();
 
-        // Step 2: Create SimpleDrawingCanvas
-        SimpleDrawingCanvas drawingCanvas = CreateSimpleDrawingCanvas(canvas);
+        // Step 2: Create BattleDrawingCanvas
+        BattleDrawingCanvas drawingCanvas = CreateBattleDrawingCanvas(canvas);
 
         // Step 3: Create LineRenderer prefab for strokes
         LineRenderer lineRendererPrefab = CreateLineRendererPrefab();
@@ -74,7 +74,7 @@ public class RebuildBattleDrawingSystem : EditorWindow
             "Battle Drawing System has been rebuilt!\n\n" +
             "Components created:\n" +
             "• BattleDrawingManager\n" +
-            "• SimpleDrawingCanvas\n" +
+            "• BattleDrawingCanvas (separate from DrawingScene)\n" +
             "• Drawing Panel UI (bottom center)\n" +
             "• LineRenderer prefab\n\n" +
             "Make sure to:\n" +
@@ -121,28 +121,28 @@ public class RebuildBattleDrawingSystem : EditorWindow
         return manager;
     }
 
-    private static SimpleDrawingCanvas CreateSimpleDrawingCanvas(Canvas canvas)
+    private static BattleDrawingCanvas CreateBattleDrawingCanvas(Canvas canvas)
     {
-        Debug.Log("Creating SimpleDrawingCanvas...");
+        Debug.Log("Creating BattleDrawingCanvas...");
 
         // Check if one already exists
-        SimpleDrawingCanvas existing = FindObjectOfType<SimpleDrawingCanvas>();
+        BattleDrawingCanvas existing = FindObjectOfType<BattleDrawingCanvas>();
         if (existing != null)
         {
-            Debug.Log("✓ Using existing SimpleDrawingCanvas");
+            Debug.Log("✓ Using existing BattleDrawingCanvas");
             return existing;
         }
 
         // Create new one
         GameObject canvasObj = new GameObject("BattleDrawingCanvas");
         canvasObj.transform.SetParent(canvas.transform, false);
-        SimpleDrawingCanvas drawingCanvas = canvasObj.AddComponent<SimpleDrawingCanvas>();
+        BattleDrawingCanvas drawingCanvas = canvasObj.AddComponent<BattleDrawingCanvas>();
 
         // Create stroke container
         GameObject strokeContainer = new GameObject("StrokeContainer");
         strokeContainer.transform.SetParent(canvasObj.transform, false);
 
-        // Configure SimpleDrawingCanvas
+        // Configure BattleDrawingCanvas
         SerializedObject so = new SerializedObject(drawingCanvas);
 
         SerializedProperty mainCameraProp = so.FindProperty("mainCamera");
@@ -160,15 +160,15 @@ public class RebuildBattleDrawingSystem : EditorWindow
         SerializedProperty minPointDistanceProp = so.FindProperty("minPointDistance");
         minPointDistanceProp.floatValue = 0.03f;
 
-        SerializedProperty currentColorProp = so.FindProperty("currentColor");
-        currentColorProp.colorValue = new Color(0.2f, 1f, 0.2f); // Bright green for visibility
+        SerializedProperty strokeColorProp = so.FindProperty("strokeColor");
+        strokeColorProp.colorValue = new Color(0.2f, 1f, 0.2f); // Bright green for visibility
 
         so.ApplyModifiedProperties();
 
         // Initially disable the canvas (BattleDrawingManager will enable it)
         drawingCanvas.enabled = false;
 
-        Debug.Log("✓ Created SimpleDrawingCanvas (initially disabled)");
+        Debug.Log("✓ Created BattleDrawingCanvas (initially disabled)");
         return drawingCanvas;
     }
 
@@ -373,7 +373,7 @@ public class RebuildBattleDrawingSystem : EditorWindow
         return button;
     }
 
-    private static void WireComponents(BattleDrawingManager battleManager, SimpleDrawingCanvas drawingCanvas,
+    private static void WireComponents(BattleDrawingManager battleManager, BattleDrawingCanvas drawingCanvas,
         LineRenderer lineRendererPrefab, GameObject drawingPanel, CombatManager combatManager)
     {
         Debug.Log("Wiring components together...");
@@ -421,7 +421,7 @@ public class RebuildBattleDrawingSystem : EditorWindow
         managerSO.ApplyModifiedProperties();
         Debug.Log("✓ BattleDrawingManager wired");
 
-        // Wire SimpleDrawingCanvas
+        // Wire BattleDrawingCanvas
         SerializedObject canvasSO = new SerializedObject(drawingCanvas);
 
         SerializedProperty lineRendererPrefabProp = canvasSO.FindProperty("lineRendererPrefab");
@@ -434,7 +434,7 @@ public class RebuildBattleDrawingSystem : EditorWindow
         }
 
         canvasSO.ApplyModifiedProperties();
-        Debug.Log("✓ SimpleDrawingCanvas wired");
+        Debug.Log("✓ BattleDrawingCanvas wired");
 
         // Wire CombatManager
         SerializedObject combatSO = new SerializedObject(combatManager);
