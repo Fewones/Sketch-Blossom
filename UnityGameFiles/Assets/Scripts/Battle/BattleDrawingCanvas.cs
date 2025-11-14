@@ -227,7 +227,9 @@ namespace SketchBlossom.Battle
             currentLine.startWidth = lineWidth;
             currentLine.endWidth = lineWidth;
             currentLine.positionCount = 0;
-            currentLine.useWorldSpace = true; // Use world space for proper visibility
+
+            // For ScreenSpaceOverlay, MUST use local space since overlay doesn't exist in true world space
+            currentLine.useWorldSpace = false;
 
             // Set material and ensure it's applied correctly
             if (lineMaterial != null)
@@ -304,40 +306,21 @@ namespace SketchBlossom.Battle
             // Store local point for move detection
             currentStrokePoints.Add(localPoint);
 
-            if (currentLine != null && mainCamera != null)
+            if (currentLine != null)
             {
-                Vector3 worldPos;
-
-                // Different approach based on canvas render mode
-                if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceCamera)
-                {
-                    // For ScreenSpaceCamera, use the canvas plane distance
-                    float zDistance = canvas.planeDistance;
-                    worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, zDistance));
-                }
-                else if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-                {
-                    // For overlay mode, use a fixed depth in front of camera
-                    worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, mainCamera.nearClipPlane + 0.1f));
-                }
-                else
-                {
-                    // World space canvas - use canvas position Z and offset slightly toward camera
-                    Vector3 canvasWorldPos = drawingArea.position;
-                    float zDepth = Vector3.Distance(mainCamera.transform.position, canvasWorldPos);
-                    worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, zDepth - 0.5f));
-                }
+                // For ScreenSpaceOverlay, use local canvas coordinates directly (Z=0 in local space)
+                Vector3 localPos = new Vector3(localPoint.x, localPoint.y, 0f);
 
                 // Update LineRenderer with the new point
                 int newIndex = currentLine.positionCount;
                 currentLine.positionCount = newIndex + 1;
-                currentLine.SetPosition(newIndex, worldPos);
+                currentLine.SetPosition(newIndex, localPos);
 
                 // Debug first and every 10th point to verify visibility
                 if (currentLine.positionCount == 1 || currentLine.positionCount % 10 == 0)
                 {
-                    Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → World({worldPos.x:F2}, {worldPos.y:F2}, {worldPos.z:F2}) | " +
-                             $"Visible: {currentLine.enabled} | Color: {currentLine.startColor} | CanvasMode: {canvas?.renderMode}");
+                    Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → Local({localPos.x:F2}, {localPos.y:F2}, {localPos.z:F2}) | " +
+                             $"Visible: {currentLine.enabled} | Color: {currentLine.startColor} | UseWorldSpace: {currentLine.useWorldSpace}");
                 }
             }
         }
