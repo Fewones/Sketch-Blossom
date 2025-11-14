@@ -55,6 +55,12 @@ public class SimpleDrawingCanvas : MonoBehaviour
             {
                 AddPoint(mousePos);
             }
+            else
+            {
+                // Mouse left the drawing area - end the stroke immediately
+                Debug.Log("Mouse left drawing area - ending stroke");
+                FinishStroke();
+            }
         }
 
         // End drawing
