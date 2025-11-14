@@ -145,8 +145,14 @@ namespace SketchBlossom.Battle
 
                 if (foundPages.Count > 0)
                 {
+                    // Sort pages by name to ensure correct order (Page0, Page1, Page2, etc.)
+                    foundPages.Sort((a, b) => string.Compare(a.name, b.name));
                     pages = foundPages.ToArray();
-                    LogDebug($"✅ Found {pages.Length} pages");
+                    LogDebug($"✅ Found {pages.Length} pages (sorted by name)");
+                    for (int i = 0; i < pages.Length; i++)
+                    {
+                        LogDebug($"    Page {i}: {pages[i].name}");
+                    }
                 }
                 else
                 {
@@ -426,7 +432,49 @@ namespace SketchBlossom.Battle
         {
             AutoWireReferences();
             SetupListeners();
+            SetupPages();
             LogDebug("Force re-wire complete");
+        }
+
+        /// <summary>
+        /// Manually trigger page setup (useful for editor debugging)
+        /// </summary>
+        [ContextMenu("Setup Pages Manually")]
+        public void ManualSetupPages()
+        {
+            LogDebug("=== Manual Page Setup ===");
+            SetupPages();
+
+            if (pages != null && pages.Length > 0)
+            {
+                LogDebug($"Pages setup complete. Current page: {currentPageIndex + 1}/{pages.Length}");
+                ShowCurrentPage();
+            }
+        }
+
+        /// <summary>
+        /// Debug current state
+        /// </summary>
+        [ContextMenu("Debug Current State")]
+        public void DebugCurrentState()
+        {
+            LogDebug("=== Current State ===");
+            LogDebug($"Guide Panel: {guidePanel != null}");
+            LogDebug($"Open Button: {openGuideButton != null}");
+            LogDebug($"Close Button: {closeGuideButton != null}");
+            LogDebug($"Previous Button: {previousPageButton != null}");
+            LogDebug($"Next Button: {nextPageButton != null}");
+            LogDebug($"Page Indicator: {pageIndicatorText != null}");
+            LogDebug($"Pages Array: {pages != null} (Length: {pages?.Length ?? 0})");
+            LogDebug($"Current Page Index: {currentPageIndex}");
+
+            if (pages != null && pages.Length > 0)
+            {
+                for (int i = 0; i < pages.Length; i++)
+                {
+                    LogDebug($"  Page {i}: {pages[i]?.name ?? "null"} - Active: {pages[i]?.activeSelf ?? false}");
+                }
+            }
         }
     }
 }
