@@ -300,37 +300,17 @@ namespace SketchBlossom.Editor
 
         private static void RemoveOldScripts()
         {
-            bool removed = false;
+            // Old scripts (DrawingManager and DrawingSceneUI) have already been removed from the codebase
+            // This function is kept for UI purposes but no longer needs to search for them
 
-            // Find and destroy old DrawingManager
-            var oldDrawingManager = FindFirstObjectByType<DrawingManager>();
-            if (oldDrawingManager != null)
-            {
-                DestroyImmediate(oldDrawingManager.gameObject);
-                Debug.Log("✓ Removed old DrawingManager");
-                removed = true;
-            }
+            EditorUtility.DisplayDialog("Cleanup Info",
+                "Old manager scripts (DrawingManager, DrawingSceneUI) have already been removed from the codebase.\n\n" +
+                "If you have any old GameObjects in your scene with these components, please remove them manually.\n\n" +
+                "The new architecture uses:\n" +
+                "• DrawingSceneManager\n" +
+                "• DrawingSceneUIController", "OK");
 
-            // Find and destroy old DrawingSceneUI
-            var oldDrawingSceneUI = FindFirstObjectByType<DrawingSceneUI>();
-            if (oldDrawingSceneUI != null)
-            {
-                DestroyImmediate(oldDrawingSceneUI);
-                Debug.Log("✓ Removed old DrawingSceneUI component");
-                removed = true;
-            }
-
-            if (removed)
-            {
-                EditorUtility.DisplayDialog("Cleanup Complete",
-                    "Old manager scripts have been removed.\n\n" +
-                    "Check the Console for details.", "OK");
-            }
-            else
-            {
-                EditorUtility.DisplayDialog("No Old Scripts Found",
-                    "No old manager scripts were found in the scene.", "OK");
-            }
+            Debug.Log("Old scripts have been removed from codebase. Check your scene for any remaining GameObjects.");
         }
     }
 }
