@@ -202,6 +202,13 @@ public class PlantRecognitionSystem : MonoBehaviour
         public bool isHorizontal;        // Wider than tall
         public bool isRadial;            // Strokes from center
         public bool isBranching;         // Multiple branches
+
+        // New robust detection features
+        public int redCircleCount;       // Number of red circular strokes
+        public int greenLineCount;       // Number of green line strokes
+        public int overlappingRedStrokes; // Number of overlapping red strokes
+        public int verticalRedStrokes;   // Number of vertical red strokes
+        public int longVerticalRedStrokes; // Number of long vertical red strokes
     }
 
     private ShapeFeatures AnalyzeShapeFeatures(List<LineRenderer> strokes)
@@ -299,6 +306,77 @@ public class PlantRecognitionSystem : MonoBehaviour
         // Detect branching (multiple short strokes)
         features.isBranching = features.strokeCount >= 4 && features.avgStrokeLength < 3f;
 
+        // NEW ROBUST DETECTION: Analyze strokes by color and shape
+        List<LineRenderer> redStrokes = new List<LineRenderer>();
+        List<LineRenderer> greenStrokes = new List<LineRenderer>();
+
+        // Separate strokes by color
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null) continue;
+
+            Color strokeColor = GetStrokeColor(stroke);
+            if (IsColorRed(strokeColor))
+            {
+                redStrokes.Add(stroke);
+            }
+            else if (IsColorGreen(strokeColor))
+            {
+                greenStrokes.Add(stroke);
+            }
+        }
+
+        // Count red circles
+        features.redCircleCount = 0;
+        foreach (var stroke in redStrokes)
+        {
+            if (IsStrokeCircular(stroke))
+            {
+                features.redCircleCount++;
+            }
+        }
+
+        // Count green lines (non-circular green strokes)
+        features.greenLineCount = 0;
+        foreach (var stroke in greenStrokes)
+        {
+            if (!IsStrokeCircular(stroke))
+            {
+                features.greenLineCount++;
+            }
+        }
+
+        // Count overlapping red strokes
+        features.overlappingRedStrokes = 0;
+        for (int i = 0; i < redStrokes.Count; i++)
+        {
+            for (int j = i + 1; j < redStrokes.Count; j++)
+            {
+                if (DoStrokesOverlap(redStrokes[i], redStrokes[j]))
+                {
+                    features.overlappingRedStrokes++;
+                }
+            }
+        }
+
+        // Count vertical red strokes
+        features.verticalRedStrokes = 0;
+        features.longVerticalRedStrokes = 0;
+        const float LONG_STROKE_THRESHOLD = 2.0f; // Minimum length to be considered "long"
+
+        foreach (var stroke in redStrokes)
+        {
+            float strokeLength;
+            if (IsStrokeVertical(stroke, out strokeLength))
+            {
+                features.verticalRedStrokes++;
+                if (strokeLength >= LONG_STROKE_THRESHOLD)
+                {
+                    features.longVerticalRedStrokes++;
+                }
+            }
+        }
+
         return features;
     }
 
@@ -319,19 +397,65 @@ public class PlantRecognitionSystem : MonoBehaviour
 
     private PlantType DetermineFirePlant(ShapeFeatures features)
     {
-        // Sunflower: Radial pattern, circular
-        if (features.isRadial && features.compactness > 0.4f)
+        Debug.Log("=== ROBUST FIRE PLANT DETECTION ===");
+
+        // ROBUST DETECTION LOGIC:
+        // Sunflower: Roughly 4 or more red circles + one green line
+        bool isSunflower = features.redCircleCount >= 4 && features.greenLineCount >= 1;
+        Debug.Log($"Sunflower check: {features.redCircleCount} red circles, {features.greenLineCount} green lines -> {isSunflower}");
+
+        if (isSunflower)
+        {
+            Debug.Log("✓ Detected: SUNFLOWER (4+ red circles + green line)");
             return PlantType.Sunflower;
+        }
 
-        // Fire Rose: Compact, many strokes, circular
-        if (features.strokeCount >= 6 && features.compactness > 0.5f)
+        // Fire Rose: At least 5 overlapping red strokes + one green line
+        bool isFireRose = features.overlappingRedStrokes >= 5 && features.greenLineCount >= 1;
+        Debug.Log($"Fire Rose check: {features.overlappingRedStrokes} overlapping red strokes, {features.greenLineCount} green lines -> {isFireRose}");
+
+        if (isFireRose)
+        {
+            Debug.Log("✓ Detected: FIRE ROSE (5+ overlapping red strokes + green line)");
             return PlantType.FireRose;
+        }
 
-        // Flame Tulip: Vertical, simple shape (few strokes)
-        if (features.isVertical || features.strokeCount <= 3)
+        // Flame Tulip: 3 long enough mostly vertical red strokes
+        bool isFlameTulip = features.longVerticalRedStrokes >= 3;
+        Debug.Log($"Flame Tulip check: {features.longVerticalRedStrokes} long vertical red strokes -> {isFlameTulip}");
+
+        if (isFlameTulip)
+        {
+            Debug.Log("✓ Detected: FLAME TULIP (3+ long vertical red strokes)");
             return PlantType.FlameTulip;
+        }
 
-        // Default
+        // FALLBACK: Use legacy detection for edge cases
+        Debug.Log("No robust match found, using fallback detection...");
+
+        // Fallback Sunflower: Radial pattern, circular
+        if (features.isRadial && features.compactness > 0.4f)
+        {
+            Debug.Log("✓ Fallback: SUNFLOWER (radial pattern)");
+            return PlantType.Sunflower;
+        }
+
+        // Fallback Fire Rose: Compact, many strokes, circular
+        if (features.strokeCount >= 6 && features.compactness > 0.5f)
+        {
+            Debug.Log("✓ Fallback: FIRE ROSE (many compact strokes)");
+            return PlantType.FireRose;
+        }
+
+        // Fallback Flame Tulip: Vertical, simple shape (few strokes)
+        if (features.isVertical || features.strokeCount <= 3)
+        {
+            Debug.Log("✓ Fallback: FLAME TULIP (vertical or simple)");
+            return PlantType.FlameTulip;
+        }
+
+        // Default to Sunflower
+        Debug.Log("✓ Default: SUNFLOWER");
         return PlantType.Sunflower;
     }
 
@@ -397,6 +521,160 @@ public class PlantRecognitionSystem : MonoBehaviour
         return new RecognitionResult(defaultType, element, data, 0.3f, color);
     }
 
+    /// <summary>
+    /// Checks if a stroke is circular (closed loop with round shape)
+    /// </summary>
+    private bool IsStrokeCircular(LineRenderer stroke)
+    {
+        if (stroke == null || stroke.positionCount < 10) return false;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        // Check if start and end points are close (closed loop)
+        float closedDistance = Vector3.Distance(positions[0], positions[positions.Length - 1]);
+
+        // Calculate the perimeter
+        float perimeter = 0f;
+        for (int i = 1; i < positions.Length; i++)
+        {
+            perimeter += Vector3.Distance(positions[i - 1], positions[i]);
+        }
+
+        // A closed loop should have start/end close together
+        if (closedDistance > perimeter * 0.2f) return false;
+
+        // Calculate center and average radius
+        Vector2 center = Vector2.zero;
+        foreach (var pos in positions)
+        {
+            center += new Vector2(pos.x, pos.y);
+        }
+        center /= positions.Length;
+
+        // Calculate radius variance (how consistent the radius is)
+        float avgRadius = 0f;
+        foreach (var pos in positions)
+        {
+            avgRadius += Vector2.Distance(new Vector2(pos.x, pos.y), center);
+        }
+        avgRadius /= positions.Length;
+
+        float radiusVariance = 0f;
+        foreach (var pos in positions)
+        {
+            float radius = Vector2.Distance(new Vector2(pos.x, pos.y), center);
+            radiusVariance += Mathf.Abs(radius - avgRadius);
+        }
+        radiusVariance /= positions.Length;
+
+        // A circle should have low radius variance
+        float varianceRatio = radiusVariance / Mathf.Max(0.01f, avgRadius);
+        return varianceRatio < 0.3f; // 30% variance threshold
+    }
+
+    /// <summary>
+    /// Checks if a stroke is mostly vertical
+    /// </summary>
+    private bool IsStrokeVertical(LineRenderer stroke, out float strokeLength)
+    {
+        strokeLength = 0f;
+        if (stroke == null || stroke.positionCount < 2) return false;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        // Calculate bounding box
+        float minY = float.MaxValue, maxY = float.MinValue;
+        float minX = float.MaxValue, maxX = float.MinValue;
+
+        foreach (var pos in positions)
+        {
+            minY = Mathf.Min(minY, pos.y);
+            maxY = Mathf.Max(maxY, pos.y);
+            minX = Mathf.Min(minX, pos.x);
+            maxX = Mathf.Max(maxX, pos.x);
+        }
+
+        float height = maxY - minY;
+        float width = maxX - minX;
+        strokeLength = height;
+
+        // Stroke is vertical if height > width * 1.5
+        return height > width * 1.5f;
+    }
+
+    /// <summary>
+    /// Checks if two strokes overlap (have points close to each other)
+    /// </summary>
+    private bool DoStrokesOverlap(LineRenderer stroke1, LineRenderer stroke2, float threshold = 0.5f)
+    {
+        if (stroke1 == null || stroke2 == null) return false;
+
+        Vector3[] positions1 = new Vector3[stroke1.positionCount];
+        Vector3[] positions2 = new Vector3[stroke2.positionCount];
+        stroke1.GetPositions(positions1);
+        stroke2.GetPositions(positions2);
+
+        // Sample points to check for overlaps
+        int sampleRate = Mathf.Max(1, positions1.Length / 5); // Sample ~5 points
+        int overlapCount = 0;
+        int sampledPoints = 0;
+
+        for (int i = 0; i < positions1.Length; i += sampleRate)
+        {
+            sampledPoints++;
+            Vector2 point1 = new Vector2(positions1[i].x, positions1[i].y);
+
+            // Check if any point in stroke2 is close to this point
+            foreach (var pos2 in positions2)
+            {
+                Vector2 point2 = new Vector2(pos2.x, pos2.y);
+                if (Vector2.Distance(point1, point2) < threshold)
+                {
+                    overlapCount++;
+                    break;
+                }
+            }
+        }
+
+        // Consider overlapping if at least 40% of sampled points are close
+        return (float)overlapCount / sampledPoints >= 0.4f;
+    }
+
+    /// <summary>
+    /// Gets the color of a stroke
+    /// </summary>
+    private Color GetStrokeColor(LineRenderer stroke)
+    {
+        if (stroke == null) return Color.white;
+
+        // Get color from the material or gradient
+        if (stroke.material != null && stroke.material.HasProperty("_Color"))
+        {
+            return stroke.material.GetColor("_Color");
+        }
+
+        // Fallback to gradient start color
+        return stroke.startColor;
+    }
+
+    /// <summary>
+    /// Determines if a color is primarily red
+    /// </summary>
+    private bool IsColorRed(Color color)
+    {
+        return color.r > 0.5f && color.r > color.g && color.r > color.b;
+    }
+
+    /// <summary>
+    /// Determines if a color is primarily green
+    /// </summary>
+    private bool IsColorGreen(Color color)
+    {
+        return color.g > 0.5f && color.g > color.r && color.g > color.b;
+    }
+
     private void LogShapeFeatures(ShapeFeatures features)
     {
         Debug.Log($"Shape Features:");
@@ -405,6 +683,9 @@ public class PlantRecognitionSystem : MonoBehaviour
         Debug.Log($"  - Curviness: {features.curviness:F1}°");
         Debug.Log($"  - Strokes: {features.strokeCount}, Avg Length: {features.avgStrokeLength:F2}");
         Debug.Log($"  - Radial: {features.isRadial}, Branching: {features.isBranching}");
+        Debug.Log($"  - Red Circles: {features.redCircleCount}, Green Lines: {features.greenLineCount}");
+        Debug.Log($"  - Overlapping Red Strokes: {features.overlappingRedStrokes}");
+        Debug.Log($"  - Vertical Red Strokes: {features.verticalRedStrokes}, Long Vertical: {features.longVerticalRedStrokes}");
     }
 
     private void LogResult(RecognitionResult result)
