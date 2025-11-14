@@ -185,7 +185,7 @@ namespace SketchBlossom.Battle
                 return;
 
             isDrawing = true;
-            currentStrokePoints = new List<Vector2>();
+            currentStrokePoints = new List<Vector2>(); // Still track as Vector2 for move detection
 
             // Create new line renderer
             GameObject lineObj;
@@ -212,7 +212,7 @@ namespace SketchBlossom.Battle
             currentLine.startWidth = lineWidth;
             currentLine.endWidth = lineWidth;
             currentLine.positionCount = 0;
-            currentLine.useWorldSpace = false; // Use local space for UI canvas
+            currentLine.useWorldSpace = true; // Use world space for proper visibility
 
             // Set material and ensure it's applied correctly
             if (lineMaterial != null)
@@ -288,15 +288,24 @@ namespace SketchBlossom.Battle
         {
             currentStrokePoints.Add(point);
 
-            if (currentLine != null)
+            if (currentLine != null && mainCamera != null)
             {
                 currentLine.positionCount = currentStrokePoints.Count;
 
-                // Convert to Vector3 for LineRenderer (local space)
+                // Convert to Vector3 for LineRenderer (world space with proper Z depth)
                 Vector3[] positions = new Vector3[currentStrokePoints.Count];
                 for (int i = 0; i < currentStrokePoints.Count; i++)
                 {
-                    positions[i] = new Vector3(currentStrokePoints[i].x, currentStrokePoints[i].y, 0);
+                    // Convert local canvas point back to screen space, then to world space
+                    Vector2 localPoint = currentStrokePoints[i];
+                    Vector3 worldCorner = drawingArea.TransformPoint(localPoint);
+                    Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(
+                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                        worldCorner
+                    );
+
+                    // Convert screen point to world position with Z=10f for proper depth
+                    positions[i] = mainCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, 10f));
                 }
 
                 currentLine.SetPositions(positions);
@@ -304,7 +313,7 @@ namespace SketchBlossom.Battle
                 // Debug first and every 10th point to verify visibility
                 if (currentStrokePoints.Count == 1 || currentStrokePoints.Count % 10 == 0)
                 {
-                    Debug.Log($"Line point {currentStrokePoints.Count}: {point} | LineRenderer visible: {currentLine.enabled} | Color: {currentLine.startColor}");
+                    Debug.Log($"Line point {currentStrokePoints.Count}: World {positions[currentStrokePoints.Count-1]} | LineRenderer visible: {currentLine.enabled} | Color: {currentLine.startColor}");
                 }
             }
         }
