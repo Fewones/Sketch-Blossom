@@ -172,62 +172,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &46784760
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 46784762}
-  - component: {fileID: 46784761}
-  m_Layer: 0
-  m_Name: DrawnUnityData
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &46784761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 46784760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f80bcf4e39d1a2541aebac9c0ced676c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DrawnUnitData
-  attack: 10
-  defense: 10
-  health: 30
-  plantType: 0
-  element: 0
-  detectionConfidence: 0
-  plantDisplayName: Unknown
-  strokeCount: 0
-  totalDrawingLength: 0
-  totalPoints: 0
-  drawingTexture: {fileID: 0}
-  unitColor: {r: 0, g: 1, b: 0, a: 1}
---- !u!4 &46784762
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 46784760}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &164154743
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,85 +583,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 281713992}
   m_CullTransparentMesh: 1
---- !u!1 &325244527
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 325244530}
-  - component: {fileID: 325244529}
-  - component: {fileID: 325244531}
-  m_Layer: 0
-  m_Name: DrawingManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &325244529
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 325244527}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0acfc8655c1dbdd4d81d7cc011779d5b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DrawingManager
-  drawingCanvas: {fileID: 824603168}
-  simpleCanvas: {fileID: 34142893}
-  recognitionSystem: {fileID: 1935590026}
-  plantResultPanel: {fileID: 879836866}
-  drawingOverlay: {fileID: 1458536662}
-  drawingPanel: {fileID: 1324501826}
-  battleSceneName: BattleScene
---- !u!4 &325244530
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 325244527}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1094600378}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &325244531
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 325244527}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9279e8b1dd434eedb8874992af77b60, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DrawingCanvas
-  maxStrokes: 15
-  minPointDistance: 0.05
-  lineRendererPrefab: {fileID: 5329420961075820134, guid: c63f49d04e33d4271a61d087a59a3ca1, type: 3}
-  strokeContainer: {fileID: 1094600378}
-  strokeCountText: {fileID: 0}
-  finishButton: {fileID: 0}
-  drawingArea: {fileID: 0}
-  isDrawingEnabled: 0
-  redColor: {r: 1, g: 0, b: 0, a: 1}
-  greenColor: {r: 0, g: 1, b: 0, a: 1}
-  blueColor: {r: 0, g: 0, b: 1, a: 1}
-  currentDrawingColor: {r: 0, g: 1, b: 0, a: 1}
-  currentStrokeCount: 0
-  allStrokes: []
 --- !u!1 &332956669
 GameObject:
   m_ObjectHideFlags: 0
@@ -2013,7 +1878,6 @@ MonoBehaviour:
   redLabel: {fileID: 1712406329}
   greenLabel: {fileID: 164154746}
   blueLabel: {fileID: 1375806677}
-  drawingCanvas: {fileID: 325244531}
   simpleDrawingCanvas: {fileID: 34142893}
 --- !u!1 &665204012
 GameObject:
@@ -2280,37 +2144,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705992513}
   m_CullTransparentMesh: 1
---- !u!1 &739888710
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 739888711}
-  m_Layer: 0
-  m_Name: StrokeContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &739888711
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 739888710}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &824233831
 GameObject:
   m_ObjectHideFlags: 0
@@ -2451,64 +2284,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!1 &824603167
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 824603169}
-  - component: {fileID: 824603168}
-  m_Layer: 0
-  m_Name: GameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &824603168
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824603167}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9279e8b1dd434eedb8874992af77b60, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DrawingCanvas
-  maxStrokes: 15
-  minPointDistance: 0.05
-  lineRendererPrefab: {fileID: 6411615712902191213, guid: b43a7c06943ca49fca55ea1ce1ed9c68, type: 3}
-  strokeContainer: {fileID: 739888711}
-  strokeCountText: {fileID: 0}
-  finishButton: {fileID: 0}
-  drawingArea: {fileID: 0}
-  isDrawingEnabled: 0
-  redColor: {r: 1, g: 0, b: 0, a: 1}
-  greenColor: {r: 0, g: 1, b: 0, a: 1}
-  blueColor: {r: 0, g: 0, b: 1, a: 1}
-  currentDrawingColor: {r: 0, g: 1, b: 0, a: 1}
-  currentStrokeCount: 0
-  allStrokes: []
---- !u!4 &824603169
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824603167}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1280, y: 720, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &879836864
 GameObject:
   m_ObjectHideFlags: 0
@@ -3158,37 +2933,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1055880576}
   m_CullTransparentMesh: 1
---- !u!1 &1094600377
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1094600378}
-  m_Layer: 0
-  m_Name: StrokeContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1094600378
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1094600377}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 325244530}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1099387697
 GameObject:
   m_ObjectHideFlags: 0
@@ -4131,71 +3875,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
   m_Padding: {x: 0, y: 0, z: 0, w: 0}
   m_Softness: {x: 0, y: 0}
---- !u!1 &1338616856
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1338616858}
-  - component: {fileID: 1338616857}
-  m_Layer: 0
-  m_Name: UIManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1338616857
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1338616856}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb66d8876a11d43c38e81b7799838743, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DrawingSceneUI
-  instructionsPanel: {fileID: 1460150792}
-  drawingPanel: {fileID: 1324501826}
-  feedbackPanel: {fileID: 0}
-  instructionTitle: {fileID: 0}
-  instructionText: {fileID: 0}
-  startDrawingButton: {fileID: 1222118662}
-  strokeCounterText: {fileID: 0}
-  hintText: {fileID: 0}
-  progressBar: {fileID: 0}
-  detectedPlantText: {fileID: 0}
-  elementTypeText: {fileID: 0}
-  confidenceText: {fileID: 0}
-  plantIcon: {fileID: 0}
-  clearButton: {fileID: 0}
-  undoButton: {fileID: 0}
-  guideBookButton: {fileID: 0}
-  fireColor: {r: 1, g: 0.4, b: 0, a: 1}
-  grassColor: {r: 0.3, g: 0.8, b: 0.3, a: 1}
-  waterColor: {r: 0.3, g: 0.6, b: 1, a: 1}
-  useAnimations: 1
-  fadeSpeed: 2
---- !u!4 &1338616858
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1338616856}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1375806674
 GameObject:
   m_ObjectHideFlags: 0
@@ -6877,11 +6556,6 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 1879217796}
   - {fileID: 487772903}
-  - {fileID: 739888711}
-  - {fileID: 824603169}
-  - {fileID: 325244530}
-  - {fileID: 46784762}
-  - {fileID: 1338616858}
   - {fileID: 1709098662}
   - {fileID: 34142894}
   - {fileID: 1935590027}
