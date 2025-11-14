@@ -406,7 +406,23 @@ public class DrawingManager : MonoBehaviour
     /// </summary>
     private void LoadBattleScene()
     {
-        Debug.Log($"Loading battle scene: {battleSceneName}");
+        Debug.Log("========== LOAD BATTLE SCENE CALLED ==========");
+        Debug.Log($"✓ Loading battle scene: {battleSceneName}");
+
+        // Verify DrawnUnitData exists
+        if (DrawnUnitData.Instance != null)
+        {
+            Debug.Log($"✓ DrawnUnitData exists with plant: {DrawnUnitData.Instance.plantDisplayName}");
+            Debug.Log($"✓ Plant type: {DrawnUnitData.Instance.plantType}");
+            Debug.Log($"✓ Stats: HP={DrawnUnitData.Instance.health} ATK={DrawnUnitData.Instance.attack} DEF={DrawnUnitData.Instance.defense}");
+        }
+        else
+        {
+            Debug.LogError("❌ DrawnUnitData.Instance is NULL! Battle scene may not work correctly.");
+        }
+
+        Debug.Log("✓ Calling SceneManager.LoadScene...");
         SceneManager.LoadScene(battleSceneName);
+        Debug.Log("========== SCENE LOAD INITIATED ==========");
     }
 }

@@ -35,22 +35,34 @@ public class PlantResultPanel : MonoBehaviour
     private void Awake()
     {
         // Use Awake instead of Start - runs before any SetActive calls
-        Debug.Log("PlantResultPanel.Awake() called");
+        Debug.Log("========== PlantResultPanel.Awake() ==========");
 
         // Setup button listeners in Awake (won't interfere with ShowResults)
         if (continueButton != null)
         {
             continueButton.onClick.AddListener(OnContinue);
-            Debug.Log("PlantResultPanel: Continue button listener added");
+            Debug.Log("✓ Continue button listener added successfully");
+            Debug.Log($"✓ Continue button name: {continueButton.gameObject.name}");
+            Debug.Log($"✓ Continue button active: {continueButton.gameObject.activeInHierarchy}");
+        }
+        else
+        {
+            Debug.LogError("❌ Continue button is NULL! Button won't work.");
+            Debug.LogError("❌ Make sure to assign the continue button in the Inspector.");
         }
 
         if (redrawButton != null)
         {
             redrawButton.onClick.AddListener(OnRedraw);
-            Debug.Log("PlantResultPanel: Redraw button listener added");
+            Debug.Log("✓ Redraw button listener added successfully");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Redraw button is NULL");
         }
 
         hasBeenInitialized = true;
+        Debug.Log("========== PlantResultPanel.Awake() Complete ==========");
     }
 
     private void OnEnable()
@@ -102,6 +114,15 @@ public class PlantResultPanel : MonoBehaviour
 
         onContinueCallback = onContinue;
         onRedrawCallback = onRedraw;
+
+        Debug.Log($"✓ Continue callback set: {(onContinue != null ? "YES" : "NO (NULL)")}");
+        Debug.Log($"✓ Redraw callback set: {(onRedraw != null ? "YES" : "NO (NULL)")}");
+
+        if (onContinue != null)
+        {
+            Debug.Log($"✓ Continue callback target: {onContinue.Target}");
+            Debug.Log($"✓ Continue callback method: {onContinue.Method.Name}");
+        }
 
         // Show the panel overlay (background)
         panelOverlay.SetActive(true);
@@ -203,16 +224,30 @@ public class PlantResultPanel : MonoBehaviour
 
     private void OnContinue()
     {
+        Debug.Log("========== CONTINUE BUTTON CLICKED ==========");
         Debug.Log("PlantResultPanel: Continue to Battle button clicked");
+
+        // Check if callback exists
+        if (onContinueCallback != null)
+        {
+            Debug.Log("✓ Continue callback exists - invoking now...");
+        }
+        else
+        {
+            Debug.LogError("❌ Continue callback is NULL! Cannot load battle scene.");
+            Debug.LogError("❌ Make sure DrawingManager passed LoadBattleScene callback to ShowResults()");
+        }
 
         // Hide panel
         if (panelOverlay != null)
         {
             panelOverlay.SetActive(false);
+            Debug.Log("✓ Panel overlay hidden");
         }
 
         // Invoke callback
         onContinueCallback?.Invoke();
+        Debug.Log("========== CONTINUE CALLBACK INVOKED ==========");
     }
 
     private void OnRedraw()
