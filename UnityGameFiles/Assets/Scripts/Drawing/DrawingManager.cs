@@ -20,7 +20,7 @@ public class DrawingManager : MonoBehaviour
     public GameObject drawingPanel;
 
     [Header("Scene Management")]
-    public string battleSceneName = "BattleScene";
+    public string battleSceneName = "DrawingBattleScene";
 
     private DrawnUnitData unitData;
     private PlantRecognitionSystem.RecognitionResult lastRecognitionResult;
@@ -266,8 +266,8 @@ public class DrawingManager : MonoBehaviour
         if (plantResultPanel != null)
         {
             Debug.Log("✓ Calling PlantResultPanel.ShowResults() - it will show its own UI");
-            // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
-            plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
+            // Pass LoadBattleScene to enable battle scene transition
+            plantResultPanel.ShowResults(lastRecognitionResult, unitData, LoadBattleScene, OnRedrawRequested);
         }
         else
         {
@@ -402,13 +402,15 @@ public class DrawingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Load the battle scene - DISABLED FOR TESTING
+    /// Load the battle scene with the drawn unit data
     /// </summary>
     private void LoadBattleScene()
     {
-        Debug.LogWarning("⚠️ BATTLE SCENE LOADING DISABLED FOR TESTING ⚠️");
-        Debug.LogWarning($"Would have loaded: {battleSceneName}");
-        Debug.LogWarning("Stay in drawing scene to test plant recognition");
-        // SceneManager.LoadScene(battleSceneName);
+        Debug.Log($"Loading battle scene: {battleSceneName}");
+        Debug.Log($"Transferring plant data: {unitData.plantType} ({unitData.element})");
+        Debug.Log($"Stats: HP={unitData.health}, ATK={unitData.attack}, DEF={unitData.defense}");
+
+        // DrawnUnitData is a singleton with DontDestroyOnLoad, so it will persist
+        SceneManager.LoadScene(battleSceneName);
     }
 }
