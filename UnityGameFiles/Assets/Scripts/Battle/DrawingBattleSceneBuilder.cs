@@ -501,6 +501,66 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
+        /// Fix existing scene by finding and wiring up all references
+        /// Use this instead of rebuilding the entire scene
+        /// </summary>
+        [ContextMenu("Fix Existing Scene (No Rebuild)")]
+        public void FixExistingScene()
+        {
+            Debug.Log("=== FIXING EXISTING SCENE ===");
+
+            // Find BattleManager
+            battleManager = FindObjectOfType<DrawingBattleSceneManager>();
+            if (battleManager == null)
+            {
+                Debug.LogError("❌ BattleManager not found in scene! Add DrawingBattleSceneManager component first.");
+                return;
+            }
+
+            // Find all existing components by name
+            createdDrawingCanvas = FindComponentByName<BattleDrawingCanvas>("DrawingArea");
+            createdPlayerHPBar = FindComponentByName<BattleHPBar>("PlayerHPBar");
+            createdEnemyHPBar = FindComponentByName<BattleHPBar>("EnemyHPBar");
+            createdFinishButton = FindComponentByName<Button>("FinishDrawingButton");
+            createdClearButton = FindComponentByName<Button>("ClearDrawingButton");
+            createdTurnIndicator = FindComponentByName<TextMeshProUGUI>("TurnIndicator");
+            createdActionText = FindComponentByName<TextMeshProUGUI>("ActionText");
+            createdAvailableMovesText = FindComponentByName<TextMeshProUGUI>("AvailableMovesText");
+
+            // Wire them all up
+            WireUpReferences();
+
+            Debug.Log("✅ EXISTING SCENE FIXED!");
+            Debug.Log("All references connected. Drawing and action text should now work!");
+        }
+
+        /// <summary>
+        /// Helper to find a component by GameObject name
+        /// </summary>
+        private T FindComponentByName<T>(string gameObjectName) where T : Component
+        {
+            GameObject obj = GameObject.Find(gameObjectName);
+            if (obj != null)
+            {
+                T component = obj.GetComponent<T>();
+                if (component != null)
+                {
+                    Debug.Log($"✅ Found {typeof(T).Name} in '{gameObjectName}'");
+                    return component;
+                }
+                else
+                {
+                    Debug.LogWarning($"⚠ Found '{gameObjectName}' but no {typeof(T).Name} component");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"⚠ GameObject '{gameObjectName}' not found");
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Create EventSystem if it doesn't exist
         /// </summary>
         [ContextMenu("Create EventSystem")]
