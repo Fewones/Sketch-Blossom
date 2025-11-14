@@ -241,7 +241,7 @@ namespace SketchBlossom.Battle
 
             // Add first point
             Vector2 localPoint = ScreenToCanvasPoint(screenPosition);
-            AddPointToCurrentLine(localPoint);
+            AddPointToCurrentLine(localPoint, screenPosition);
         }
 
         private void ContinueDrawing(Vector2 screenPosition)
@@ -259,7 +259,7 @@ namespace SketchBlossom.Battle
                     return;
             }
 
-            AddPointToCurrentLine(localPoint);
+            AddPointToCurrentLine(localPoint, screenPosition);
         }
 
         private void EndDrawing()
@@ -284,36 +284,25 @@ namespace SketchBlossom.Battle
             isDrawing = false;
         }
 
-        private void AddPointToCurrentLine(Vector2 point)
+        private void AddPointToCurrentLine(Vector2 localPoint, Vector2 screenPosition)
         {
-            currentStrokePoints.Add(point);
+            // Store local point for move detection
+            currentStrokePoints.Add(localPoint);
 
             if (currentLine != null && mainCamera != null)
             {
-                currentLine.positionCount = currentStrokePoints.Count;
+                // Convert screen position directly to world space with proper Z depth
+                Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 10f));
 
-                // Convert to Vector3 for LineRenderer (world space with proper Z depth)
-                Vector3[] positions = new Vector3[currentStrokePoints.Count];
-                for (int i = 0; i < currentStrokePoints.Count; i++)
-                {
-                    // Convert local canvas point back to screen space, then to world space
-                    Vector2 localPoint = currentStrokePoints[i];
-                    Vector3 worldCorner = drawingArea.TransformPoint(localPoint);
-                    Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(
-                        canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                        worldCorner
-                    );
-
-                    // Convert screen point to world position with Z=10f for proper depth
-                    positions[i] = mainCamera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, 10f));
-                }
-
-                currentLine.SetPositions(positions);
+                // Update LineRenderer with the new point
+                int newIndex = currentLine.positionCount;
+                currentLine.positionCount = newIndex + 1;
+                currentLine.SetPosition(newIndex, worldPos);
 
                 // Debug first and every 10th point to verify visibility
-                if (currentStrokePoints.Count == 1 || currentStrokePoints.Count % 10 == 0)
+                if (currentLine.positionCount == 1 || currentLine.positionCount % 10 == 0)
                 {
-                    Debug.Log($"Line point {currentStrokePoints.Count}: World {positions[currentStrokePoints.Count-1]} | LineRenderer visible: {currentLine.enabled} | Color: {currentLine.startColor}");
+                    Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → World({worldPos.x:F2}, {worldPos.y:F2}, {worldPos.z:F2}) | Visible: {currentLine.enabled} | Color: {currentLine.startColor}");
                 }
             }
         }
