@@ -52,7 +52,25 @@ public class SetupResultPanelLayout : EditorWindow
 
         Debug.Log($"✓ Found Panel Window: {panelWindow.name}");
 
-        // Add/Update background color for panel window
+        // Find the drawing area to get its dimensions
+        SimpleDrawingCanvas drawingCanvas = FindFirstObjectByType<SimpleDrawingCanvas>(FindObjectsInactive.Include);
+        RectTransform drawingAreaRect = null;
+        float drawingWidth = 800f;  // Default fallback
+        float drawingHeight = 600f; // Default fallback
+
+        if (drawingCanvas != null && drawingCanvas.drawingArea != null)
+        {
+            drawingAreaRect = drawingCanvas.drawingArea;
+            drawingWidth = drawingAreaRect.rect.width;
+            drawingHeight = drawingAreaRect.rect.height;
+            Debug.Log($"✓ Found DrawingArea: {drawingWidth}x{drawingHeight}");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ DrawingArea not found, using default size");
+        }
+
+        // Add/Update background color for panel window (transparent so drawing shows through)
         Image panelWindowImage = panelWindow.GetComponent<Image>();
         if (panelWindowImage == null)
         {
@@ -60,116 +78,163 @@ public class SetupResultPanelLayout : EditorWindow
             Debug.Log("✓ Added Image component to Panel Window");
         }
         Undo.RecordObject(panelWindowImage, "Set Panel Background Color");
-        panelWindowImage.color = new Color(0.95f, 0.95f, 0.95f, 1f); // Light gray, fully opaque
+        panelWindowImage.color = new Color(0.95f, 0.95f, 0.95f, 0f); // Transparent - let drawing show through
         EditorUtility.SetDirty(panelWindowImage);
-        Debug.Log("✓ Set Panel Window background to light gray");
+        Debug.Log("✓ Set Panel Window background to transparent");
 
-        // Format Title (top center)
+        // Create or find a visual frame rectangle in the center
+        Transform existingFrame = panelWindow.transform.Find("DrawingFrame");
+        GameObject frameObj;
+        if (existingFrame != null)
+        {
+            frameObj = existingFrame.gameObject;
+            Debug.Log("✓ Found existing DrawingFrame");
+        }
+        else
+        {
+            frameObj = new GameObject("DrawingFrame");
+            frameObj.transform.SetParent(panelWindow.transform, false);
+            Debug.Log("✓ Created new DrawingFrame");
+        }
+
+        RectTransform frameRect = frameObj.GetComponent<RectTransform>();
+        if (frameRect == null)
+        {
+            frameRect = frameObj.AddComponent<RectTransform>();
+        }
+
+        Image frameImage = frameObj.GetComponent<Image>();
+        if (frameImage == null)
+        {
+            frameImage = frameObj.AddComponent<Image>();
+        }
+
+        // Position the frame in the center (same size as drawing area)
+        Undo.RecordObject(frameRect, "Format Drawing Frame");
+        frameRect.anchorMin = new Vector2(0.5f, 0.5f);
+        frameRect.anchorMax = new Vector2(0.5f, 0.5f);
+        frameRect.pivot = new Vector2(0.5f, 0.5f);
+        frameRect.anchoredPosition = new Vector2(0f, -50f); // Slight offset down from center
+        frameRect.sizeDelta = new Vector2(drawingWidth, drawingHeight);
+
+        // Make it a subtle outline frame
+        Undo.RecordObject(frameImage, "Set Frame Color");
+        frameImage.color = new Color(0.5f, 0.5f, 0.5f, 0.3f); // Semi-transparent gray
+        EditorUtility.SetDirty(frameObj);
+        Debug.Log($"✓ Created frame rectangle: {drawingWidth}x{drawingHeight}");
+
+        // Calculate positions based on frame
+        float frameTop = -50f + drawingHeight / 2f;
+        float frameBottom = -50f - drawingHeight / 2f;
+        float frameLeft = -drawingWidth / 2f;
+        float frameRight = drawingWidth / 2f;
+
+        // Format Title (above frame, centered)
         if (titleText != null)
         {
             Undo.RecordObject(titleText.GetComponent<RectTransform>(), "Format Title");
             RectTransform rect = titleText.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -20f);
-            rect.sizeDelta = new Vector2(400f, 40f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, frameTop + 100f); // 100px above frame
+            rect.sizeDelta = new Vector2(drawingWidth, 40f);
             titleText.alignment = TextAlignmentOptions.Center;
-            titleText.fontSize = 24;
+            titleText.fontSize = 28;
             EditorUtility.SetDirty(titleText.gameObject);
-            Debug.Log("✓ Formatted Title: Top Center");
+            Debug.Log($"✓ Formatted Title: Above frame at y={frameTop + 100f}");
         }
 
-        // Format Plant Name (below title, center)
+        // Format Plant Name (above frame, below title)
         if (plantNameText != null)
         {
             Undo.RecordObject(plantNameText.GetComponent<RectTransform>(), "Format Plant Name");
             RectTransform rect = plantNameText.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -70f);
-            rect.sizeDelta = new Vector2(500f, 60f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, frameTop + 50f); // 50px above frame
+            rect.sizeDelta = new Vector2(drawingWidth, 40f);
             plantNameText.alignment = TextAlignmentOptions.Center;
-            plantNameText.fontSize = 48;
+            plantNameText.fontSize = 36;
             EditorUtility.SetDirty(plantNameText.gameObject);
-            Debug.Log("✓ Formatted Plant Name: Below Title, Centered");
+            Debug.Log($"✓ Formatted Plant Name: Above frame at y={frameTop + 50f}");
         }
 
-        // Format Element Text (below plant name, center)
+        // Format Element Text (directly above frame)
         if (elementText != null)
         {
             Undo.RecordObject(elementText.GetComponent<RectTransform>(), "Format Element");
             RectTransform rect = elementText.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -140f);
-            rect.sizeDelta = new Vector2(300f, 35f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, frameTop + 10f); // 10px above frame
+            rect.sizeDelta = new Vector2(drawingWidth, 30f);
             elementText.alignment = TextAlignmentOptions.Center;
-            elementText.fontSize = 24;
+            elementText.fontSize = 22;
             EditorUtility.SetDirty(elementText.gameObject);
-            Debug.Log("✓ Formatted Element: Below Plant Name, Centered");
+            Debug.Log($"✓ Formatted Element: Above frame at y={frameTop + 10f}");
         }
 
-        // Format Stats (left side of content area)
+        // Format Stats (left of frame)
         if (statsText != null)
         {
             Undo.RecordObject(statsText.GetComponent<RectTransform>(), "Format Stats");
             RectTransform rect = statsText.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0.5f);
-            rect.anchorMax = new Vector2(0f, 0.5f);
-            rect.pivot = new Vector2(0f, 0.5f);
-            rect.anchoredPosition = new Vector2(40f, 0f);
-            rect.sizeDelta = new Vector2(250f, 200f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f); // Pivot on right edge
+            rect.anchoredPosition = new Vector2(frameLeft - 20f, -50f); // 20px left of frame
+            rect.sizeDelta = new Vector2(200f, drawingHeight);
             statsText.alignment = TextAlignmentOptions.TopLeft;
-            statsText.fontSize = 18;
+            statsText.fontSize = 20;
             EditorUtility.SetDirty(statsText.gameObject);
-            Debug.Log("✓ Formatted Stats: Left Side, Centered Vertically");
+            Debug.Log($"✓ Formatted Stats: Left of frame at x={frameLeft - 20f}");
         }
 
-        // Format Moves (right side of content area)
+        // Format Moves (right of frame)
         if (movesText != null)
         {
             Undo.RecordObject(movesText.GetComponent<RectTransform>(), "Format Moves");
             RectTransform rect = movesText.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(1f, 0.5f);
-            rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(-40f, 0f);
-            rect.sizeDelta = new Vector2(300f, 200f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0f, 0.5f); // Pivot on left edge
+            rect.anchoredPosition = new Vector2(frameRight + 20f, -50f); // 20px right of frame
+            rect.sizeDelta = new Vector2(200f, drawingHeight);
             movesText.alignment = TextAlignmentOptions.TopLeft;
-            movesText.fontSize = 18;
+            movesText.fontSize = 20;
             EditorUtility.SetDirty(movesText.gameObject);
-            Debug.Log("✓ Formatted Moves: Right Side, Centered Vertically");
+            Debug.Log($"✓ Formatted Moves: Right of frame at x={frameRight + 20f}");
         }
 
-        // Format Continue Button (bottom-right)
+        // Format Continue Button (below frame, right side)
         if (continueButton != null)
         {
             Undo.RecordObject(continueButton.GetComponent<RectTransform>(), "Format Continue Button");
             RectTransform rect = continueButton.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(1f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(-20f, 20f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(frameRight, frameBottom - 35f); // Below frame, aligned right
             rect.sizeDelta = new Vector2(180f, 50f);
             EditorUtility.SetDirty(continueButton.gameObject);
-            Debug.Log("✓ Formatted Continue Button: Bottom-Right");
+            Debug.Log($"✓ Formatted Continue Button: Below frame at y={frameBottom - 35f}");
         }
 
-        // Format Redraw Button (bottom-left)
+        // Format Redraw Button (below frame, left side)
         if (redrawButton != null)
         {
             Undo.RecordObject(redrawButton.GetComponent<RectTransform>(), "Format Redraw Button");
             RectTransform rect = redrawButton.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(0f, 0f);
-            rect.pivot = new Vector2(0f, 0f);
-            rect.anchoredPosition = new Vector2(20f, 20f);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.anchoredPosition = new Vector2(frameLeft, frameBottom - 35f); // Below frame, aligned left
             rect.sizeDelta = new Vector2(180f, 50f);
             EditorUtility.SetDirty(redrawButton.gameObject);
-            Debug.Log("✓ Formatted Redraw Button: Bottom-Left");
+            Debug.Log($"✓ Formatted Redraw Button: Below frame at y={frameBottom - 35f}");
         }
 
         // Mark scene as dirty
@@ -179,13 +244,12 @@ public class SetupResultPanelLayout : EditorWindow
         Debug.Log("========== LAYOUT FORMATTING COMPLETE ==========");
         EditorUtility.DisplayDialog("Success",
             "PlantResultPanel layout formatted successfully!\n\n" +
-            "✓ Background: Light Gray\n" +
-            "✓ Title: Top Center\n" +
-            "✓ Plant Name: Large, Centered\n" +
-            "✓ Element: Below Plant Name\n" +
-            "✓ Stats: Left Side\n" +
-            "✓ Moves: Right Side\n" +
-            "✓ Buttons: Bottom Corners",
+            "✓ Drawing Frame: Center (" + drawingWidth + "x" + drawingHeight + ")\n" +
+            "✓ Title/Type: Above frame\n" +
+            "✓ Stats: Left of frame\n" +
+            "✓ Moves: Right of frame\n" +
+            "✓ Buttons: Below frame\n" +
+            "✓ Background: Transparent (drawing visible)",
             "OK");
     }
 }
