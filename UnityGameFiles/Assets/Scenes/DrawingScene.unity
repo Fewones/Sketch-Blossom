@@ -675,7 +675,7 @@ MonoBehaviour:
   plantResultPanel: {fileID: 879836866}
   drawingOverlay: {fileID: 1458536662}
   drawingPanel: {fileID: 1324501826}
-  battleSceneName: BattleScene
+  battleSceneName: DrawingBattleScene
 --- !u!4 &325244530
 Transform:
   m_ObjectHideFlags: 0
