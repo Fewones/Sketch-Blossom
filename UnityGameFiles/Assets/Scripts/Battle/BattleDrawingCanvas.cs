@@ -200,7 +200,7 @@ namespace SketchBlossom.Battle
             currentLine.startWidth = lineWidth;
             currentLine.endWidth = lineWidth;
             currentLine.positionCount = 0;
-            currentLine.useWorldSpace = false;
+            currentLine.useWorldSpace = true; // Use world space for accurate positioning
 
             // Set material
             if (lineMaterial != null)
@@ -271,11 +271,14 @@ namespace SketchBlossom.Battle
             {
                 currentLine.positionCount = currentStrokePoints.Count;
 
-                // Convert to Vector3 for LineRenderer
+                // Convert to Vector3 for LineRenderer (world space)
+                // Use the drawing area's Z position to ensure proper layering
+                float zPosition = drawingArea.position.z;
+
                 Vector3[] positions = new Vector3[currentStrokePoints.Count];
                 for (int i = 0; i < currentStrokePoints.Count; i++)
                 {
-                    positions[i] = new Vector3(currentStrokePoints[i].x, currentStrokePoints[i].y, 0);
+                    positions[i] = new Vector3(currentStrokePoints[i].x, currentStrokePoints[i].y, zPosition);
                 }
 
                 currentLine.SetPositions(positions);
@@ -299,6 +302,7 @@ namespace SketchBlossom.Battle
 
         private Vector2 ScreenToCanvasPoint(Vector2 screenPosition)
         {
+            // Convert screen position to world position on the drawing area
             Vector2 localPoint;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 drawingArea,
@@ -307,7 +311,10 @@ namespace SketchBlossom.Battle
                 out localPoint
             );
 
-            return localPoint;
+            // Convert local point to world position
+            Vector3 worldPoint = drawingArea.TransformPoint(localPoint);
+
+            return new Vector2(worldPoint.x, worldPoint.y);
         }
 
         /// <summary>
