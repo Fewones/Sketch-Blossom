@@ -40,22 +40,45 @@ public class PlantDetectionFeedback : MonoBehaviour
             return;
         }
 
-        // Update text
-        if (plantNameText != null)
+        // Check if the drawing is valid
+        if (!result.isValidPlant)
         {
-            plantNameText.text = GetPlantDisplayName(result.plantType);
-        }
+            // Show invalid plant message
+            if (plantNameText != null)
+            {
+                plantNameText.text = "❌ Not a Valid Plant!";
+            }
 
-        if (elementText != null)
-        {
-            elementText.text = $"{result.element} Type";
-            elementText.color = GetElementColor(result.element.ToString());
-        }
+            if (elementText != null)
+            {
+                elementText.text = "Drawing doesn't meet requirements";
+                elementText.color = Color.red;
+            }
 
-        if (confidenceText != null)
+            if (confidenceText != null)
+            {
+                confidenceText.text = "Please try again!";
+            }
+        }
+        else
         {
-            string confidenceLevel = GetConfidenceLevel(result.confidence);
-            confidenceText.text = $"Detection: {confidenceLevel}";
+            // Show valid plant detection
+            if (plantNameText != null)
+            {
+                plantNameText.text = GetPlantDisplayName(result.plantType);
+            }
+
+            if (elementText != null)
+            {
+                elementText.text = $"{result.element} Type";
+                elementText.color = GetElementColor(result.element.ToString());
+            }
+
+            if (confidenceText != null)
+            {
+                string confidenceLevel = GetConfidenceLevel(result.confidence);
+                confidenceText.text = $"Detection: {confidenceLevel}";
+            }
         }
 
         // Show panel

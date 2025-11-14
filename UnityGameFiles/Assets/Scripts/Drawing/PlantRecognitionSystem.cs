@@ -64,14 +64,16 @@ public class PlantRecognitionSystem : MonoBehaviour
         public PlantData plantData;
         public float confidence;
         public Color dominantColor;
+        public bool isValidPlant;  // True if drawing meets threshold criteria
 
-        public RecognitionResult(PlantType type, ElementType elem, PlantData data, float conf, Color color)
+        public RecognitionResult(PlantType type, ElementType elem, PlantData data, float conf, Color color, bool isValid = true)
         {
             plantType = type;
             element = elem;
             plantData = data;
             confidence = conf;
             dominantColor = color;
+            isValidPlant = isValid;
         }
     }
 
@@ -162,7 +164,8 @@ public class PlantRecognitionSystem : MonoBehaviour
         LogShapeFeatures(features);
 
         // Step 3: Determine plant type based on element and shape
-        PlantType plantType = DeterminePlantType(element, features);
+        bool isValidPlant;
+        PlantType plantType = DeterminePlantType(element, features, out isValidPlant);
         Debug.Log($"Step 3: Plant type detected = {plantType}");
 
         // Step 4: Calculate confidence
@@ -171,9 +174,14 @@ public class PlantRecognitionSystem : MonoBehaviour
 
         // Step 5: Get plant data and create result
         PlantData data = plantDatabase[plantType];
-        RecognitionResult result = new RecognitionResult(plantType, element, data, confidence, dominantColor);
+        RecognitionResult result = new RecognitionResult(plantType, element, data, confidence, dominantColor, isValidPlant);
 
         Debug.Log("=== PLANT RECOGNITION COMPLETE ===");
+        if (!isValidPlant)
+        {
+            Debug.LogWarning("⚠️  DRAWING DOES NOT MEET REQUIREMENTS - NOT A VALID PLANT!");
+            Debug.LogWarning("   Please try again with the correct pattern.");
+        }
         LogResult(result);
 
         return result;
@@ -380,33 +388,38 @@ public class PlantRecognitionSystem : MonoBehaviour
         return features;
     }
 
-    private PlantType DeterminePlantType(ElementType element, ShapeFeatures features)
+    private PlantType DeterminePlantType(ElementType element, ShapeFeatures features, out bool isValid)
     {
         switch (element)
         {
             case ElementType.Fire:
-                return DetermineFirePlant(features);
+                return DetermineFirePlant(features, out isValid);
             case ElementType.Grass:
+                isValid = true; // Grass plants don't have strict thresholds (yet)
                 return DetermineGrassPlant(features);
             case ElementType.Water:
+                isValid = true; // Water plants don't have strict thresholds (yet)
                 return DetermineWaterPlant(features);
             default:
+                isValid = true;
                 return PlantType.GrassSprout;
         }
     }
 
-    private PlantType DetermineFirePlant(ShapeFeatures features)
+    private PlantType DetermineFirePlant(ShapeFeatures features, out bool isValid)
     {
         Debug.Log("=== ROBUST FIRE PLANT DETECTION ===");
+        isValid = false;
 
-        // ROBUST DETECTION LOGIC:
+        // ROBUST DETECTION LOGIC - STRICT THRESHOLDS REQUIRED:
         // Sunflower: Roughly 4 or more red circles + one green line
         bool isSunflower = features.redCircleCount >= 4 && features.greenLineCount >= 1;
         Debug.Log($"Sunflower check: {features.redCircleCount} red circles, {features.greenLineCount} green lines -> {isSunflower}");
 
         if (isSunflower)
         {
-            Debug.Log("✓ Detected: SUNFLOWER (4+ red circles + green line)");
+            Debug.Log("✓ VALID PLANT DETECTED: SUNFLOWER (4+ red circles + green line)");
+            isValid = true;
             return PlantType.Sunflower;
         }
 
@@ -416,7 +429,8 @@ public class PlantRecognitionSystem : MonoBehaviour
 
         if (isFireRose)
         {
-            Debug.Log("✓ Detected: FIRE ROSE (5+ overlapping red strokes + green line)");
+            Debug.Log("✓ VALID PLANT DETECTED: FIRE ROSE (5+ overlapping red strokes + green line)");
+            isValid = true;
             return PlantType.FireRose;
         }
 
@@ -426,36 +440,19 @@ public class PlantRecognitionSystem : MonoBehaviour
 
         if (isFlameTulip)
         {
-            Debug.Log("✓ Detected: FLAME TULIP (3+ long vertical red strokes)");
+            Debug.Log("✓ VALID PLANT DETECTED: FLAME TULIP (3+ long vertical red strokes)");
+            isValid = true;
             return PlantType.FlameTulip;
         }
 
-        // FALLBACK: Use legacy detection for edge cases
-        Debug.Log("No robust match found, using fallback detection...");
+        // NO VALID PLANT DETECTED
+        Debug.Log("✗ INVALID DRAWING: Does not meet any Fire plant criteria!");
+        Debug.Log("  Requirements:");
+        Debug.Log("    - Sunflower: 4+ red circles + 1 green line");
+        Debug.Log("    - Fire Rose: 5+ overlapping red strokes + 1 green line");
+        Debug.Log("    - Flame Tulip: 3+ long vertical red strokes");
 
-        // Fallback Sunflower: Radial pattern, circular
-        if (features.isRadial && features.compactness > 0.4f)
-        {
-            Debug.Log("✓ Fallback: SUNFLOWER (radial pattern)");
-            return PlantType.Sunflower;
-        }
-
-        // Fallback Fire Rose: Compact, many strokes, circular
-        if (features.strokeCount >= 6 && features.compactness > 0.5f)
-        {
-            Debug.Log("✓ Fallback: FIRE ROSE (many compact strokes)");
-            return PlantType.FireRose;
-        }
-
-        // Fallback Flame Tulip: Vertical, simple shape (few strokes)
-        if (features.isVertical || features.strokeCount <= 3)
-        {
-            Debug.Log("✓ Fallback: FLAME TULIP (vertical or simple)");
-            return PlantType.FlameTulip;
-        }
-
-        // Default to Sunflower
-        Debug.Log("✓ Default: SUNFLOWER");
+        // Return a default but mark as invalid
         return PlantType.Sunflower;
     }
 
@@ -691,6 +688,7 @@ public class PlantRecognitionSystem : MonoBehaviour
     private void LogResult(RecognitionResult result)
     {
         Debug.Log($"📋 FINAL RESULT:");
+        Debug.Log($"   ✅ Valid Plant: {result.isValidPlant}");
         Debug.Log($"   🌱 Plant: {result.plantData.displayName} ({result.plantType})");
         Debug.Log($"   🔥 Element: {result.element}");
         Debug.Log($"   ⭐ Confidence: {result.confidence:P0}");
