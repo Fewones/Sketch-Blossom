@@ -12,9 +12,10 @@ namespace SketchBlossom.Battle
     public class BattleDrawingCanvas : MonoBehaviour
     {
         [Header("Canvas Settings")]
-        [SerializeField] private RectTransform drawingArea;
+        [SerializeField] private RectTransform _drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 5f;
+        [Range(1f, 200f)]
+        [SerializeField] private float lineWidth = 20f; // Very thick strokes for visible attack animations
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("UI Drawing")]
@@ -45,6 +46,9 @@ namespace SketchBlossom.Battle
         public delegate void DrawingCompleted(List<List<Vector2>> strokes, Color dominantColor);
         public event DrawingCompleted OnDrawingCompleted;
 
+        // Public accessors
+        public RectTransform drawingArea => _drawingArea;
+
         private void Awake()
         {
             mainCamera = Camera.main;
@@ -54,8 +58,8 @@ namespace SketchBlossom.Battle
                 canvas = GetComponentInParent<Canvas>();
 
             // The drawing area is this GameObject's RectTransform
-            if (drawingArea == null)
-                drawingArea = GetComponent<RectTransform>();
+            if (_drawingArea == null)
+                _drawingArea = GetComponent<RectTransform>();
 
             // Find or create RawImage for drawing
             if (drawingImage == null)
@@ -97,10 +101,10 @@ namespace SketchBlossom.Battle
             }
 
             // Initialize texture based on drawing area size
-            if (drawingArea != null)
+            if (_drawingArea != null)
             {
-                textureWidth = Mathf.Max(512, (int)drawingArea.rect.width);
-                textureHeight = Mathf.Max(512, (int)drawingArea.rect.height);
+                textureWidth = Mathf.Max(512, (int)_drawingArea.rect.width);
+                textureHeight = Mathf.Max(512, (int)_drawingArea.rect.height);
             }
 
             // Create drawing texture
@@ -123,6 +127,7 @@ namespace SketchBlossom.Battle
             drawingImage.color = Color.white; // Ensure image is visible
 
             Debug.Log($"BattleDrawingCanvas: Initialized texture-based drawing ({textureWidth}x{textureHeight}) on UI canvas. RenderMode: {canvas?.renderMode}");
+            Debug.Log($"BattleDrawingCanvas: Line width set to {lineWidth} pixels");
         }
 
         private void Update()
@@ -157,6 +162,8 @@ namespace SketchBlossom.Battle
 
             isDrawingEnabled = true;
             gameObject.SetActive(true);
+
+            Debug.Log($"BattleDrawingCanvas: Drawing enabled with lineWidth = {lineWidth}");
         }
 
         /// <summary>
@@ -233,6 +240,15 @@ namespace SketchBlossom.Battle
                 tempObj.transform.SetParent(transform);
                 LineRenderer lr = tempObj.AddComponent<LineRenderer>();
 
+                // Set line width for thick, visible strokes in attack animations
+                lr.startWidth = lineWidth;
+                lr.endWidth = lineWidth;
+
+                // Set material and color for rendering
+                lr.material = new Material(Shader.Find("Sprites/Default"));
+                lr.startColor = drawingColor;
+                lr.endColor = drawingColor;
+
                 lr.positionCount = stroke.Count;
                 for (int i = 0; i < stroke.Count; i++)
                 {
@@ -241,6 +257,8 @@ namespace SketchBlossom.Battle
 
                 lineRenderers.Add(lr);
             }
+
+            Debug.Log($"BattleDrawingCanvas: Created {lineRenderers.Count} LineRenderers with width {lineWidth}");
 
             return lineRenderers;
         }
@@ -269,7 +287,7 @@ namespace SketchBlossom.Battle
             // Draw initial point
             DrawPoint(texturePoint);
 
-            Debug.Log($"Started drawing at screen: {screenPosition}, texture: {texturePoint}");
+            Debug.Log($"Started drawing at screen: {screenPosition}, texture: {texturePoint}, lineWidth: {lineWidth}");
         }
 
         private void ContinueDrawing(Vector2 screenPosition)
@@ -316,7 +334,7 @@ namespace SketchBlossom.Battle
         {
             Vector2 localPoint;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                drawingArea,
+                _drawingArea,
                 screenPosition,
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
                 out localPoint
@@ -324,7 +342,7 @@ namespace SketchBlossom.Battle
 
             // Convert local point to texture coordinates
             // Local point is relative to the center of the rect, so offset it
-            Rect rect = drawingArea.rect;
+            Rect rect = _drawingArea.rect;
             float x = (localPoint.x - rect.xMin) / rect.width * textureWidth;
             float y = (localPoint.y - rect.yMin) / rect.height * textureHeight;
 
@@ -345,7 +363,7 @@ namespace SketchBlossom.Battle
             int x = Mathf.RoundToInt(point.x);
             int y = Mathf.RoundToInt(point.y);
 
-            int radius = Mathf.RoundToInt(lineWidth);
+            int radius = Mathf.Max(1, Mathf.RoundToInt(lineWidth)); // Ensure at least 1 pixel
 
             for (int i = -radius; i <= radius; i++)
             {
@@ -365,6 +383,15 @@ namespace SketchBlossom.Battle
             }
 
             drawingTexture.Apply();
+        }
+
+        /// <summary>
+        /// Force set the line width (useful for runtime adjustments)
+        /// </summary>
+        public void SetLineWidth(float width)
+        {
+            lineWidth = Mathf.Clamp(width, 1f, 200f);
+            Debug.Log($"BattleDrawingCanvas: Line width set to {lineWidth}");
         }
 
         /// <summary>
@@ -405,17 +432,17 @@ namespace SketchBlossom.Battle
 
         private bool IsPointInDrawingArea(Vector2 screenPosition)
         {
-            if (drawingArea == null) return true;
+            if (_drawingArea == null) return true;
 
             Vector2 localPoint;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                drawingArea,
+                _drawingArea,
                 screenPosition,
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
                 out localPoint
             );
 
-            return drawingArea.rect.Contains(localPoint);
+            return _drawingArea.rect.Contains(localPoint);
         }
 
 
