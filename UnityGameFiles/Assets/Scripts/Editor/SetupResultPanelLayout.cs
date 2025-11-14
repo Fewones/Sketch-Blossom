@@ -339,14 +339,9 @@ public class SetupResultPanelLayout : EditorWindow
         // ===== FORMAT DRAWING UI ELEMENTS =====
         Debug.Log("========== FORMATTING DRAWING UI ==========");
 
-        // Adjust drawing area to match frame size
-        if (drawingCanvas != null && drawingAreaRect != null)
-        {
-            Undo.RecordObject(drawingAreaRect, "Adjust Drawing Area Size");
-            drawingAreaRect.sizeDelta = new Vector2(drawingWidth, drawingHeight);
-            EditorUtility.SetDirty(drawingAreaRect.gameObject);
-            Debug.Log($"✓ Adjusted DrawingArea to match frame: {drawingWidth}x{drawingHeight}");
-        }
+        // DON'T resize drawing area - leave it as is
+        // The result panel frame already matches the drawing area size
+        Debug.Log($"✓ Drawing area left unchanged at: {drawingWidth}x{drawingHeight}");
 
         // Find and format color selector buttons
         DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
@@ -464,10 +459,10 @@ public class SetupResultPanelLayout : EditorWindow
         Debug.Log("========== LAYOUT FORMATTING COMPLETE ==========");
         EditorUtility.DisplayDialog("Success",
             "PlantResultPanel and Drawing UI formatted successfully!\n\n" +
-            "✓ Drawing Area: Adjusted to " + drawingWidth + "x" + drawingHeight + "\n" +
+            "✓ Result Frame: Matches drawing area (" + drawingWidth + "x" + drawingHeight + ")\n" +
             "✓ Color Buttons: Resized to 80x80 and repositioned\n" +
             "✓ Result Panel: Dark backgrounds for readability\n" +
-            "✓ Title/Type: Above frame\n" +
+            "✓ Title/Type: Above frame (white text)\n" +
             "✓ Stats: Left of frame (white text on dark bg)\n" +
             "✓ Moves: Right of frame (white text on dark bg)\n" +
             "✓ Buttons: Below frame",
