@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SketchBlossom.Battle
 {
@@ -62,20 +63,36 @@ namespace SketchBlossom.Battle
                 drawingImage = GetComponent<RawImage>();
                 if (drawingImage == null)
                 {
+                    // Remove Image component if it exists (conflicts with RawImage)
+                    Image existingImage = GetComponent<Image>();
+                    if (existingImage != null)
+                    {
+                        Debug.Log("BattleDrawingCanvas: Removing existing Image component to add RawImage");
+                        DestroyImmediate(existingImage);
+                    }
+
                     // Make sure we have a CanvasRenderer (required for RawImage)
                     if (gameObject.GetComponent<CanvasRenderer>() == null)
                     {
                         gameObject.AddComponent<CanvasRenderer>();
                     }
 
-                    drawingImage = gameObject.AddComponent<RawImage>();
-                    Debug.Log("BattleDrawingCanvas: Added RawImage component");
+                    try
+                    {
+                        drawingImage = gameObject.AddComponent<RawImage>();
+                        Debug.Log("BattleDrawingCanvas: Successfully added RawImage component");
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"BattleDrawingCanvas: Exception adding RawImage: {e.Message}");
+                    }
                 }
             }
 
             if (drawingImage == null)
             {
                 Debug.LogError("BattleDrawingCanvas: Failed to get or create RawImage component!");
+                Debug.LogError($"GameObject: {gameObject.name}, Components: {string.Join(", ", GetComponents<Component>().Select(c => c.GetType().Name))}");
                 return;
             }
 
@@ -132,6 +149,12 @@ namespace SketchBlossom.Battle
         /// </summary>
         public void EnableDrawing()
         {
+            if (drawingTexture == null)
+            {
+                Debug.LogError("BattleDrawingCanvas: Cannot enable drawing - not properly initialized!");
+                return;
+            }
+
             isDrawingEnabled = true;
             gameObject.SetActive(true);
         }
@@ -313,6 +336,12 @@ namespace SketchBlossom.Battle
         /// </summary>
         private void DrawPoint(Vector2 point)
         {
+            if (drawingTexture == null)
+            {
+                Debug.LogError("BattleDrawingCanvas: Cannot draw - texture is null!");
+                return;
+            }
+
             int x = Mathf.RoundToInt(point.x);
             int y = Mathf.RoundToInt(point.y);
 
