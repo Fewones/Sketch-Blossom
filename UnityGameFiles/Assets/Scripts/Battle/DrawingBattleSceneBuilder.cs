@@ -18,6 +18,20 @@ namespace SketchBlossom.Battle
         [SerializeField] private Canvas mainCanvas;
         [SerializeField] private DrawingBattleSceneManager battleManager;
 
+        // Created components (for wiring up references)
+        private BattleDrawingCanvas createdDrawingCanvas;
+        private BattleHPBar createdPlayerHPBar;
+        private BattleHPBar createdEnemyHPBar;
+        private Button createdFinishButton;
+        private Button createdClearButton;
+        private TextMeshProUGUI createdTurnIndicator;
+        private TextMeshProUGUI createdActionText;
+        private TextMeshProUGUI createdAvailableMovesText;
+        private Image createdPlayerSprite;
+        private Image createdEnemySprite;
+        private TextMeshProUGUI createdPlayerName;
+        private TextMeshProUGUI createdEnemyName;
+
         private void OnValidate()
         {
             if (buildScene)
@@ -50,7 +64,11 @@ namespace SketchBlossom.Battle
             // Create UI elements
             CreateUIElements();
 
+            // Wire up all references to BattleManager
+            WireUpReferences();
+
             Debug.Log("=== Battle Scene Built Successfully! ===");
+            Debug.Log("All references connected to BattleManager");
         }
 
         /// <summary>
@@ -179,6 +197,11 @@ namespace SketchBlossom.Battle
             hpRT.anchorMin = new Vector2(0.5f, 0.1f);
             hpRT.anchorMax = new Vector2(0.5f, 0.1f);
             hpRT.anchoredPosition = Vector2.zero;
+            createdPlayerHPBar = playerHPObj.GetComponent<BattleHPBar>(); // Store reference
+
+            // Store player visuals
+            createdPlayerSprite = playerSprite.GetComponent<Image>();
+            createdPlayerName = playerName.GetComponent<TextMeshProUGUI>();
         }
 
         /// <summary>
@@ -219,6 +242,11 @@ namespace SketchBlossom.Battle
             hpRT.anchorMin = new Vector2(0.5f, 0.1f);
             hpRT.anchorMax = new Vector2(0.5f, 0.1f);
             hpRT.anchoredPosition = Vector2.zero;
+            createdEnemyHPBar = enemyHPObj.GetComponent<BattleHPBar>(); // Store reference
+
+            // Store enemy visuals
+            createdEnemySprite = enemySprite.GetComponent<Image>();
+            createdEnemyName = enemyName.GetComponent<TextMeshProUGUI>();
         }
 
         /// <summary>
@@ -289,6 +317,7 @@ namespace SketchBlossom.Battle
 
             // Add BattleDrawingCanvas component
             BattleDrawingCanvas canvas = drawingArea.AddComponent<BattleDrawingCanvas>();
+            createdDrawingCanvas = canvas; // Store reference
 
             // Border - needs Image component for Outline to work
             GameObject border = new GameObject("Border");
@@ -324,6 +353,7 @@ namespace SketchBlossom.Battle
             turnRT.sizeDelta = new Vector2(300, 50);
             turnIndicator.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
             turnIndicator.GetComponent<TextMeshProUGUI>().color = Color.yellow;
+            createdTurnIndicator = turnIndicator.GetComponent<TextMeshProUGUI>(); // Store reference
 
             // Action Text
             GameObject actionText = CreateTextElement("ActionText", mainCanvas.transform, "Draw your move!", 20);
@@ -332,6 +362,8 @@ namespace SketchBlossom.Battle
             actionRT.anchorMax = new Vector2(0.5f, 0.38f);
             actionRT.sizeDelta = new Vector2(400, 30);
             actionText.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            actionText.GetComponent<TextMeshProUGUI>().color = Color.white; // Make sure it's visible
+            createdActionText = actionText.GetComponent<TextMeshProUGUI>(); // Store reference
 
             // Available Moves Text
             GameObject movesText = CreateTextElement("AvailableMovesText", mainCanvas.transform, "Available Moves:\n- Move 1\n- Move 2", 16);
@@ -340,6 +372,7 @@ namespace SketchBlossom.Battle
             movesRT.anchorMax = new Vector2(0, 0.4f);
             movesRT.sizeDelta = new Vector2(200, 150);
             movesRT.anchoredPosition = new Vector2(100, 0);
+            createdAvailableMovesText = movesText.GetComponent<TextMeshProUGUI>(); // Store reference
 
             // Finish Drawing Button
             GameObject finishButton = CreateButton("FinishDrawingButton", mainCanvas.transform, "Finish Drawing");
@@ -347,6 +380,7 @@ namespace SketchBlossom.Battle
             finishRT.anchorMin = new Vector2(0.7f, 0.02f);
             finishRT.anchorMax = new Vector2(0.7f, 0.02f);
             finishRT.sizeDelta = new Vector2(180, 50);
+            createdFinishButton = finishButton.GetComponent<Button>(); // Store reference
 
             // Clear Drawing Button
             GameObject clearButton = CreateButton("ClearDrawingButton", mainCanvas.transform, "Clear");
@@ -354,6 +388,7 @@ namespace SketchBlossom.Battle
             clearRT.anchorMin = new Vector2(0.3f, 0.02f);
             clearRT.anchorMax = new Vector2(0.3f, 0.02f);
             clearRT.sizeDelta = new Vector2(120, 50);
+            createdClearButton = clearButton.GetComponent<Button>(); // Store reference
 
             Debug.Log("Created UI elements (buttons and text)");
         }
@@ -406,6 +441,63 @@ namespace SketchBlossom.Battle
             tmp.alignment = TextAlignmentOptions.Center;
 
             return buttonObj;
+        }
+
+        /// <summary>
+        /// Wire up all references to the BattleManager using reflection
+        /// </summary>
+        private void WireUpReferences()
+        {
+            if (battleManager == null)
+            {
+                Debug.LogError("BattleManager not found! Cannot wire up references.");
+                return;
+            }
+
+            // Use reflection to assign private serialized fields
+            var managerType = typeof(DrawingBattleSceneManager);
+
+            // Drawing System
+            SetPrivateField(managerType, "drawingCanvas", createdDrawingCanvas);
+            SetPrivateField(managerType, "finishDrawingButton", createdFinishButton);
+            SetPrivateField(managerType, "clearDrawingButton", createdClearButton);
+
+            // HP Bars
+            SetPrivateField(managerType, "playerHPBar", createdPlayerHPBar);
+            SetPrivateField(managerType, "enemyHPBar", createdEnemyHPBar);
+
+            // UI Elements
+            SetPrivateField(managerType, "turnIndicatorText", createdTurnIndicator);
+            SetPrivateField(managerType, "actionText", createdActionText);
+            SetPrivateField(managerType, "availableMovesText", createdAvailableMovesText);
+
+            // Move Detection (already wired in CreateBattleManager)
+            var moveDetector = battleManager.GetComponent<MovesetDetector>();
+            var moveRecognition = battleManager.GetComponent<MoveRecognitionSystem>();
+            SetPrivateField(managerType, "movesetDetector", moveDetector);
+            SetPrivateField(managerType, "moveRecognitionSystem", moveRecognition);
+
+            Debug.Log("✅ All references wired to BattleManager!");
+            Debug.Log($"  - Drawing Canvas: {createdDrawingCanvas != null}");
+            Debug.Log($"  - Action Text: {createdActionText != null}");
+            Debug.Log($"  - HP Bars: {createdPlayerHPBar != null} / {createdEnemyHPBar != null}");
+            Debug.Log($"  - Buttons: {createdFinishButton != null} / {createdClearButton != null}");
+        }
+
+        /// <summary>
+        /// Helper to set private serialized fields using reflection
+        /// </summary>
+        private void SetPrivateField(System.Type type, string fieldName, object value)
+        {
+            var field = type.GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(battleManager, value);
+            }
+            else
+            {
+                Debug.LogWarning($"Field '{fieldName}' not found in {type.Name}");
+            }
         }
 
         /// <summary>
