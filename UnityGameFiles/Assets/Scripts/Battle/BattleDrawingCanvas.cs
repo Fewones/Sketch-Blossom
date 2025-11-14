@@ -56,6 +56,21 @@ namespace SketchBlossom.Battle
                 Debug.LogError("BattleDrawingCanvas: No Canvas found in parent! Drawing may not work correctly.");
             }
 
+            // Debug camera and canvas info
+            if (mainCamera != null)
+            {
+                Debug.Log($"Camera: Position={mainCamera.transform.position}, Orthographic={mainCamera.orthographic}, " +
+                         $"OrthographicSize={mainCamera.orthographicSize}, NearClip={mainCamera.nearClipPlane}, FarClip={mainCamera.farClipPlane}");
+            }
+            if (canvas != null)
+            {
+                Debug.Log($"Canvas: RenderMode={canvas.renderMode}, Position={canvas.transform.position}, PlaneDistance={canvas.planeDistance}");
+            }
+            if (drawingArea != null)
+            {
+                Debug.Log($"DrawingArea: Position={drawingArea.position}, LocalPosition={drawingArea.localPosition}");
+            }
+
             // Create default line material if none provided
             if (lineMaterial == null)
             {
@@ -291,8 +306,27 @@ namespace SketchBlossom.Battle
 
             if (currentLine != null && mainCamera != null)
             {
-                // Convert screen position directly to world space with proper Z depth
-                Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 10f));
+                Vector3 worldPos;
+
+                // Different approach based on canvas render mode
+                if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceCamera)
+                {
+                    // For ScreenSpaceCamera, use the canvas plane distance
+                    float zDistance = canvas.planeDistance;
+                    worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, zDistance));
+                }
+                else if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                {
+                    // For overlay mode, use a fixed depth in front of camera
+                    worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, mainCamera.nearClipPlane + 0.1f));
+                }
+                else
+                {
+                    // World space canvas - use canvas position Z and offset slightly toward camera
+                    Vector3 canvasWorldPos = drawingArea.position;
+                    float zDepth = Vector3.Distance(mainCamera.transform.position, canvasWorldPos);
+                    worldPos = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, zDepth - 0.5f));
+                }
 
                 // Update LineRenderer with the new point
                 int newIndex = currentLine.positionCount;
@@ -302,7 +336,8 @@ namespace SketchBlossom.Battle
                 // Debug first and every 10th point to verify visibility
                 if (currentLine.positionCount == 1 || currentLine.positionCount % 10 == 0)
                 {
-                    Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → World({worldPos.x:F2}, {worldPos.y:F2}, {worldPos.z:F2}) | Visible: {currentLine.enabled} | Color: {currentLine.startColor}");
+                    Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → World({worldPos.x:F2}, {worldPos.y:F2}, {worldPos.z:F2}) | " +
+                             $"Visible: {currentLine.enabled} | Color: {currentLine.startColor} | CanvasMode: {canvas?.renderMode}");
                 }
             }
         }
