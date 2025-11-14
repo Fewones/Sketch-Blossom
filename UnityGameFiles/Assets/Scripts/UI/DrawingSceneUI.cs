@@ -135,12 +135,11 @@ public class DrawingSceneUI : MonoBehaviour
             Debug.Log("DrawingPanel activated");
         }
 
-        // Enable drawing canvas
+        // Verify drawing canvas exists
         SimpleDrawingCanvas canvas = FindFirstObjectByType<SimpleDrawingCanvas>();
         if (canvas != null)
         {
-            canvas.isDrawingEnabled = true;
-            Debug.Log("SimpleDrawingCanvas enabled - player can now draw");
+            Debug.Log("SimpleDrawingCanvas found - player can now draw");
         }
         else
         {
