@@ -407,13 +407,36 @@ public class DrawingManager : MonoBehaviour
     private void LoadBattleScene()
     {
         Debug.Log("========== LOAD BATTLE SCENE CALLED ==========");
-        Debug.Log($"✓ Loading battle scene: {battleSceneName}");
+        Debug.Log($"✓ Target scene name: {battleSceneName}");
+
+        // Check if scene exists in build settings
+        int sceneCount = SceneManager.sceneCountInBuildSettings;
+        bool sceneFound = false;
+        for (int i = 0; i < sceneCount; i++)
+        {
+            string scenePath = SceneUtility.GetScenePathByBuildIndex(i);
+            string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
+            if (sceneName == battleSceneName)
+            {
+                sceneFound = true;
+                Debug.Log($"✓ Scene found in build settings at index {i}: {scenePath}");
+                break;
+            }
+        }
+
+        if (!sceneFound)
+        {
+            Debug.LogError($"❌ Scene '{battleSceneName}' NOT FOUND in build settings!");
+            Debug.LogError("❌ Go to File > Build Settings and add BattleScene.unity");
+            return;
+        }
 
         // Verify DrawnUnitData exists
         if (DrawnUnitData.Instance != null)
         {
             Debug.Log($"✓ DrawnUnitData exists with plant: {DrawnUnitData.Instance.plantDisplayName}");
             Debug.Log($"✓ Plant type: {DrawnUnitData.Instance.plantType}");
+            Debug.Log($"✓ Element: {DrawnUnitData.Instance.element}");
             Debug.Log($"✓ Stats: HP={DrawnUnitData.Instance.health} ATK={DrawnUnitData.Instance.attack} DEF={DrawnUnitData.Instance.defense}");
         }
         else
@@ -421,8 +444,15 @@ public class DrawingManager : MonoBehaviour
             Debug.LogError("❌ DrawnUnitData.Instance is NULL! Battle scene may not work correctly.");
         }
 
-        Debug.Log("✓ Calling SceneManager.LoadScene...");
-        SceneManager.LoadScene(battleSceneName);
-        Debug.Log("========== SCENE LOAD INITIATED ==========");
+        Debug.Log($"✓ Calling SceneManager.LoadScene(\"{battleSceneName}\")...");
+        try
+        {
+            SceneManager.LoadScene(battleSceneName);
+            Debug.Log("========== SCENE LOAD INITIATED ==========");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"❌ Failed to load scene: {e.Message}");
+        }
     }
 }

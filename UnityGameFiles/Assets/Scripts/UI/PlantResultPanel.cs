@@ -124,6 +124,13 @@ public class PlantResultPanel : MonoBehaviour
             Debug.Log($"✓ Continue callback method: {onContinue.Method.Name}");
         }
 
+        // Ensure continue button is interactable
+        if (continueButton != null)
+        {
+            continueButton.interactable = true;
+            Debug.Log($"✓ Continue button interactable: {continueButton.interactable}");
+        }
+
         // Show the panel overlay (background)
         panelOverlay.SetActive(true);
         Debug.Log("PlantResultPanel: Panel overlay activated!");
@@ -220,6 +227,15 @@ public class PlantResultPanel : MonoBehaviour
         }
 
         Debug.Log($"PlantResultPanel: Showing {result.plantData.displayName} ({result.element})");
+    }
+
+    /// <summary>
+    /// Public method that can be called from Unity Inspector or code
+    /// </summary>
+    public void OnContinueButton()
+    {
+        Debug.Log("========== OnContinueButton() PUBLIC METHOD CALLED ==========");
+        OnContinue();
     }
 
     private void OnContinue()
