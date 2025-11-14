@@ -14,7 +14,7 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform _drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 20f; // Thick strokes for visible attack animations
+        [SerializeField] private float lineWidth = 50f; // Very thick strokes for visible attack animations
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("UI Drawing")]
@@ -236,6 +236,15 @@ namespace SketchBlossom.Battle
                 tempObj.transform.SetParent(transform);
                 LineRenderer lr = tempObj.AddComponent<LineRenderer>();
 
+                // Set line width for thick, visible strokes in attack animations
+                lr.startWidth = lineWidth;
+                lr.endWidth = lineWidth;
+
+                // Set material and color for rendering
+                lr.material = new Material(Shader.Find("Sprites/Default"));
+                lr.startColor = drawingColor;
+                lr.endColor = drawingColor;
+
                 lr.positionCount = stroke.Count;
                 for (int i = 0; i < stroke.Count; i++)
                 {
@@ -244,6 +253,8 @@ namespace SketchBlossom.Battle
 
                 lineRenderers.Add(lr);
             }
+
+            Debug.Log($"BattleDrawingCanvas: Created {lineRenderers.Count} LineRenderers with width {lineWidth}");
 
             return lineRenderers;
         }
