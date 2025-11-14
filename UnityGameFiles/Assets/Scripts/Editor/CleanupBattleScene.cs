@@ -42,6 +42,15 @@ public class CleanupBattleScene : EditorWindow
             itemsRemoved++;
         }
 
+        // Find and remove SimpleDrawingCanvas (should only be in DrawingScene)
+        SimpleDrawingCanvas[] simpleCanvases = FindObjectsOfType<SimpleDrawingCanvas>();
+        foreach (var simpleCanvas in simpleCanvases)
+        {
+            Debug.Log($"Removing SimpleDrawingCanvas: {simpleCanvas.gameObject.name} (should only be in DrawingScene)");
+            Undo.DestroyObjectImmediate(simpleCanvas.gameObject);
+            itemsRemoved++;
+        }
+
         // Find and remove DrawingManager (should only be in DrawingScene)
         DrawingManager[] drawingManagers = FindObjectsOfType<DrawingManager>();
         foreach (var manager in drawingManagers)

@@ -142,6 +142,9 @@ public class RebuildBattleDrawingSystem : EditorWindow
         GameObject strokeContainer = new GameObject("StrokeContainer");
         strokeContainer.transform.SetParent(canvasObj.transform, false);
 
+        // Position stroke container at z=10 in world space for proper LineRenderer rendering
+        strokeContainer.transform.position = new Vector3(0, 0, 10f);
+
         // Configure BattleDrawingCanvas
         SerializedObject so = new SerializedObject(drawingCanvas);
 
@@ -200,9 +203,14 @@ public class RebuildBattleDrawingSystem : EditorWindow
         lineRenderer.endWidth = 0.05f;
         lineRenderer.positionCount = 0;
         lineRenderer.useWorldSpace = true;
-        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        lineRenderer.startColor = Color.green;
-        lineRenderer.endColor = Color.green;
+
+        // Use Unlit/Color shader for better visibility
+        Material lineMaterial = new Material(Shader.Find("Unlit/Color"));
+        lineMaterial.color = new Color(0.2f, 1f, 0.2f, 1f); // Bright green
+        lineRenderer.material = lineMaterial;
+
+        lineRenderer.startColor = new Color(0.2f, 1f, 0.2f, 1f);
+        lineRenderer.endColor = new Color(0.2f, 1f, 0.2f, 1f);
         lineRenderer.sortingOrder = 100; // High sorting order to draw on top
         lineRenderer.numCapVertices = 5;
         lineRenderer.numCornerVertices = 5;
