@@ -42,25 +42,7 @@ public class DrawnUnitData : MonoBehaviour
     }
 
     /// <summary>
-    /// Set unit stats from drawing analysis
-    /// </summary>
-    public void SetStatsFromDrawing(int strokes, float length, int points)
-    {
-        strokeCount = strokes;
-        totalDrawingLength = length;
-        totalPoints = points;
-
-        // Calculate stats based on drawing properties
-        // You can tune these formulas
-        attack = Mathf.Clamp(strokes * 5, 5, 30);
-        defense = Mathf.Clamp((int)(length * 10), 5, 25);
-        health = Mathf.Clamp(points / 2, 20, 60);
-
-        Debug.Log($"Unit Stats Generated - ATK: {attack}, DEF: {defense}, HP: {health}");
-    }
-
-    /// <summary>
-    /// Alternative: Set stats directly (for testing or custom units)
+    /// Set stats directly (for testing or custom units)
     /// </summary>
     public void SetStats(int atk, int def, int hp)
     {
@@ -70,7 +52,7 @@ public class DrawnUnitData : MonoBehaviour
     }
 
     /// <summary>
-    /// Set plant data from new recognition system
+    /// Set plant data from recognition system (primary method)
     /// </summary>
     public void SetPlantData(PlantRecognitionSystem.PlantData data)
     {

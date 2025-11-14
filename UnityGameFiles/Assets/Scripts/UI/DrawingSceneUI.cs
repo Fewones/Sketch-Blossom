@@ -136,15 +136,15 @@ public class DrawingSceneUI : MonoBehaviour
         }
 
         // Enable drawing canvas
-        DrawingCanvas canvas = FindFirstObjectByType<DrawingCanvas>();
+        SimpleDrawingCanvas canvas = FindFirstObjectByType<SimpleDrawingCanvas>();
         if (canvas != null)
         {
             canvas.isDrawingEnabled = true;
-            Debug.Log("DrawingCanvas enabled - player can now draw");
+            Debug.Log("SimpleDrawingCanvas enabled - player can now draw");
         }
         else
         {
-            Debug.LogError("DrawingCanvas not found!");
+            Debug.LogError("SimpleDrawingCanvas not found!");
         }
 
         UpdateHintText("Draw your plant! Use 3-8 strokes for best results.");
@@ -282,21 +282,21 @@ public class DrawingSceneUI : MonoBehaviour
     /// </summary>
     public void OnClearCanvas()
     {
-        DrawingCanvas canvas = FindFirstObjectByType<DrawingCanvas>();
+        SimpleDrawingCanvas canvas = FindFirstObjectByType<SimpleDrawingCanvas>();
         if (canvas != null)
         {
-            canvas.ClearCanvas();
+            canvas.ClearAll();
             UpdateHintText("Canvas cleared! Start fresh.");
         }
     }
 
     /// <summary>
-    /// Undo last stroke (if implemented in DrawingCanvas)
+    /// Undo last stroke (if implemented in SimpleDrawingCanvas)
     /// </summary>
     public void OnUndo()
     {
         UpdateHintText("Undo last stroke");
-        // Note: You'll need to implement undo in DrawingCanvas
+        // Note: You'll need to implement undo in SimpleDrawingCanvas
     }
 
     // Animation helpers

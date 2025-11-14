@@ -5,13 +5,12 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Manages the drawing phase and transitions to battle
-/// Works alongside your existing DrawingCanvas script
+/// Works with SimpleDrawingCanvas for drawing functionality
 /// </summary>
 public class DrawingManager : MonoBehaviour
 {
     [Header("References")]
-    public DrawingCanvas drawingCanvas;  // Legacy canvas (keep for backward compatibility)
-    public SimpleDrawingCanvas simpleCanvas;  // New simplified canvas (preferred)
+    public SimpleDrawingCanvas simpleCanvas;
     public PlantRecognitionSystem recognitionSystem;
     public PlantResultPanel plantResultPanel;
 
@@ -44,30 +43,18 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Using existing DrawnUnitData");
         }
 
-        // Try to find SimpleDrawingCanvas first (preferred)
+        // Find SimpleDrawingCanvas
         if (simpleCanvas == null)
         {
             simpleCanvas = FindObjectOfType<SimpleDrawingCanvas>();
             if (simpleCanvas != null)
                 Debug.Log("✓ Auto-found SimpleDrawingCanvas: " + simpleCanvas.gameObject.name);
+            else
+                Debug.LogError("❌ SimpleDrawingCanvas not found! Please add SimpleDrawingCanvas to the scene.");
         }
         else
         {
             Debug.Log("✓ SimpleDrawingCanvas assigned: " + simpleCanvas.gameObject.name);
-        }
-
-        // Fall back to legacy DrawingCanvas if SimpleDrawingCanvas not found
-        if (simpleCanvas == null && drawingCanvas == null)
-        {
-            drawingCanvas = FindObjectOfType<DrawingCanvas>();
-            if (drawingCanvas != null)
-                Debug.Log("✓ Auto-found legacy DrawingCanvas: " + drawingCanvas.gameObject.name);
-            else
-                Debug.LogError("❌ No drawing canvas found! Please add SimpleDrawingCanvas or DrawingCanvas to the scene.");
-        }
-        else if (drawingCanvas != null && simpleCanvas == null)
-        {
-            Debug.Log("✓ Using legacy DrawingCanvas: " + drawingCanvas.gameObject.name);
         }
 
         if (recognitionSystem == null)
@@ -173,13 +160,6 @@ public class DrawingManager : MonoBehaviour
             finishButton.onClick.RemoveAllListeners();
             finishButton.onClick.AddListener(OnFinishDrawing);
             Debug.Log($"✓ Finish button hooked up (removed {oldListeners} old listeners, added OnFinishDrawing)");
-
-            // Also assign it to legacy canvas if it exists
-            if (drawingCanvas != null)
-            {
-                drawingCanvas.finishButton = finishButton;
-                Debug.Log("✓ Assigned finish button to legacy DrawingCanvas");
-            }
         }
         else
         {
@@ -192,26 +172,19 @@ public class DrawingManager : MonoBehaviour
 
     /// <summary>
     /// Called when the player finishes drawing their unit
-    /// This replaces the OnFinishDrawing in DrawingCanvas
     /// </summary>
     private void OnFinishDrawing()
     {
         Debug.Log("DrawingManager: Finish button pressed!");
 
-        // Determine which canvas system we're using
-        bool usingSimpleCanvas = (simpleCanvas != null);
-        bool usingLegacyCanvas = (drawingCanvas != null);
+        if (simpleCanvas == null)
+        {
+            Debug.LogError("❌ SimpleDrawingCanvas is null! Cannot process drawing.");
+            return;
+        }
 
         // Check if we have any strokes BEFORE hiding anything
-        int strokeCount = 0;
-        if (usingSimpleCanvas)
-        {
-            strokeCount = simpleCanvas.allStrokes.Count;
-        }
-        else if (usingLegacyCanvas)
-        {
-            strokeCount = drawingCanvas.allStrokes.Count;
-        }
+        int strokeCount = simpleCanvas.allStrokes.Count;
 
         // If no strokes, show error and don't proceed
         if (strokeCount == 0)
@@ -223,16 +196,8 @@ public class DrawingManager : MonoBehaviour
         }
 
         // End any in-progress stroke first
-        if (usingSimpleCanvas)
-        {
-            simpleCanvas.ForceEndStroke();
-            Debug.Log("Using SimpleDrawingCanvas - forced end stroke");
-        }
-        else if (usingLegacyCanvas)
-        {
-            drawingCanvas.ForceEndStroke();
-            Debug.Log("Using legacy DrawingCanvas - forced end stroke");
-        }
+        simpleCanvas.ForceEndStroke();
+        Debug.Log("Using SimpleDrawingCanvas - forced end stroke");
 
         // Analyze the drawing BEFORE hiding anything
         AnalyzeAndStoreDrawing();
@@ -284,21 +249,15 @@ public class DrawingManager : MonoBehaviour
     {
         Debug.Log("===== REDRAW REQUESTED =====");
 
-        // Determine which canvas system we're using
-        bool usingSimpleCanvas = (simpleCanvas != null);
-        bool usingLegacyCanvas = (drawingCanvas != null);
+        if (simpleCanvas == null)
+        {
+            Debug.LogError("❌ SimpleDrawingCanvas is null! Cannot clear canvas.");
+            return;
+        }
 
         // Clear the canvas
-        if (usingSimpleCanvas)
-        {
-            simpleCanvas.ClearAll();
-            Debug.Log("✓ SimpleCanvas cleared for redrawing");
-        }
-        else if (usingLegacyCanvas)
-        {
-            drawingCanvas.ClearCanvas();
-            Debug.Log("✓ Legacy canvas cleared for redrawing");
-        }
+        simpleCanvas.ClearAll();
+        Debug.Log("✓ SimpleCanvas cleared for redrawing");
 
         // Clear stored results
         lastRecognitionResult = null;
@@ -326,13 +285,9 @@ public class DrawingManager : MonoBehaviour
     /// </summary>
     private void AnalyzeAndStoreDrawing()
     {
-        // Determine which canvas system we're using
-        bool usingSimpleCanvas = (simpleCanvas != null);
-        bool usingLegacyCanvas = (drawingCanvas != null);
-
-        if (!usingSimpleCanvas && !usingLegacyCanvas)
+        if (simpleCanvas == null)
         {
-            Debug.LogError("No drawing canvas reference found! Please assign either SimpleDrawingCanvas or DrawingCanvas.");
+            Debug.LogError("SimpleDrawingCanvas reference missing!");
             return;
         }
 
@@ -344,22 +299,10 @@ public class DrawingManager : MonoBehaviour
 
         Debug.Log("========== ANALYZING DRAWING ==========");
 
-        // Get strokes and dominant color from appropriate canvas
-        List<LineRenderer> strokes;
-        Color dominantColor;
-
-        if (usingSimpleCanvas)
-        {
-            strokes = simpleCanvas.allStrokes;
-            dominantColor = simpleCanvas.GetDominantColor();
-            Debug.Log($"Using SimpleDrawingCanvas - {strokes.Count} strokes");
-        }
-        else
-        {
-            strokes = drawingCanvas.allStrokes;
-            dominantColor = drawingCanvas.GetDominantColorByCount();
-            Debug.Log($"Using legacy DrawingCanvas - {strokes.Count} strokes");
-        }
+        // Get strokes and dominant color from canvas
+        List<LineRenderer> strokes = simpleCanvas.allStrokes;
+        Color dominantColor = simpleCanvas.GetDominantColor();
+        Debug.Log($"Using SimpleDrawingCanvas - {strokes.Count} strokes");
 
         // Validate stroke count
         int strokeCount = strokes.Count;
