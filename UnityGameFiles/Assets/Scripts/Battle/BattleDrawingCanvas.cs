@@ -62,8 +62,21 @@ namespace SketchBlossom.Battle
                 drawingImage = GetComponent<RawImage>();
                 if (drawingImage == null)
                 {
+                    // Make sure we have a CanvasRenderer (required for RawImage)
+                    if (gameObject.GetComponent<CanvasRenderer>() == null)
+                    {
+                        gameObject.AddComponent<CanvasRenderer>();
+                    }
+
                     drawingImage = gameObject.AddComponent<RawImage>();
+                    Debug.Log("BattleDrawingCanvas: Added RawImage component");
                 }
+            }
+
+            if (drawingImage == null)
+            {
+                Debug.LogError("BattleDrawingCanvas: Failed to get or create RawImage component!");
+                return;
             }
 
             // Initialize texture based on drawing area size
