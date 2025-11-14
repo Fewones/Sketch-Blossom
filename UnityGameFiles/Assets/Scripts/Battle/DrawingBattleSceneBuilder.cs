@@ -24,6 +24,8 @@ namespace SketchBlossom.Battle
         private BattleHPBar createdEnemyHPBar;
         private Button createdFinishButton;
         private Button createdClearButton;
+        private Button createdGuideButton;
+        private GameObject createdGuidePanel;
         private TextMeshProUGUI createdTurnIndicator;
         private TextMeshProUGUI createdActionText;
         private TextMeshProUGUI createdAvailableMovesText;
@@ -390,6 +392,18 @@ namespace SketchBlossom.Battle
             clearRT.sizeDelta = new Vector2(120, 50);
             createdClearButton = clearButton.GetComponent<Button>(); // Store reference
 
+            // Guide Book Button (below available moves)
+            GameObject guideButton = CreateButton("GuideBookButton", mainCanvas.transform, "How to Draw");
+            RectTransform guideRT = guideButton.GetComponent<RectTransform>();
+            guideRT.anchorMin = new Vector2(0, 0.4f);
+            guideRT.anchorMax = new Vector2(0, 0.4f);
+            guideRT.sizeDelta = new Vector2(160, 40);
+            guideRT.anchoredPosition = new Vector2(100, -100);
+            createdGuideButton = guideButton.GetComponent<Button>(); // Store reference
+
+            // Create the guide panel
+            CreateGuidePanel();
+
             Debug.Log("Created UI elements (buttons and text)");
         }
 
@@ -444,6 +458,144 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
+        /// Create the drawing guide panel
+        /// </summary>
+        private void CreateGuidePanel()
+        {
+            // Main panel (full screen overlay)
+            GameObject guidePanel = new GameObject("GuidePanel");
+            guidePanel.transform.SetParent(mainCanvas.transform);
+            RectTransform panelRT = guidePanel.AddComponent<RectTransform>();
+            panelRT.anchorMin = Vector2.zero;
+            panelRT.anchorMax = Vector2.one;
+            panelRT.offsetMin = Vector2.zero;
+            panelRT.offsetMax = Vector2.zero;
+
+            // Background overlay (semi-transparent)
+            Image panelBg = guidePanel.AddComponent<Image>();
+            panelBg.color = new Color(0, 0, 0, 0.8f);
+
+            // Content panel
+            GameObject contentPanel = new GameObject("ContentPanel");
+            contentPanel.transform.SetParent(guidePanel.transform);
+            RectTransform contentRT = contentPanel.AddComponent<RectTransform>();
+            contentRT.anchorMin = new Vector2(0.15f, 0.1f);
+            contentRT.anchorMax = new Vector2(0.85f, 0.9f);
+            contentRT.offsetMin = Vector2.zero;
+            contentRT.offsetMax = Vector2.zero;
+
+            Image contentBg = contentPanel.AddComponent<Image>();
+            contentBg.color = new Color(0.9f, 0.85f, 0.7f); // Parchment color
+
+            // Title
+            GameObject titleObj = CreateTextElement("Title", contentPanel.transform, "Drawing Guide", 32);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.92f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.92f);
+            titleRT.sizeDelta = new Vector2(400, 50);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+
+            // Instructions text
+            string instructions = "Draw the following patterns to execute moves:\n";
+            GameObject instructionsObj = CreateTextElement("Instructions", contentPanel.transform, instructions, 18);
+            RectTransform instructionsRT = instructionsObj.GetComponent<RectTransform>();
+            instructionsRT.anchorMin = new Vector2(0.5f, 0.85f);
+            instructionsRT.anchorMax = new Vector2(0.5f, 0.85f);
+            instructionsRT.sizeDelta = new Vector2(700, 40);
+            instructionsObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+
+            // Move guides
+            CreateMoveGuides(contentPanel.transform);
+
+            // Close button
+            GameObject closeButton = CreateButton("CloseButton", contentPanel.transform, "Close");
+            RectTransform closeRT = closeButton.GetComponent<RectTransform>();
+            closeRT.anchorMin = new Vector2(0.5f, 0.05f);
+            closeRT.anchorMax = new Vector2(0.5f, 0.05f);
+            closeRT.sizeDelta = new Vector2(150, 45);
+
+            createdGuidePanel = guidePanel;
+            guidePanel.SetActive(false); // Hidden by default
+
+            Debug.Log("Created GuidePanel");
+        }
+
+        /// <summary>
+        /// Create visual guides for each move type
+        /// </summary>
+        private void CreateMoveGuides(Transform parent)
+        {
+            // Create a grid layout for move guides
+            string[,] moveGuides = new string[,]
+            {
+                { "Block", "Draw any simple shape\n(Square, Circle, etc.)" },
+                { "Fireball", "Draw a circle or spiral" },
+                { "Burn", "Draw zigzag or spiky lines" },
+                { "Flame Strike", "Draw vertical wavy line" },
+                { "Vine Whip", "Draw a curved S-shape" },
+                { "Leaf Storm", "Draw many small scattered marks" },
+                { "Root Attack", "Draw vertical lines downward" },
+                { "Water Splash", "Draw wavy horizontal lines" },
+                { "Bubble", "Draw small circles (2-3)" },
+                { "Healing Wave", "Draw smooth horizontal wave" }
+            };
+
+            int rows = 5;
+            int cols = 2;
+            float startY = 0.75f;
+            float spacing = 0.15f;
+
+            for (int i = 0; i < Mathf.Min(moveGuides.GetLength(0), rows * cols); i++)
+            {
+                int row = i / cols;
+                int col = i % cols;
+
+                float xPos = col == 0 ? 0.25f : 0.75f;
+                float yPos = startY - (row * spacing);
+
+                string moveName = moveGuides[i, 0];
+                string description = moveGuides[i, 1];
+
+                CreateMoveGuideEntry(parent, moveName, description, xPos, yPos);
+            }
+        }
+
+        /// <summary>
+        /// Create a single move guide entry
+        /// </summary>
+        private void CreateMoveGuideEntry(Transform parent, string moveName, string description, float xPos, float yPos)
+        {
+            GameObject entry = new GameObject($"Guide_{moveName}");
+            entry.transform.SetParent(parent);
+            RectTransform entryRT = entry.AddComponent<RectTransform>();
+            entryRT.anchorMin = new Vector2(xPos, yPos);
+            entryRT.anchorMax = new Vector2(xPos, yPos);
+            entryRT.sizeDelta = new Vector2(300, 100);
+
+            // Move name (bold)
+            GameObject nameObj = CreateTextElement("Name", entry.transform, moveName, 16);
+            RectTransform nameRT = nameObj.GetComponent<RectTransform>();
+            nameRT.anchorMin = new Vector2(0, 0.6f);
+            nameRT.anchorMax = new Vector2(1, 1f);
+            nameRT.offsetMin = Vector2.zero;
+            nameRT.offsetMax = Vector2.zero;
+            nameObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.TopLeft;
+            nameObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            nameObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
+
+            // Description
+            GameObject descObj = CreateTextElement("Description", entry.transform, description, 12);
+            RectTransform descRT = descObj.GetComponent<RectTransform>();
+            descRT.anchorMin = new Vector2(0, 0f);
+            descRT.anchorMax = new Vector2(1, 0.6f);
+            descRT.offsetMin = Vector2.zero;
+            descRT.offsetMax = Vector2.zero;
+            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.TopLeft;
+            descObj.GetComponent<TextMeshProUGUI>().color = new Color(0.3f, 0.2f, 0.1f);
+        }
+
+        /// <summary>
         /// Wire up all references to the BattleManager using reflection
         /// </summary>
         private void WireUpReferences()
@@ -461,6 +613,8 @@ namespace SketchBlossom.Battle
             SetPrivateField(managerType, "drawingCanvas", createdDrawingCanvas);
             SetPrivateField(managerType, "finishDrawingButton", createdFinishButton);
             SetPrivateField(managerType, "clearDrawingButton", createdClearButton);
+            SetPrivateField(managerType, "guideBookButton", createdGuideButton);
+            SetPrivateField(managerType, "guidePanel", createdGuidePanel);
 
             // HP Bars
             SetPrivateField(managerType, "playerHPBar", createdPlayerHPBar);
@@ -523,9 +677,18 @@ namespace SketchBlossom.Battle
             createdEnemyHPBar = FindComponentByName<BattleHPBar>("EnemyHPBar");
             createdFinishButton = FindComponentByName<Button>("FinishDrawingButton");
             createdClearButton = FindComponentByName<Button>("ClearDrawingButton");
+            createdGuideButton = FindComponentByName<Button>("GuideBookButton");
             createdTurnIndicator = FindComponentByName<TextMeshProUGUI>("TurnIndicator");
             createdActionText = FindComponentByName<TextMeshProUGUI>("ActionText");
             createdAvailableMovesText = FindComponentByName<TextMeshProUGUI>("AvailableMovesText");
+
+            // Find guide panel
+            GameObject guidePanelObj = GameObject.Find("GuidePanel");
+            if (guidePanelObj != null)
+            {
+                createdGuidePanel = guidePanelObj;
+                Debug.Log("✅ Found GuidePanel");
+            }
 
             // Wire them all up
             WireUpReferences();
