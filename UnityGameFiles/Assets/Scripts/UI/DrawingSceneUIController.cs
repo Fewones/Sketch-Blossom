@@ -188,9 +188,16 @@ namespace SketchBlossom.Drawing
             if (strokeCountText != null) strokeCountText.gameObject.SetActive(false);
             if (hintText != null) hintText.gameObject.SetActive(false);
 
-            // Keep panels and strokes visible - only hide the controls
+            // Hide the drawing panel overlay (UI background) but keep stroke container
+            if (drawingPanel != null)
+            {
+                drawingPanel.SetActive(false);
+                Debug.Log("✓ Drawing panel overlay hidden");
+            }
+
+            // Keep drawing overlay active if it contains the stroke container
             // This allows the drawing to remain visible in the background
-            Debug.Log("✓ Drawing UI controls hidden, but panels and strokes remain visible");
+            Debug.Log("✓ Drawing UI controls hidden, strokes remain visible");
 
             // Ensure strokes are explicitly kept visible
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)

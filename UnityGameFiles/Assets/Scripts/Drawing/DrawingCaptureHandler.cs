@@ -10,7 +10,7 @@ public class DrawingCaptureHandler : MonoBehaviour
     [Header("Capture Settings")]
     [SerializeField] private int textureWidth = 512;
     [SerializeField] private int textureHeight = 512;
-    [SerializeField] private Color backgroundColor = Color.white; // White background (was transparent)
+    [SerializeField] private Color backgroundColor = new Color(0, 0, 0, 0); // Transparent background
     [SerializeField] private bool useScreenCapture = false; // Alternative capture method
 
     /// <summary>
@@ -242,24 +242,26 @@ public class DrawingCaptureHandler : MonoBehaviour
         if (texture == null) return false;
 
         Color[] pixels = texture.GetPixels();
-        int nonBackgroundPixels = 0;
+        int visiblePixels = 0;
 
         // Sample every 10th pixel for performance
         for (int i = 0; i < pixels.Length; i += 10)
         {
             Color pixel = pixels[i];
 
-            // Check if pixel is not the background color and not fully transparent
-            if (pixel.a > 0.1f || !ColorApproximatelyEqual(pixel, backgroundColor))
+            // Check if pixel is visible (has alpha > 0.1 and not matching background)
+            bool isVisible = pixel.a > 0.1f && !ColorApproximatelyEqual(pixel, backgroundColor);
+
+            if (isVisible)
             {
-                nonBackgroundPixels++;
+                visiblePixels++;
             }
         }
 
-        float percentageNonBackground = (float)nonBackgroundPixels / (pixels.Length / 10) * 100f;
-        Debug.Log($"DrawingCaptureHandler: Texture has {percentageNonBackground:F1}% non-background pixels");
+        float percentageVisible = (float)visiblePixels / (pixels.Length / 10) * 100f;
+        Debug.Log($"DrawingCaptureHandler: Texture has {percentageVisible:F1}% visible pixels (alpha > 0.1)");
 
-        return nonBackgroundPixels > 10; // Need at least 10 non-background pixels
+        return visiblePixels > 10; // Need at least 10 visible pixels
     }
 
     /// <summary>
