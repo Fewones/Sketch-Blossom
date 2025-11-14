@@ -1423,6 +1423,117 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &532746216
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 532746218}
+  - component: {fileID: 532746217}
+  m_Layer: 0
+  m_Name: DrawingSceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &532746217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 532746216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cffa9082a94d346e4b369e51afd58cf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.Drawing.DrawingSceneManager
+  drawingCanvas: {fileID: 34142893}
+  recognitionSystem: {fileID: 1935590026}
+  unitData: {fileID: 0}
+  uiController: {fileID: 553741604}
+  resultPanel: {fileID: 879836866}
+  guideBook: {fileID: 0}
+  battleSceneName: DrawingBattleScene
+  enableBattleTransition: 1
+--- !u!4 &532746218
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 532746216}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &553741603
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 553741605}
+  - component: {fileID: 553741604}
+  m_Layer: 0
+  m_Name: DrawingSceneUIController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &553741604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 553741603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b416f4825dd045c2887df96d9dcb14d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.Drawing.DrawingSceneUIController
+  instructionsPanel: {fileID: 1460150792}
+  drawingOverlay: {fileID: 1458536662}
+  drawingPanel: {fileID: 1324501826}
+  instructionTitle: {fileID: 281713994}
+  instructionText: {fileID: 665204014}
+  startDrawingButton: {fileID: 1222118662}
+  strokeCountText: {fileID: 332956671}
+  hintText: {fileID: 0}
+  finishButton: {fileID: 1636357515}
+  clearButton: {fileID: 0}
+  guideBookButton: {fileID: 824233836}
+  errorPanel: {fileID: 0}
+  errorText: {fileID: 0}
+  errorDisplayDuration: 2
+  drawingCanvas: {fileID: 34142893}
+--- !u!4 &553741605
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 553741603}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &578979868
 GameObject:
   m_ObjectHideFlags: 0
@@ -3358,8 +3469,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1990978706}
-  - {fileID: 1847231912}
-  - {fileID: 1649472005}
   - {fileID: 2095866480}
   - {fileID: 504545467}
   - {fileID: 1528098094}
@@ -3367,6 +3476,8 @@ RectTransform:
   - {fileID: 1777434043}
   - {fileID: 1055880577}
   - {fileID: 1733158322}
+  - {fileID: 1649472005}
+  - {fileID: 1847231912}
   m_Father: {fileID: 879836865}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -6559,3 +6670,5 @@ SceneRoots:
   - {fileID: 1709098662}
   - {fileID: 34142894}
   - {fileID: 1935590027}
+  - {fileID: 532746218}
+  - {fileID: 553741605}
