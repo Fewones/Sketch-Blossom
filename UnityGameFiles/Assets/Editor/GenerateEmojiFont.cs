@@ -12,7 +12,7 @@ using System.IO;
 public class GenerateEmojiFont : MonoBehaviour
 {
     [MenuItem("Tools/Generate Emoji Font Asset")]
-    public static void GenerateEmojiFont()
+    public static void CreateEmojiFont()
     {
         Debug.Log("========================================");
         Debug.Log("GENERATING EMOJI FONT ASSET");
