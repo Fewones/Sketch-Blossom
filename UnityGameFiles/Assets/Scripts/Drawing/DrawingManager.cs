@@ -211,6 +211,13 @@ public class DrawingManager : MonoBehaviour
 
         Debug.Log("===== ANALYSIS SUCCEEDED - SHOWING RESULTS =====");
 
+        // Keep strokes visible by ensuring strokeContainer stays active
+        if (simpleCanvas != null && simpleCanvas.strokeContainer != null)
+        {
+            simpleCanvas.strokeContainer.gameObject.SetActive(true);
+            Debug.Log("✓ Ensured strokes remain visible");
+        }
+
         // HIDE DRAWING UI (only drawing UI - let PlantResultPanel show itself)
         if (drawingOverlay != null)
         {
@@ -224,8 +231,12 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Hidden DrawingPanel");
         }
 
-        // Leave strokes visible - they'll be in the background behind the result panel
-        Debug.Log("✓ Keeping strokes visible in background");
+        // Ensure strokes remain visible even if they were children of hidden panels
+        if (simpleCanvas != null && simpleCanvas.strokeContainer != null)
+        {
+            simpleCanvas.strokeContainer.gameObject.SetActive(true);
+            Debug.Log("✓ Strokes kept visible in background");
+        }
 
         // Show result data - PlantResultPanel will handle showing its own overlay/panel
         if (plantResultPanel != null)
