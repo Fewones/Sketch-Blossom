@@ -165,7 +165,10 @@ public class RebuildBattleDrawingSystem : EditorWindow
 
         so.ApplyModifiedProperties();
 
-        Debug.Log("✓ Created SimpleDrawingCanvas");
+        // Initially disable the canvas (BattleDrawingManager will enable it)
+        drawingCanvas.enabled = false;
+
+        Debug.Log("✓ Created SimpleDrawingCanvas (initially disabled)");
         return drawingCanvas;
     }
 

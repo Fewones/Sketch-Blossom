@@ -120,10 +120,23 @@ public class BattleDrawingManager : MonoBehaviour
         currentPlantType = plantType;
         isDrawingEnabled = true;
 
+        // Enable the drawing canvas component
+        if (drawingCanvas != null)
+        {
+            drawingCanvas.enabled = true;
+            Debug.Log("✓ Drawing canvas enabled");
+        }
+        else if (legacyDrawingCanvas != null)
+        {
+            legacyDrawingCanvas.enabled = true;
+            Debug.Log("✓ Legacy drawing canvas enabled");
+        }
+
         // Show the panel
         if (drawingPanel != null)
         {
             drawingPanel.SetActive(true);
+            Debug.Log("✓ Drawing panel activated");
         }
 
         // Clear any previous drawing
@@ -133,7 +146,7 @@ public class BattleDrawingManager : MonoBehaviour
         if (instructionText != null)
         {
             MoveData[] availableMoves = MoveData.GetMovesForPlant(plantType);
-            string movesText = "Draw your move:\n";
+            string movesText = "Available Moves:\n";
             foreach (var move in availableMoves)
             {
                 movesText += $"• {move.moveName}\n";
@@ -147,7 +160,7 @@ public class BattleDrawingManager : MonoBehaviour
             submitButton.interactable = false;
         }
 
-        Debug.Log("✓ Drawing panel shown and ready");
+        Debug.Log("✓ Drawing panel shown and ready - you can now draw!");
     }
 
     /// <summary>
@@ -157,6 +170,18 @@ public class BattleDrawingManager : MonoBehaviour
     {
         Debug.Log("Hiding drawing panel");
         isDrawingEnabled = false;
+
+        // Disable the drawing canvas component
+        if (drawingCanvas != null)
+        {
+            drawingCanvas.enabled = false;
+            Debug.Log("✓ Drawing canvas disabled");
+        }
+        else if (legacyDrawingCanvas != null)
+        {
+            legacyDrawingCanvas.enabled = false;
+            Debug.Log("✓ Legacy drawing canvas disabled");
+        }
 
         if (drawingPanel != null)
         {
@@ -236,14 +261,22 @@ public class BattleDrawingManager : MonoBehaviour
     {
         Debug.Log("========== SUBMIT DRAWING CLICKED ==========");
 
+        // Verify we have the necessary components
+        if (drawingCanvas == null && legacyDrawingCanvas == null)
+        {
+            Debug.LogError("❌ No drawing canvas found! Cannot submit drawing.");
+            return;
+        }
+
         List<LineRenderer> strokes = GetAllStrokes();
         int strokeCount = strokes.Count;
 
-        Debug.Log($"Analyzing {strokeCount} strokes for {currentPlantType}");
+        Debug.Log($"Stroke count: {strokeCount}");
+        Debug.Log($"Plant type: {currentPlantType}");
 
         if (strokeCount == 0)
         {
-            Debug.LogWarning("No strokes to analyze!");
+            Debug.LogWarning("⚠️ No strokes to analyze! Draw something first.");
             return;
         }
 
@@ -251,40 +284,44 @@ public class BattleDrawingManager : MonoBehaviour
         if (drawingCanvas != null)
         {
             drawingCanvas.ForceEndStroke();
+            Debug.Log("✓ Forced end of any in-progress stroke");
         }
         else if (legacyDrawingCanvas != null)
         {
             legacyDrawingCanvas.ForceEndStroke();
+            Debug.Log("✓ Forced end of any in-progress stroke (legacy)");
         }
 
         // Analyze the move using MovesetDetector
-        if (movesetDetector != null)
-        {
-            MovesetDetector.MoveDetectionResult result = movesetDetector.DetectMove(strokes, currentPlantType);
-
-            Debug.Log($"Move detected: {result.detectedMove}");
-            Debug.Log($"Confidence: {result.confidence:P0}");
-            Debug.Log($"Quality: {result.quality:P0}");
-            Debug.Log($"Quality Rating: {result.qualityRating}");
-            Debug.Log($"Damage Multiplier: {result.damageMultiplier:F2}x");
-
-            // Hide drawing panel
-            HideDrawingPanel();
-
-            // Notify CombatManager that move is ready
-            if (combatManager != null)
-            {
-                combatManager.OnMoveSubmitted(result);
-            }
-            else
-            {
-                Debug.LogError("❌ CombatManager is null! Cannot submit move.");
-            }
-        }
-        else
+        if (movesetDetector == null)
         {
             Debug.LogError("❌ MovesetDetector is null! Cannot analyze move.");
+            return;
         }
+
+        Debug.Log("✓ Analyzing move...");
+        MovesetDetector.MoveDetectionResult result = movesetDetector.DetectMove(strokes, currentPlantType);
+
+        Debug.Log($"✓ Move detected: {result.detectedMove}");
+        Debug.Log($"✓ Was recognized: {result.wasRecognized}");
+        Debug.Log($"✓ Confidence: {result.confidence:P0}");
+        Debug.Log($"✓ Quality: {result.quality:P0}");
+        Debug.Log($"✓ Quality Rating: {result.qualityRating}");
+        Debug.Log($"✓ Damage Multiplier: {result.damageMultiplier:F2}x");
+
+        // Hide drawing panel
+        HideDrawingPanel();
+
+        // Notify CombatManager that move is ready
+        if (combatManager == null)
+        {
+            Debug.LogError("❌ CombatManager is null! Cannot submit move.");
+            return;
+        }
+
+        Debug.Log("✓ Submitting move to CombatManager...");
+        combatManager.OnMoveSubmitted(result);
+        Debug.Log("========== SUBMIT COMPLETE ==========");
     }
 
     /// <summary>
