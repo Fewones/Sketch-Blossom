@@ -2,112 +2,266 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
-
-public enum GrowthMode { None, Tame, Wild }
+using System.Collections;
 
 public class PostBattleManager : MonoBehaviour
 {
-    [Header("UI")]
+    [Header("Main UI")]
+    [SerializeField] private GameObject wildGrowthPanel;
+    [SerializeField] private GameObject tamePanel;
+    [SerializeField] private Button wildGrowthButton;
     [SerializeField] private Button tameButton;
-    [SerializeField] private Button wildButton;
-    [SerializeField] private Button finishButton;   // your renamed Continue → Finish
-    [SerializeField] private TextMeshProUGUI titleText;
-    [SerializeField] private TextMeshProUGUI subtitleText;
-    [SerializeField] private TextMeshProUGUI descriptionText; // optional helper text
+    [SerializeField] private Image plantImage; // For Wild-Growth option
+    [SerializeField] private TextMeshProUGUI tameDescriptionText;
 
-    [Header("Scene Names")]
-    [SerializeField] private string drawingSceneName = "DrawingScene";
-    [SerializeField] private string nextSceneName = "WorldMapScene"; // or BattleScene, configure in Inspector
+    [Header("Guide System")]
+    [SerializeField] private Button guideButton;
+    [SerializeField] private GameObject guideBookPanel;
+    [SerializeField] private TextMeshProUGUI guidePageTitle;
+    [SerializeField] private TextMeshProUGUI guidePageContent;
+    [SerializeField] private TextMeshProUGUI pageNumberText;
+    [SerializeField] private Button nextPageButton;
+    [SerializeField] private Button prevPageButton;
+    [SerializeField] private Button closeGuideButton;
 
-    private GrowthMode selected = GrowthMode.None;
+    [Header("Scene Settings")]
+    [SerializeField] private string nextSceneName = "DrawingScene";
 
-    private const string PREF_GROWTH_MODE = "GrowthMode"; // shared flag for DrawingScene
+    private int currentPage = 0;
+    private readonly string[] pageTitles = new string[]
+    {
+        "Wild Growth",
+        "Tame"
+    };
+
+    private readonly string[] pageContents = new string[]
+    {
+        "<b>Wild Growth</b>\n\n" +
+        "Wild Growth allows your plant to grow freely and reach its full natural potential. " +
+        "Your plant will maintain its wild, untamed nature and develop powerful natural abilities.\n\n" +
+        "<color=green>Benefits:</color>\n" +
+        "• Increases base stats significantly\n" +
+        "• Unlocks unique wild abilities\n" +
+        "• Maintains the plant's original appearance\n" +
+        "• Can be used immediately in battle",
+
+        "<b>Tame</b>\n\n" +
+        "Taming your plant allows you to add it as a new unit to your roster. " +
+        "The plant will become a loyal companion that you can deploy in future battles.\n\n" +
+        "<color=blue>Benefits:</color>\n" +
+        "• Adds a new unit to your collection\n" +
+        "• Can be summoned in future battles\n" +
+        "• Grows stronger with experience\n" +
+        "• Builds a diverse team of plants"
+    };
 
     private void Awake()
     {
-        // Basic safety: find by name if not wired yet
-        if (!tameButton)      tameButton = GameObject.Find("TameButton")?.GetComponent<Button>();
-        if (!wildButton)      wildButton = GameObject.Find("WildButton")?.GetComponent<Button>();
-        if (!finishButton)    finishButton = GameObject.Find("FinishButton")?.GetComponent<Button>()
-                                 ?? GameObject.Find("ContinueButton opt")?.GetComponent<Button>();
-        if (!titleText)       titleText = GameObject.Find("TitleText")?.GetComponent<TextMeshProUGUI>();
-        if (!subtitleText)    subtitleText = GameObject.Find("SubtitleText")?.GetComponent<TextMeshProUGUI>();
-        if (!descriptionText) descriptionText = GameObject.Find("DescriptionText")?.GetComponent<TextMeshProUGUI>();
+        // Auto-wire components if not set
+        if (!wildGrowthButton) wildGrowthButton = GameObject.Find("WildGrowthButton")?.GetComponent<Button>();
+        if (!tameButton) tameButton = GameObject.Find("TameButton")?.GetComponent<Button>();
+        if (!guideButton) guideButton = GameObject.Find("GuideButton")?.GetComponent<Button>();
+        if (!plantImage) plantImage = GameObject.Find("PlantImage")?.GetComponent<Image>();
+        if (!tameDescriptionText) tameDescriptionText = GameObject.Find("TameDescriptionText")?.GetComponent<TextMeshProUGUI>();
     }
 
     private void Start()
     {
-        // Initial UI
-        if (titleText)    titleText.text = "Victory! Choose Your Growth Path";
-        if (subtitleText) subtitleText.text = "Choose one option:";
-        if (descriptionText) descriptionText.text = "";
+        // Setup buttons
+        if (wildGrowthButton) wildGrowthButton.onClick.AddListener(OnWildGrowthSelected);
+        if (tameButton) tameButton.onClick.AddListener(OnTameSelected);
+        if (guideButton) guideButton.onClick.AddListener(OnGuideButtonClicked);
+        if (closeGuideButton) closeGuideButton.onClick.AddListener(OnCloseGuide);
+        if (nextPageButton) nextPageButton.onClick.AddListener(OnNextPage);
+        if (prevPageButton) prevPageButton.onClick.AddListener(OnPreviousPage);
 
-        if (finishButton) finishButton.gameObject.SetActive(false);
+        // Set Tame description
+        if (tameDescriptionText)
+        {
+            tameDescriptionText.text = "Add a new unit to the roster";
+        }
 
-        // Wire buttons
-        if (tameButton)   tameButton.onClick.AddListener(OnTameSelected);
-        if (wildButton)   wildButton.onClick.AddListener(OnWildSelected);
-        if (finishButton) finishButton.onClick.AddListener(OnFinish);
+        // Load plant image from battle
+        LoadPlantImage();
+
+        // Hide guidebook initially
+        if (guideBookPanel) guideBookPanel.SetActive(false);
+
+        // Show first page
+        UpdateGuidePage();
     }
 
     private void OnDestroy()
     {
-        // Unwire to avoid leaks on domain reload
-        if (tameButton)   tameButton.onClick.RemoveListener(OnTameSelected);
-        if (wildButton)   wildButton.onClick.RemoveListener(OnWildSelected);
-        if (finishButton) finishButton.onClick.RemoveListener(OnFinish);
+        // Cleanup listeners
+        if (wildGrowthButton) wildGrowthButton.onClick.RemoveListener(OnWildGrowthSelected);
+        if (tameButton) tameButton.onClick.RemoveListener(OnTameSelected);
+        if (guideButton) guideButton.onClick.RemoveListener(OnGuideButtonClicked);
+        if (closeGuideButton) closeGuideButton.onClick.RemoveListener(OnCloseGuide);
+        if (nextPageButton) nextPageButton.onClick.RemoveListener(OnNextPage);
+        if (prevPageButton) prevPageButton.onClick.RemoveListener(OnPreviousPage);
+    }
+
+    private void LoadPlantImage()
+    {
+        // Get the plant data from the battle
+        if (DrawnUnitData.Instance != null && DrawnUnitData.Instance.drawingTexture != null)
+        {
+            Texture2D drawingTexture = DrawnUnitData.Instance.drawingTexture;
+
+            // Convert texture to sprite
+            Sprite plantSprite = Texture2DToSprite(drawingTexture);
+
+            if (plantImage != null && plantSprite != null)
+            {
+                plantImage.sprite = plantSprite;
+                plantImage.color = Color.white;
+                plantImage.preserveAspect = true;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No plant drawing data found. Using default placeholder.");
+            if (plantImage)
+            {
+                // Apply element color as fallback
+                plantImage.color = new Color(0.3f, 1f, 0.3f); // Green
+            }
+        }
+    }
+
+    private Sprite Texture2DToSprite(Texture2D texture)
+    {
+        if (texture == null) return null;
+
+        // Create sprite from texture
+        Sprite sprite = Sprite.Create(
+            texture,
+            new Rect(0, 0, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f), // Pivot at center
+            100f // Pixels per unit
+        );
+        return sprite;
+    }
+
+    public void OnWildGrowthSelected()
+    {
+        Debug.Log("Wild Growth selected!");
+        // Store the choice
+        PlayerPrefs.SetString("GrowthMode", "WILD");
+        PlayerPrefs.Save();
+
+        // Proceed to next scene or apply wild growth effect
+        StartCoroutine(TransitionToNextScene());
     }
 
     public void OnTameSelected()
     {
-        selected = GrowthMode.Tame;
-        PlayerPrefs.SetString(PREF_GROWTH_MODE, "TAME");
+        Debug.Log("Tame selected!");
+        // Store the choice
+        PlayerPrefs.SetString("GrowthMode", "TAME");
+        PlayerPrefs.Save();
 
-        if (descriptionText)
-            descriptionText.text = "🌱 TAME: Draw a brand new plant with limited strokes. " +
-                                   "Your drawing will be analyzed to generate a new card.";
-
-        // Jump directly into the Drawing Scene
-        LoadDrawingScene();
+        // Proceed to next scene or add unit to roster
+        StartCoroutine(TransitionToNextScene());
     }
 
-    public void OnWildSelected()
+    private IEnumerator TransitionToNextScene()
     {
-        selected = GrowthMode.Wild;
-        PlayerPrefs.SetString(PREF_GROWTH_MODE, "WILD");
+        yield return new WaitForSeconds(0.5f);
 
-        if (descriptionText)
-            descriptionText.text = "🌿 WILD GROWTH: Choose a card and add thorns/leaves/flowers. " +
-                                   "Stats will evolve from your additions.";
-
-        // For now: reuse the same Drawing Scene.
-        // Later you can insert a Deck picker before loading.
-        LoadDrawingScene();
-    }
-
-    // If you ever want Finish to skip drawing and continue, keep this:
-    public void OnFinish()
-    {
-        // Proceed to map/next encounter after post-battle
         if (!string.IsNullOrEmpty(nextSceneName))
         {
             SceneManager.LoadScene(nextSceneName);
         }
         else
         {
-            Debug.LogWarning("PostBattleManager: nextSceneName is empty.");
+            Debug.LogWarning("Next scene name is not set!");
         }
     }
 
-    private void LoadDrawingScene()
+    // Guide Book Methods
+    public void OnGuideButtonClicked()
     {
-        if (!string.IsNullOrEmpty(drawingSceneName))
+        if (guideBookPanel)
         {
-            SceneManager.LoadScene(drawingSceneName);
+            guideBookPanel.SetActive(true);
+            currentPage = 0;
+            UpdateGuidePage();
         }
-        else
+    }
+
+    public void OnCloseGuide()
+    {
+        if (guideBookPanel)
         {
-            Debug.LogError("PostBattleManager: drawingSceneName is empty.");
+            guideBookPanel.SetActive(false);
+        }
+    }
+
+    public void OnNextPage()
+    {
+        currentPage = (currentPage + 1) % pageTitles.Length;
+        UpdateGuidePage();
+    }
+
+    public void OnPreviousPage()
+    {
+        currentPage--;
+        if (currentPage < 0) currentPage = pageTitles.Length - 1;
+        UpdateGuidePage();
+    }
+
+    private void UpdateGuidePage()
+    {
+        if (guidePageTitle)
+        {
+            guidePageTitle.text = pageTitles[currentPage];
+        }
+
+        if (guidePageContent)
+        {
+            guidePageContent.text = pageContents[currentPage];
+        }
+
+        if (pageNumberText)
+        {
+            pageNumberText.text = $"Page {currentPage + 1} / {pageTitles.Length}";
+        }
+    }
+
+    // Keyboard shortcuts
+    private void Update()
+    {
+        // Press G to open guide
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            if (guideBookPanel && !guideBookPanel.activeSelf)
+            {
+                OnGuideButtonClicked();
+            }
+        }
+
+        // Press Escape to close guide
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (guideBookPanel && guideBookPanel.activeSelf)
+            {
+                OnCloseGuide();
+            }
+        }
+
+        // Arrow keys for page navigation
+        if (guideBookPanel && guideBookPanel.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                OnNextPage();
+            }
+            else if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                OnPreviousPage();
+            }
         }
     }
 }
