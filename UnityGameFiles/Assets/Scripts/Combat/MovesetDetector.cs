@@ -171,19 +171,21 @@ public class MovesetDetector : MonoBehaviour
         float score = 0f;
 
         // Should be 1-3 strokes (simple shape)
-        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.3f;
-        else if (f.strokeCount <= 5) score += 0.15f;  // Still okay
+        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.4f;
+        else if (f.strokeCount <= 5) score += 0.2f;  // Still okay
 
         // Prefer compact shapes
         float avgSize = (f.width + f.height) / 2f;
-        if (avgSize < 4f) score += 0.2f;
+        if (avgSize < 4f) score += 0.3f;
 
         // Bonus for circular strokes (easiest to draw)
         if (f.circularStrokes >= 1) score += 0.3f;
 
-        // Block is still forgiving but won't dominate other moves
-        // Reduced from 0.4f to 0.15f to act as a true fallback
-        score = Mathf.Max(score, 0.15f);
+        // Or any stroke pattern works decently
+        if (f.strokeCount >= 1) score += 0.2f;
+
+        // Block is forgiving - give minimum score for any drawing
+        score = Mathf.Max(score, 0.4f);
 
         return Mathf.Clamp01(score);
     }
@@ -200,9 +202,9 @@ public class MovesetDetector : MonoBehaviour
         // Should be 1-2 strokes (circle with optional tail)
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
 
-        // Strong bonus for circular shape
+        // Must have circular shape
         if (f.circularStrokes >= 1) score += 0.5f;
-        else if (f.strokeCount <= 2) score += 0.1f; // Partial credit for simple strokes
+        else return 0f; // No circle = not a fireball
 
         // Should be compact (not too spread out)
         float size = Mathf.Max(f.width, f.height);
@@ -240,9 +242,9 @@ public class MovesetDetector : MonoBehaviour
     {
         float score = 0f;
 
-        // Strong bonus for sharp turns (spiky)
+        // Should have sharp turns (spiky)
         if (f.spikyStrokes >= 1) score += 0.5f;
-        else if (f.strokeCount >= 2) score += 0.15f; // Partial credit for multiple strokes
+        else return 0f; // No spikes = not burn
 
         // Can be vertical or diagonal
         if (f.verticalStrokes >= 1 || f.spikyStrokes >= 2) score += 0.3f;
@@ -268,9 +270,9 @@ public class MovesetDetector : MonoBehaviour
         // Should be 1-2 strokes
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
 
-        // Strong bonus for curved strokes
+        // Must be curved
         if (f.curvedStrokes >= 1) score += 0.4f;
-        else if (f.strokeCount <= 3) score += 0.1f; // Partial credit for few strokes
+        else return 0f; // Not curved = not vine
 
         // Should be elongated (not compact)
         if (f.aspectRatio > 0.8f && f.aspectRatio < 2.0f) score += 0.2f;
@@ -291,14 +293,13 @@ public class MovesetDetector : MonoBehaviour
         // Should have many strokes (3+)
         if (f.strokeCount >= 5) score += 0.4f;
         else if (f.strokeCount >= 3) score += 0.25f;
-        else if (f.strokeCount >= 2) score += 0.1f; // Partial credit for some strokes
+        else return 0f; // Too few strokes
 
         // Strokes should be relatively short/scattered
         if (f.strokeCount >= 4) score += 0.3f;
 
         // Mix of directions (not all same direction)
         if (f.horizontalStrokes >= 1 && f.verticalStrokes >= 1) score += 0.2f;
-        else if (f.horizontalStrokes >= 1 || f.verticalStrokes >= 1) score += 0.1f;
 
         // Penalty for circular shapes
         if (f.circularStrokes > 0) score *= 0.6f;
@@ -315,11 +316,10 @@ public class MovesetDetector : MonoBehaviour
 
         // Should be tall (high aspect ratio)
         if (f.aspectRatio > 1.2f) score += 0.3f;
-        else if (f.aspectRatio > 0.9f) score += 0.1f; // Partial credit
 
-        // Strong bonus for vertical strokes
+        // Must have vertical strokes
         if (f.verticalStrokes >= 1) score += 0.4f;
-        else if (f.strokeCount >= 1) score += 0.1f; // Partial credit for any strokes
+        else return 0f; // No vertical = not roots
 
         // Bonus for multiple vertical strokes
         if (f.verticalStrokes >= 2) score += 0.2f;
@@ -364,9 +364,9 @@ public class MovesetDetector : MonoBehaviour
     {
         float score = 0f;
 
-        // Strong bonus for circular strokes
+        // Must have circular strokes
         if (f.circularStrokes >= 1) score += 0.5f;
-        else if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f; // Partial credit for simple strokes
+        else return 0f; // No circles = not bubbles
 
         // Bonus for multiple circles
         if (f.circularStrokes >= 2) score += 0.3f;
@@ -387,11 +387,10 @@ public class MovesetDetector : MonoBehaviour
 
         // Should be horizontal and wide
         if (f.aspectRatio < 0.8f) score += 0.3f;
-        else if (f.aspectRatio < 1.2f) score += 0.1f; // Partial credit
 
-        // Strong bonus for horizontal strokes
+        // Must have horizontal strokes
         if (f.horizontalStrokes >= 1) score += 0.3f;
-        else if (f.curvedStrokes >= 1) score += 0.15f; // Partial credit for curved
+        else return 0f; // Not horizontal = not healing wave
 
         // Should be smooth/curved
         if (f.curvedStrokes >= 1) score += 0.3f;
@@ -483,8 +482,7 @@ public class MovesetDetector : MonoBehaviour
             float verticalExtent = Mathf.Abs(positions[positions.Length - 1].y - positions[0].y);
             float horizontalExtent = Mathf.Abs(positions[positions.Length - 1].x - positions[0].x);
 
-            // Relaxed from 1.3x to 1.1x to be more forgiving
-            if (verticalExtent > horizontalExtent * 1.1f)
+            if (verticalExtent > horizontalExtent * 1.3f)
             {
                 count++;
             }
@@ -505,8 +503,7 @@ public class MovesetDetector : MonoBehaviour
             float verticalExtent = Mathf.Abs(positions[positions.Length - 1].y - positions[0].y);
             float horizontalExtent = Mathf.Abs(positions[positions.Length - 1].x - positions[0].x);
 
-            // Relaxed from 1.3x to 1.1x to be more forgiving
-            if (horizontalExtent > verticalExtent * 1.1f)
+            if (horizontalExtent > verticalExtent * 1.3f)
             {
                 count++;
             }
@@ -531,8 +528,7 @@ public class MovesetDetector : MonoBehaviour
                 Vector3 dir2 = (positions[i + 1] - positions[i]).normalized;
                 float angle = Vector3.Angle(dir1, dir2);
 
-                // Relaxed from 80° to 60° to be more forgiving
-                if (angle > 60f) sharpTurns++;
+                if (angle > 80f) sharpTurns++;
             }
 
             if (sharpTurns >= 2) count++;
