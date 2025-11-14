@@ -72,8 +72,16 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     bool IsInsideDrawingArea(Vector2 screenPos)
     {
-        if (drawingArea == null) return true; // If no area defined, allow anywhere
-        if (mainCamera == null) return false;
+        if (drawingArea == null)
+        {
+            Debug.LogWarning("DrawingArea is null! Cannot restrict drawing bounds.");
+            return true; // If no area defined, allow anywhere
+        }
+        if (mainCamera == null)
+        {
+            Debug.LogWarning("MainCamera is null! Cannot check bounds.");
+            return false;
+        }
 
         // Get world corners of the drawing area
         Vector3[] corners = new Vector3[4];
@@ -83,9 +91,20 @@ public class SimpleDrawingCanvas : MonoBehaviour
         Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
         Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
 
-        return screenPos.x >= min.x && screenPos.x <= max.x &&
-               screenPos.y >= min.y && screenPos.y <= max.y;
+        bool isInside = screenPos.x >= min.x && screenPos.x <= max.x &&
+                        screenPos.y >= min.y && screenPos.y <= max.y;
+
+        // Debug log on first check
+        if (!hasLoggedBounds)
+        {
+            Debug.Log($"Drawing area bounds - Min: {min}, Max: {max}, Size: {max - min}");
+            hasLoggedBounds = true;
+        }
+
+        return isInside;
     }
+
+    private bool hasLoggedBounds = false;
 
     void StartStroke(Vector2 screenPos)
     {

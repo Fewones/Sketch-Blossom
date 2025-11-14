@@ -56,11 +56,29 @@ public class RestoreDrawingScreenLayout : EditorWindow
             drawingAreaRect.anchoredPosition = new Vector2(0f, -30f); // Slightly down to leave room for UI
             drawingAreaRect.sizeDelta = new Vector2(1700f, 950f); // Wider for better screen fit
 
+            // Add RectMask2D to clip drawing to this area
+            UnityEngine.UI.RectMask2D mask = drawingAreaRect.GetComponent<UnityEngine.UI.RectMask2D>();
+            if (mask == null)
+            {
+                mask = Undo.AddComponent<UnityEngine.UI.RectMask2D>(drawingAreaRect.gameObject);
+                Debug.Log("✓ Added RectMask2D to clip drawing to bounds");
+            }
+
             EditorUtility.SetDirty(drawingAreaRect.gameObject);
-            Debug.Log("✓ DrawingArea restored to 1700x950 centered");
+            Debug.Log("✓ DrawingArea restored to 1700x950 centered with clipping mask");
         }
 
-        // Find and position stroke counter at top-left
+        // Ensure stroke container is a child of drawing area for proper clipping
+        if (drawingCanvas != null && drawingCanvas.strokeContainer != null && drawingCanvas.drawingArea != null)
+        {
+            if (drawingCanvas.strokeContainer.parent != drawingCanvas.drawingArea)
+            {
+                Undo.SetTransformParent(drawingCanvas.strokeContainer, drawingCanvas.drawingArea, "Move stroke container to drawing area");
+                Debug.Log("✓ Moved stroke container under drawing area for proper clipping");
+            }
+        }
+
+        // Find and position stroke counter centered above the drawing area
         if (drawingPanelTransform != null)
         {
             // Find StrokeCounter text
@@ -70,11 +88,12 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 RectTransform strokeRect = strokeCounterTransform.GetComponent<RectTransform>();
                 Undo.RecordObject(strokeRect, "Position Stroke Counter");
 
-                // Position at top-left corner
-                strokeRect.anchorMin = new Vector2(0f, 1f);
-                strokeRect.anchorMax = new Vector2(0f, 1f);
-                strokeRect.pivot = new Vector2(0f, 1f);
-                strokeRect.anchoredPosition = new Vector2(20f, -20f); // Top-left with padding
+                // Position centered, above drawing area (not screen)
+                // Using center anchor and positioning relative to drawing area position
+                strokeRect.anchorMin = new Vector2(0.5f, 0.5f);
+                strokeRect.anchorMax = new Vector2(0.5f, 0.5f);
+                strokeRect.pivot = new Vector2(1f, 0.5f); // Right-aligned pivot for stroke counter
+                strokeRect.anchoredPosition = new Vector2(-180f, 515f); // Above drawing area (1700x950 → top is at +475, add 40 for spacing)
                 strokeRect.sizeDelta = new Vector2(150f, 40f);
 
                 // Increase font size if it has TextMeshProUGUI
@@ -83,30 +102,30 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 {
                     Undo.RecordObject(strokeText, "Increase Stroke Counter Text");
                     strokeText.fontSize = 20f;
-                    strokeText.alignment = TextAlignmentOptions.Left;
+                    strokeText.alignment = TextAlignmentOptions.Right;
                     EditorUtility.SetDirty(strokeText.gameObject);
                 }
 
                 EditorUtility.SetDirty(strokeCounterTransform.gameObject);
-                Debug.Log("✓ Stroke counter positioned at top-left");
+                Debug.Log("✓ Stroke counter positioned above drawing area");
             }
         }
 
-        // Find and reposition color buttons horizontally next to stroke counter
+        // Find and reposition color buttons horizontally above and centered on drawing area
         DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
         if (colorSelector != null)
         {
-            // Position buttons horizontally in a row, next to stroke counter
+            // Position buttons horizontally in a row, centered above the drawing area
             // Red button - first in row
             if (colorSelector.redButton != null)
             {
                 Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Restore Red Button");
                 RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(90f, 50f); // Wider buttons
-                rect.anchorMin = new Vector2(0f, 1f);
-                rect.anchorMax = new Vector2(0f, 1f);
-                rect.pivot = new Vector2(0f, 1f);
-                rect.anchoredPosition = new Vector2(180f, -15f); // Next to stroke counter
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(-145f, 515f); // Above drawing area, left of center
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.redButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -121,16 +140,16 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 Debug.Log("✓ Red button repositioned to 90x50");
             }
 
-            // Green button - second in row
+            // Green button - second in row (center)
             if (colorSelector.greenButton != null)
             {
                 Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Restore Green Button");
                 RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(90f, 50f);
-                rect.anchorMin = new Vector2(0f, 1f);
-                rect.anchorMax = new Vector2(0f, 1f);
-                rect.pivot = new Vector2(0f, 1f);
-                rect.anchoredPosition = new Vector2(280f, -15f); // Next to red button
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(-45f, 515f); // Above drawing area, center
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.greenButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -145,16 +164,16 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 Debug.Log("✓ Green button repositioned to 90x50");
             }
 
-            // Blue button - third in row
+            // Blue button - third in row (right)
             if (colorSelector.blueButton != null)
             {
                 Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Restore Blue Button");
                 RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(90f, 50f);
-                rect.anchorMin = new Vector2(0f, 1f);
-                rect.anchorMax = new Vector2(0f, 1f);
-                rect.pivot = new Vector2(0f, 1f);
-                rect.anchoredPosition = new Vector2(380f, -15f); // Next to green button
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(55f, 515f); // Above drawing area, right of center
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.blueButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -169,7 +188,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 Debug.Log("✓ Blue button repositioned to 90x50");
             }
 
-            Debug.Log("✓ Color buttons repositioned horizontally");
+            Debug.Log("✓ Color buttons repositioned horizontally above drawing area");
         }
 
 
@@ -373,11 +392,12 @@ public class RestoreDrawingScreenLayout : EditorWindow
         EditorUtility.DisplayDialog("Success",
             "Drawing screen layout has been updated!\n\n" +
             "✓ DrawingPanel: Full screen\n" +
-            "✓ DrawingArea: 1700x950 (wider for better screen fit)\n" +
-            "✓ Stroke Counter: Top-left corner\n" +
-            "✓ Color Buttons: 90x50, horizontal row next to stroke counter\n" +
+            "✓ DrawingArea: 1700x950 with RectMask2D clipping\n" +
+            "✓ Stroke Container: Parented to drawing area for clipping\n" +
+            "✓ Stroke Counter: Centered above drawing rectangle\n" +
+            "✓ Color Buttons: Horizontal toolbar above drawing rectangle\n" +
             "✓ Button Text: Increased to 16pt\n" +
-            "✓ Horizontal toolbar layout at top-left\n" +
+            "✓ Drawing restricted to white rectangle bounds\n" +
             "✓ Result Panel: Simple centered layout\n" +
             "✓ All extra backgrounds removed",
             "OK");
