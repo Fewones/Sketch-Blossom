@@ -140,8 +140,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
             Debug.Log("✓ Color buttons repositioned and resized");
         }
 
-        // Find and position stroke counter next to color buttons
-        Transform drawingPanelTransform = mainCanvas.transform.Find("DrawingPanel");
+        // Find and position stroke counter next to color buttons (reuse drawingPanelTransform)
         if (drawingPanelTransform != null)
         {
             // Find StrokeCounter text
