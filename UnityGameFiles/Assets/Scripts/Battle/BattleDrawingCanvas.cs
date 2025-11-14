@@ -13,8 +13,8 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 5f;
-        [SerializeField] private Color drawingColor = Color.white;
+        [SerializeField] private float lineWidth = 0.1f;
+        [SerializeField] private Color drawingColor = Color.black;
 
         [Header("Line Rendering")]
         [SerializeField] private GameObject lineRendererPrefab;
@@ -43,11 +43,26 @@ namespace SketchBlossom.Battle
         {
             mainCamera = Camera.main;
 
+            // Find the parent Canvas (not on this GameObject)
             if (canvas == null)
-                canvas = GetComponent<Canvas>();
+                canvas = GetComponentInParent<Canvas>();
 
+            // The drawing area is this GameObject's RectTransform
             if (drawingArea == null)
                 drawingArea = GetComponent<RectTransform>();
+
+            if (canvas == null)
+            {
+                Debug.LogError("BattleDrawingCanvas: No Canvas found in parent! Drawing may not work correctly.");
+            }
+
+            // Create default line material if none provided
+            if (lineMaterial == null)
+            {
+                lineMaterial = new Material(Shader.Find("Sprites/Default"));
+                lineMaterial.color = Color.white;
+                Debug.Log("BattleDrawingCanvas: Created default line material");
+            }
         }
 
         private void Update()
@@ -187,11 +202,21 @@ namespace SketchBlossom.Battle
             currentLine.positionCount = 0;
             currentLine.useWorldSpace = false;
 
+            // Set material
             if (lineMaterial != null)
                 currentLine.material = lineMaterial;
 
+            // Set colors
             currentLine.startColor = drawingColor;
             currentLine.endColor = drawingColor;
+
+            // Ensure proper 2D rendering
+            currentLine.alignment = LineAlignment.TransformZ;
+            currentLine.textureMode = LineTextureMode.Tile;
+
+            // Set sorting order to render on top
+            currentLine.sortingLayerName = "Default";
+            currentLine.sortingOrder = 100;
 
             // Add first point
             Vector2 localPoint = ScreenToCanvasPoint(screenPosition);

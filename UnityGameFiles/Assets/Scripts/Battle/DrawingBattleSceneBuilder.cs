@@ -65,14 +65,31 @@ namespace SketchBlossom.Battle
                 mainCanvas = canvasObj.AddComponent<Canvas>();
                 mainCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-                canvasObj.AddComponent<CanvasScaler>();
+                // Configure CanvasScaler for proper screen scaling
+                CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920, 1080);
+                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                scaler.matchWidthOrHeight = 0.5f; // Balance between width and height
+
                 canvasObj.AddComponent<GraphicRaycaster>();
 
-                Debug.Log("Created BattleCanvas");
+                Debug.Log("Created BattleCanvas with proper scaling");
             }
             else
             {
                 mainCanvas = canvasObj.GetComponent<Canvas>();
+
+                // Configure existing canvas scaler if needed
+                CanvasScaler scaler = canvasObj.GetComponent<CanvasScaler>();
+                if (scaler != null)
+                {
+                    scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                    scaler.referenceResolution = new Vector2(1920, 1080);
+                    scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                    scaler.matchWidthOrHeight = 0.5f;
+                }
+
                 Debug.Log("Using existing BattleCanvas");
             }
         }
@@ -265,14 +282,15 @@ namespace SketchBlossom.Battle
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 
-            // Background
+            // Background - MUST be raycast target for drawing to work!
             Image bg = drawingArea.AddComponent<Image>();
             bg.color = new Color(0.95f, 0.95f, 0.95f);
+            bg.raycastTarget = true; // Enable raycasting for mouse/touch input
 
             // Add BattleDrawingCanvas component
             BattleDrawingCanvas canvas = drawingArea.AddComponent<BattleDrawingCanvas>();
 
-            // Border
+            // Border - needs Image component for Outline to work
             GameObject border = new GameObject("Border");
             border.transform.SetParent(drawingArea.transform);
             RectTransform borderRT = border.AddComponent<RectTransform>();
@@ -280,11 +298,17 @@ namespace SketchBlossom.Battle
             borderRT.anchorMax = Vector2.one;
             borderRT.offsetMin = Vector2.zero;
             borderRT.offsetMax = Vector2.zero;
+
+            // Add Image for the outline to attach to
+            Image borderImage = border.AddComponent<Image>();
+            borderImage.color = new Color(1, 1, 1, 0); // Transparent
+            borderImage.raycastTarget = false; // Don't block raycasts
+
             Outline outline = border.AddComponent<Outline>();
             outline.effectColor = Color.black;
-            outline.effectDistance = new Vector2(2, 2);
+            outline.effectDistance = new Vector2(3, 3);
 
-            Debug.Log("Created DrawingArea with BattleDrawingCanvas");
+            Debug.Log("Created DrawingArea with BattleDrawingCanvas (raycast enabled)");
         }
 
         /// <summary>
