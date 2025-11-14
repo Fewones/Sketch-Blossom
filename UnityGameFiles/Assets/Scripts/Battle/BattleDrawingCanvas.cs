@@ -13,27 +13,32 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 5f; // Much thicker for canvas local space visibility
+        [SerializeField] private float lineWidth = 5f;
         [SerializeField] private Color drawingColor = Color.black;
 
-        [Header("Line Rendering")]
-        [SerializeField] private GameObject lineRendererPrefab;
-        [SerializeField] private Material lineMaterial;
+        [Header("UI Drawing")]
+        [SerializeField] private RawImage drawingImage; // UI Image to display the drawing texture
 
         [Header("Drawing State")]
         [SerializeField] private bool isDrawingEnabled = false;
 
+        // Texture-based drawing (proper for UI)
+        private Texture2D drawingTexture;
+        private Color[] clearPixels;
+        private int textureWidth = 800;
+        private int textureHeight = 600;
+
         // Current stroke data
-        private LineRenderer currentLine;
         private List<Vector2> currentStrokePoints = new List<Vector2>();
 
-        // All strokes in current drawing
-        private List<LineRenderer> allLines = new List<LineRenderer>();
+        // All strokes in current drawing (for move detection)
         private List<List<Vector2>> allStrokes = new List<List<Vector2>>();
+        private List<LineRenderer> allLines = new List<LineRenderer>(); // Keep for compatibility
 
         // Drawing tracking
         private bool isDrawing = false;
         private Camera mainCamera;
+        private Vector2 lastDrawPoint;
 
         // Events
         public delegate void DrawingCompleted(List<List<Vector2>> strokes, Color dominantColor);
@@ -51,41 +56,43 @@ namespace SketchBlossom.Battle
             if (drawingArea == null)
                 drawingArea = GetComponent<RectTransform>();
 
-            if (canvas == null)
+            // Find or create RawImage for drawing
+            if (drawingImage == null)
             {
-                Debug.LogError("BattleDrawingCanvas: No Canvas found in parent! Drawing may not work correctly.");
+                drawingImage = GetComponent<RawImage>();
+                if (drawingImage == null)
+                {
+                    drawingImage = gameObject.AddComponent<RawImage>();
+                }
             }
 
-            // Debug camera and canvas info
-            if (mainCamera != null)
-            {
-                Debug.Log($"Camera: Position={mainCamera.transform.position}, Orthographic={mainCamera.orthographic}, " +
-                         $"OrthographicSize={mainCamera.orthographicSize}, NearClip={mainCamera.nearClipPlane}, FarClip={mainCamera.farClipPlane}");
-            }
-            if (canvas != null)
-            {
-                Debug.Log($"Canvas: RenderMode={canvas.renderMode}, Position={canvas.transform.position}, PlaneDistance={canvas.planeDistance}");
-            }
+            // Initialize texture based on drawing area size
             if (drawingArea != null)
             {
-                Debug.Log($"DrawingArea: Position={drawingArea.position}, LocalPosition={drawingArea.localPosition}, " +
-                         $"Rect={drawingArea.rect}, Size={drawingArea.rect.size}");
+                textureWidth = Mathf.Max(512, (int)drawingArea.rect.width);
+                textureHeight = Mathf.Max(512, (int)drawingArea.rect.height);
             }
 
-            // Create default line material if none provided
-            if (lineMaterial == null)
+            // Create drawing texture
+            drawingTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false);
+            drawingTexture.filterMode = FilterMode.Bilinear;
+
+            // Initialize clear pixels (transparent)
+            clearPixels = new Color[textureWidth * textureHeight];
+            for (int i = 0; i < clearPixels.Length; i++)
             {
-                // Use Unlit/Color shader which works better for LineRenderer
-                Shader lineShader = Shader.Find("Unlit/Color");
-                if (lineShader == null)
-                {
-                    // Fallback to Sprites/Default if Unlit/Color not found
-                    lineShader = Shader.Find("Sprites/Default");
-                }
-                lineMaterial = new Material(lineShader);
-                lineMaterial.color = Color.black; // BLACK so lines are visible on white background!
-                Debug.Log($"BattleDrawingCanvas: Created default line material (BLACK) with shader: {lineShader.name}");
+                clearPixels[i] = Color.clear;
             }
+
+            // Clear the texture initially
+            drawingTexture.SetPixels(clearPixels);
+            drawingTexture.Apply();
+
+            // Assign texture to RawImage
+            drawingImage.texture = drawingTexture;
+            drawingImage.color = Color.white; // Ensure image is visible
+
+            Debug.Log($"BattleDrawingCanvas: Initialized texture-based drawing ({textureWidth}x{textureHeight}) on UI canvas. RenderMode: {canvas?.renderMode}");
         }
 
         private void Update()
@@ -131,24 +138,18 @@ namespace SketchBlossom.Battle
         /// </summary>
         public void ClearCanvas()
         {
-            // Destroy all line renderers
-            foreach (var line in allLines)
+            // Clear the texture
+            if (drawingTexture != null)
             {
-                if (line != null)
-                    Destroy(line.gameObject);
+                drawingTexture.SetPixels(clearPixels);
+                drawingTexture.Apply();
             }
 
-            allLines.Clear();
             allStrokes.Clear();
             currentStrokePoints.Clear();
-
-            if (currentLine != null)
-            {
-                Destroy(currentLine.gameObject);
-                currentLine = null;
-            }
-
             isDrawing = false;
+
+            Debug.Log("BattleDrawingCanvas: Canvas cleared");
         }
 
         /// <summary>
@@ -181,10 +182,31 @@ namespace SketchBlossom.Battle
 
         /// <summary>
         /// Get all line renderers for move detection
+        /// Creates temporary LineRenderers from stroke data for compatibility
         /// </summary>
         public List<LineRenderer> GetAllLineRenderers()
         {
-            return new List<LineRenderer>(allLines);
+            // Create temporary LineRenderers from our stroke data for move detection
+            List<LineRenderer> lineRenderers = new List<LineRenderer>();
+
+            foreach (var stroke in allStrokes)
+            {
+                if (stroke.Count < 2) continue;
+
+                GameObject tempObj = new GameObject("TempLine");
+                tempObj.transform.SetParent(transform);
+                LineRenderer lr = tempObj.AddComponent<LineRenderer>();
+
+                lr.positionCount = stroke.Count;
+                for (int i = 0; i < stroke.Count; i++)
+                {
+                    lr.SetPosition(i, new Vector3(stroke[i].x, stroke[i].y, 0));
+                }
+
+                lineRenderers.Add(lr);
+            }
+
+            return lineRenderers;
         }
 
         /// <summary>
@@ -201,76 +223,17 @@ namespace SketchBlossom.Battle
                 return;
 
             isDrawing = true;
-            currentStrokePoints = new List<Vector2>(); // Still track as Vector2 for move detection
+            currentStrokePoints = new List<Vector2>();
 
-            // ALWAYS create new line renderer from scratch for UI canvas (don't use world-space prefab)
-            GameObject lineObj = new GameObject("BattleLine");
-            lineObj.transform.SetParent(transform);
+            // Convert to texture coordinates
+            Vector2 texturePoint = ScreenToTexturePoint(screenPosition);
+            lastDrawPoint = texturePoint;
+            currentStrokePoints.Add(texturePoint);
 
-            // CRITICAL: Reset local position to (0,0,0) to prevent offset
-            lineObj.transform.localPosition = Vector3.zero;
-            lineObj.transform.localRotation = Quaternion.identity;
-            lineObj.transform.localScale = Vector3.one;
+            // Draw initial point
+            DrawPoint(texturePoint);
 
-            // Add LineRenderer component fresh (not from prefab)
-            currentLine = lineObj.AddComponent<LineRenderer>();
-
-            // Configure line renderer
-            currentLine.startWidth = lineWidth;
-            currentLine.endWidth = lineWidth;
-            currentLine.positionCount = 0;
-
-            // For ScreenSpaceOverlay, MUST use local space since overlay doesn't exist in true world space
-            currentLine.useWorldSpace = false;
-
-            // Set material - create fresh material for UI rendering
-            if (lineMaterial != null)
-            {
-                // Create instance of the material to avoid modifying the shared asset
-                currentLine.material = new Material(lineMaterial);
-            }
-            else
-            {
-                // Create a new material with UI-compatible shader
-                Shader shader = Shader.Find("UI/Default");
-                if (shader == null) shader = Shader.Find("Sprites/Default");
-                if (shader == null) shader = Shader.Find("Unlit/Color");
-
-                Material newMat = new Material(shader);
-                newMat.color = drawingColor;
-                currentLine.material = newMat;
-                Debug.Log($"Created new material with shader: {shader?.name}");
-            }
-
-            // Set colors - CRITICAL for visibility
-            currentLine.startColor = drawingColor;
-            currentLine.endColor = drawingColor;
-
-            // Also set color on material
-            if (currentLine.material != null)
-            {
-                currentLine.material.color = drawingColor;
-            }
-
-            // Ensure proper 2D rendering
-            currentLine.alignment = LineAlignment.TransformZ;
-            currentLine.textureMode = LineTextureMode.Tile;
-
-            // Enable shadow casting OFF for UI rendering
-            currentLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            currentLine.receiveShadows = false;
-
-            // Set sorting order to render on top of the canvas
-            currentLine.sortingLayerName = "Default";
-            currentLine.sortingOrder = 1000; // High value to ensure it's on top
-
-            Debug.Log($"Created LineRenderer - Color: {currentLine.startColor}, Width: {currentLine.startWidth}, Material: {currentLine.material?.name}, " +
-                     $"GameObject: {lineObj.name}, Active: {lineObj.activeInHierarchy}, Parent: {lineObj.transform.parent?.name}, " +
-                     $"LocalPos: {lineObj.transform.localPosition}, LocalScale: {lineObj.transform.localScale}");
-
-            // Add first point
-            Vector2 localPoint = ScreenToCanvasPoint(screenPosition);
-            AddPointToCurrentLine(localPoint, screenPosition);
+            Debug.Log($"Started drawing at screen: {screenPosition}, texture: {texturePoint}");
         }
 
         private void ContinueDrawing(Vector2 screenPosition)
@@ -278,65 +241,122 @@ namespace SketchBlossom.Battle
             if (!IsPointInDrawingArea(screenPosition))
                 return;
 
-            Vector2 localPoint = ScreenToCanvasPoint(screenPosition);
+            Vector2 texturePoint = ScreenToTexturePoint(screenPosition);
 
-            // Only add point if it's far enough from the last point
-            if (currentStrokePoints.Count > 0)
-            {
-                Vector2 lastPoint = currentStrokePoints[currentStrokePoints.Count - 1];
-                if (Vector2.Distance(lastPoint, localPoint) < 5f)
-                    return;
-            }
+            // Only add point if it's far enough from the last point (prevents too many points)
+            if (Vector2.Distance(lastDrawPoint, texturePoint) < 2f)
+                return;
 
-            AddPointToCurrentLine(localPoint, screenPosition);
+            // Draw line from last point to current point
+            DrawLine(lastDrawPoint, texturePoint);
+
+            currentStrokePoints.Add(texturePoint);
+            lastDrawPoint = texturePoint;
         }
 
         private void EndDrawing()
         {
             if (currentStrokePoints.Count < 2)
             {
-                // Remove invalid stroke
-                if (currentLine != null)
-                    Destroy(currentLine.gameObject);
-                currentLine = null;
+                // Invalid stroke, just clear
                 currentStrokePoints.Clear();
                 isDrawing = false;
                 return;
             }
 
-            // Save the stroke
-            allLines.Add(currentLine);
+            // Save the stroke for move detection
             allStrokes.Add(new List<Vector2>(currentStrokePoints));
 
-            currentLine = null;
+            Debug.Log($"Finished stroke with {currentStrokePoints.Count} points. Total strokes: {allStrokes.Count}");
+
             currentStrokePoints.Clear();
             isDrawing = false;
         }
 
-        private void AddPointToCurrentLine(Vector2 localPoint, Vector2 screenPosition)
+        /// <summary>
+        /// Convert screen position to texture pixel coordinates
+        /// </summary>
+        private Vector2 ScreenToTexturePoint(Vector2 screenPosition)
         {
-            // Store local point for move detection
-            currentStrokePoints.Add(localPoint);
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                drawingArea,
+                screenPosition,
+                canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
+                out localPoint
+            );
 
-            if (currentLine != null)
+            // Convert local point to texture coordinates
+            // Local point is relative to the center of the rect, so offset it
+            Rect rect = drawingArea.rect;
+            float x = (localPoint.x - rect.xMin) / rect.width * textureWidth;
+            float y = (localPoint.y - rect.yMin) / rect.height * textureHeight;
+
+            return new Vector2(x, y);
+        }
+
+        /// <summary>
+        /// Draw a single point on the texture
+        /// </summary>
+        private void DrawPoint(Vector2 point)
+        {
+            int x = Mathf.RoundToInt(point.x);
+            int y = Mathf.RoundToInt(point.y);
+
+            int radius = Mathf.RoundToInt(lineWidth);
+
+            for (int i = -radius; i <= radius; i++)
             {
-                // For ScreenSpaceOverlay, use local canvas coordinates directly (Z=0 in local space)
-                Vector3 localPos = new Vector3(localPoint.x, localPoint.y, 0f);
-
-                // Update LineRenderer with the new point
-                int newIndex = currentLine.positionCount;
-                currentLine.positionCount = newIndex + 1;
-                currentLine.SetPosition(newIndex, localPos);
-
-                // Debug first and every 10th point to verify visibility
-                if (currentLine.positionCount == 1 || currentLine.positionCount % 10 == 0)
+                for (int j = -radius; j <= radius; j++)
                 {
-                    Rect bounds = drawingArea != null ? drawingArea.rect : new Rect();
-                    bool inBounds = bounds.Contains(localPos);
-                    Debug.Log($"Line point {currentLine.positionCount}: Screen({screenPosition.x:F1}, {screenPosition.y:F1}) → Local({localPos.x:F2}, {localPos.y:F2}, {localPos.z:F2}) | " +
-                             $"InBounds: {inBounds} | CanvasBounds: {bounds} | " +
-                             $"Enabled: {currentLine.enabled} | Active: {currentLine.gameObject.activeInHierarchy} | " +
-                             $"Width: {currentLine.startWidth} | Color: {currentLine.startColor}");
+                    if (i * i + j * j <= radius * radius) // Circle check
+                    {
+                        int px = x + i;
+                        int py = y + j;
+
+                        if (px >= 0 && px < textureWidth && py >= 0 && py < textureHeight)
+                        {
+                            drawingTexture.SetPixel(px, py, drawingColor);
+                        }
+                    }
+                }
+            }
+
+            drawingTexture.Apply();
+        }
+
+        /// <summary>
+        /// Draw a line between two points using Bresenham's algorithm
+        /// </summary>
+        private void DrawLine(Vector2 start, Vector2 end)
+        {
+            int x0 = Mathf.RoundToInt(start.x);
+            int y0 = Mathf.RoundToInt(start.y);
+            int x1 = Mathf.RoundToInt(end.x);
+            int y1 = Mathf.RoundToInt(end.y);
+
+            int dx = Mathf.Abs(x1 - x0);
+            int dy = Mathf.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+
+            while (true)
+            {
+                DrawPoint(new Vector2(x0, y0));
+
+                if (x0 == x1 && y0 == y1) break;
+
+                int e2 = 2 * err;
+                if (e2 > -dy)
+                {
+                    err -= dy;
+                    x0 += sx;
+                }
+                if (e2 < dx)
+                {
+                    err += dx;
+                    y0 += sy;
                 }
             }
         }
@@ -356,18 +376,6 @@ namespace SketchBlossom.Battle
             return drawingArea.rect.Contains(localPoint);
         }
 
-        private Vector2 ScreenToCanvasPoint(Vector2 screenPosition)
-        {
-            Vector2 localPoint;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                drawingArea,
-                screenPosition,
-                canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : mainCamera,
-                out localPoint
-            );
-
-            return localPoint;
-        }
 
         /// <summary>
         /// Get drawing statistics
