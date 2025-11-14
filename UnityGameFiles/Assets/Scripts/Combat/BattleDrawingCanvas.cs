@@ -126,6 +126,10 @@ public class BattleDrawingCanvas : MonoBehaviour
         currentStroke.startColor = strokeColor;
         currentStroke.endColor = strokeColor;
 
+        // Ensure LineRenderer renders on top of UI
+        currentStroke.sortingLayerName = "UI";
+        currentStroke.sortingOrder = 1000; // Very high order to appear above all UI elements
+
         // Set material color
         if (currentStroke.material != null)
         {
@@ -194,21 +198,26 @@ public class BattleDrawingCanvas : MonoBehaviour
 
     Vector3 ScreenToWorld(Vector2 screenPos)
     {
-        // Convert screen position to world position at a fixed Z distance
-        if (mainCamera == null)
-        {
-            mainCamera = Camera.main;
-        }
+        // For Screen Space - Overlay canvas, convert screen pos to local UI coordinates
+        // Then position in world space at the drawing area's z-depth with an offset for visibility
 
-        if (mainCamera != null)
-        {
-            return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
-        }
-        else
-        {
-            // Fallback: use screen coordinates as world coordinates (scaled down)
-            return new Vector3(screenPos.x / 100f, screenPos.y / 100f, 0f);
-        }
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            drawingArea,
+            screenPos,
+            null, // null for Screen Space - Overlay
+            out localPoint
+        );
+
+        // Convert local UI point to world position
+        // Get the world position of the drawing area center
+        Vector3 worldPos = drawingArea.TransformPoint(new Vector3(localPoint.x, localPoint.y, 0));
+
+        // Offset forward from the canvas to ensure visibility above UI elements
+        // Use a small z-offset (closer to camera) to draw on top of UI
+        worldPos.z = -5f; // Negative z brings it closer to camera in overlay mode
+
+        return worldPos;
     }
 
     /// <summary>

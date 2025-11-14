@@ -142,8 +142,8 @@ public class RebuildBattleDrawingSystem : EditorWindow
         GameObject strokeContainer = new GameObject("StrokeContainer");
         strokeContainer.transform.SetParent(canvasObj.transform, false);
 
-        // Position stroke container at z=10 in world space for proper LineRenderer rendering
-        strokeContainer.transform.position = new Vector3(0, 0, 10f);
+        // Stroke container stays at canvas position - individual strokes handle their own z-positioning
+        // This allows them to appear on top of UI elements
 
         // Configure BattleDrawingCanvas
         SerializedObject so = new SerializedObject(drawingCanvas);
@@ -211,7 +211,11 @@ public class RebuildBattleDrawingSystem : EditorWindow
 
         lineRenderer.startColor = new Color(0.2f, 1f, 0.2f, 1f);
         lineRenderer.endColor = new Color(0.2f, 1f, 0.2f, 1f);
-        lineRenderer.sortingOrder = 100; // High sorting order to draw on top
+
+        // Set sorting to render on top of UI elements
+        lineRenderer.sortingLayerName = "UI";
+        lineRenderer.sortingOrder = 1000; // Very high sorting order to draw on top of all UI
+
         lineRenderer.numCapVertices = 5;
         lineRenderer.numCornerVertices = 5;
 
