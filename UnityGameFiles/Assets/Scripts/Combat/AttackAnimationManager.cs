@@ -14,8 +14,9 @@ namespace SketchBlossom.Battle
         [SerializeField] private Transform playerAttackSpawnPoint;
         [SerializeField] private Transform enemyTargetPoint;
         [SerializeField] private float projectileDuration = 0.8f; // Fixed duration instead of speed
-        [SerializeField] private float projectileScale = 0.5f;
+        [SerializeField] private float projectileScale = 2f; // Increased from 0.5 for visibility
         [SerializeField] private Vector3 projectileRotation = Vector3.zero;
+        [SerializeField] private float projectileZOffset = -5f; // Z offset from camera
 
         [Header("Animation Settings")]
         [SerializeField] private float fadeInDuration = 0.2f;
@@ -114,7 +115,13 @@ namespace SketchBlossom.Battle
                 Debug.Log($"AttackAnimationManager: CreateProjectile at {spawnPosition}");
 
                 GameObject projectile = new GameObject("AttackProjectile");
-                projectile.transform.position = spawnPosition;
+
+                // Adjust Z position to be in front of camera but behind UI
+                Vector3 adjustedPosition = spawnPosition;
+                adjustedPosition.z = projectileZOffset;
+                projectile.transform.position = adjustedPosition;
+
+                Debug.Log($"AttackAnimationManager: Adjusted position to {adjustedPosition} (Z offset: {projectileZOffset})");
 
                 // Use SpriteRenderer instead of Canvas/Image for reliable world-space rendering
                 SpriteRenderer spriteRenderer = projectile.AddComponent<SpriteRenderer>();
@@ -134,7 +141,8 @@ namespace SketchBlossom.Battle
                 }
 
                 // Set sorting layer to render above battle elements
-                spriteRenderer.sortingOrder = 100;
+                spriteRenderer.sortingLayerName = "Default";
+                spriteRenderer.sortingOrder = 1000; // Very high to ensure visibility
 
                 // Set initial scale and rotation
                 projectile.transform.localScale = Vector3.one * projectileScale;
@@ -145,7 +153,8 @@ namespace SketchBlossom.Battle
                 color.a = 0f;
                 spriteRenderer.color = color;
 
-                Debug.Log($"AttackAnimationManager: Projectile setup complete - Scale: {projectileScale}, Color: {color}");
+                Debug.Log($"AttackAnimationManager: Projectile setup complete - Position: {projectile.transform.position}, Scale: {projectileScale}, SortingOrder: {spriteRenderer.sortingOrder}, Color: {color}");
+                Debug.Log($"AttackAnimationManager: Sprite bounds: {spriteRenderer.sprite.bounds}, Sprite size: {spriteRenderer.sprite.rect.size}");
 
                 return projectile;
             }
@@ -161,6 +170,10 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator AnimateProjectile(GameObject projectile, Vector3 startPos, Vector3 endPos)
         {
+            // Adjust Z positions
+            startPos.z = projectileZOffset;
+            endPos.z = projectileZOffset;
+
             Debug.Log($"AttackAnimationManager: AnimateProjectile from {startPos} to {endPos}");
 
             SpriteRenderer spriteRenderer = projectile.GetComponent<SpriteRenderer>();
@@ -169,6 +182,9 @@ namespace SketchBlossom.Battle
                 Debug.LogError("AttackAnimationManager: No SpriteRenderer on projectile!");
                 yield break;
             }
+
+            // Verify sprite is actually assigned and visible
+            Debug.Log($"AttackAnimationManager: Sprite check - Assigned: {spriteRenderer.sprite != null}, Enabled: {spriteRenderer.enabled}, GameObject active: {projectile.activeSelf}");
 
             float distance = Vector3.Distance(startPos, endPos);
             float duration = projectileDuration; // Use fixed duration regardless of distance
@@ -183,12 +199,19 @@ namespace SketchBlossom.Battle
             // Move from start to end
             Debug.Log("AttackAnimationManager: Starting movement");
             float elapsed = 0f;
+            int frameCount = 0;
             while (elapsed < duration)
             {
                 float t = elapsed / duration;
 
                 // Position
                 projectile.transform.position = Vector3.Lerp(startPos, endPos, t);
+
+                // Log position every 10 frames for debugging
+                if (frameCount % 10 == 0)
+                {
+                    Debug.Log($"AttackAnimationManager: Frame {frameCount}, Position: {projectile.transform.position}, Alpha: {spriteRenderer.color.a}");
+                }
 
                 // Rotation (optional)
                 if (rotateProjectile)
@@ -204,6 +227,7 @@ namespace SketchBlossom.Battle
                 }
 
                 elapsed += Time.deltaTime;
+                frameCount++;
                 yield return null;
             }
 
