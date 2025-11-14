@@ -21,6 +21,9 @@ namespace SketchBlossom.Drawing
         [SerializeField] private PlantResultPanel resultPanel;
         [SerializeField] private GuideBookManager guideBook;
 
+        [Header("Drawing Capture")]
+        [SerializeField] private DrawingCaptureHandler captureHandler;
+
         [Header("Scene Settings")]
         [SerializeField] private string battleSceneName = "DrawingBattleScene";
         [SerializeField] private bool enableBattleTransition = true;
@@ -95,6 +98,18 @@ namespace SketchBlossom.Drawing
             {
                 guideBook = FindFirstObjectByType<GuideBookManager>();
             }
+
+            // Auto-find or create capture handler
+            if (captureHandler == null)
+            {
+                captureHandler = FindFirstObjectByType<DrawingCaptureHandler>();
+                if (captureHandler == null)
+                {
+                    GameObject captureObj = new GameObject("DrawingCaptureHandler");
+                    captureHandler = captureObj.AddComponent<DrawingCaptureHandler>();
+                    Debug.Log("DrawingSceneManager: Created DrawingCaptureHandler");
+                }
+            }
         }
 
         private void InitializeUnitData()
@@ -121,6 +136,7 @@ namespace SketchBlossom.Drawing
             Debug.Log($"Recognition System: {(recognitionSystem != null ? "✓" : "✗")}");
             Debug.Log($"UI Controller: {(uiController != null ? "✓" : "✗")}");
             Debug.Log($"Result Panel: {(resultPanel != null ? "✓" : "✗")}");
+            Debug.Log($"Capture Handler: {(captureHandler != null ? "✓" : "✗")}");
             Debug.Log("===============================================");
         }
 
@@ -201,7 +217,10 @@ namespace SketchBlossom.Drawing
 
         private void HandleContinue()
         {
-            Debug.Log("DrawingSceneManager: Continue to battle - loading battle scene");
+            Debug.Log("DrawingSceneManager: Continue to battle - capturing drawing and loading battle scene");
+
+            // Capture the drawing and save it to DrawnUnitData
+            CaptureAndSaveDrawing();
 
             if (enableBattleTransition)
             {
@@ -211,6 +230,85 @@ namespace SketchBlossom.Drawing
             {
                 Debug.LogWarning("Battle transition disabled. Enable 'enableBattleTransition' in DrawingSceneManager inspector.");
             }
+        }
+
+        /// <summary>
+        /// Capture the current drawing and save it to DrawnUnitData for use in battle
+        /// </summary>
+        private void CaptureAndSaveDrawing()
+        {
+            if (captureHandler == null)
+            {
+                Debug.LogError("DrawingCaptureHandler is null! Cannot capture drawing.");
+                return;
+            }
+
+            if (drawingCanvas == null || drawingCanvas.allStrokes.Count == 0)
+            {
+                Debug.LogWarning("No drawing to capture!");
+                return;
+            }
+
+            // CRITICAL: Ensure stroke container is active before capturing
+            // The strokes must be visible for the camera to render them
+            if (drawingCanvas.strokeContainer != null)
+            {
+                drawingCanvas.strokeContainer.gameObject.SetActive(true);
+                Debug.Log("✓ Stroke container activated for capture");
+
+                // Also ensure all parent GameObjects are active
+                Transform parent = drawingCanvas.strokeContainer.parent;
+                while (parent != null)
+                {
+                    if (!parent.gameObject.activeSelf)
+                    {
+                        Debug.LogWarning($"Parent '{parent.name}' was inactive - activating for capture");
+                        parent.gameObject.SetActive(true);
+                    }
+                    parent = parent.parent;
+                }
+            }
+            else
+            {
+                Debug.LogError("Stroke container is null!");
+                return;
+            }
+
+            // Get the main camera for rendering
+            Camera mainCamera = drawingCanvas.mainCamera;
+            if (mainCamera == null)
+            {
+                mainCamera = Camera.main;
+            }
+
+            if (mainCamera == null)
+            {
+                Debug.LogError("No camera available for capturing drawing!");
+                return;
+            }
+
+            Debug.Log("========== CAPTURING PLANT DRAWING ==========");
+
+            // Capture the drawing as a texture (pass drawing area for screen capture option)
+            Texture2D drawingTexture = captureHandler.CaptureDrawing(
+                drawingCanvas.allStrokes,
+                mainCamera,
+                drawingCanvas.drawingArea
+            );
+
+            if (drawingTexture != null)
+            {
+                // Save to DrawnUnitData
+                unitData.drawingTexture = drawingTexture;
+                Debug.Log($"✓ Drawing captured and saved! Texture size: {drawingTexture.width}x{drawingTexture.height}");
+                Debug.Log("   This texture will be used as your plant's sprite in battle!");
+            }
+            else
+            {
+                Debug.LogError("Failed to capture drawing texture!");
+            }
+
+            Debug.Log("=============================================");
         }
 
         #endregion
@@ -297,10 +395,22 @@ namespace SketchBlossom.Drawing
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
             {
                 drawingCanvas.strokeContainer.gameObject.SetActive(true);
-                Debug.Log("✓ Strokes kept visible for results screen");
+                Debug.Log("✓ Stroke container activated for results screen");
+
+                // Ensure all parent GameObjects stay active so strokes are visible
+                Transform parent = drawingCanvas.strokeContainer.parent;
+                while (parent != null)
+                {
+                    if (!parent.gameObject.activeSelf)
+                    {
+                        Debug.Log($"Activating parent '{parent.name}' to keep strokes visible on results screen");
+                        parent.gameObject.SetActive(true);
+                    }
+                    parent = parent.parent;
+                }
             }
 
-            // Hide drawing UI controls (buttons, hints, etc.)
+            // Hide drawing UI controls (buttons, hints, etc.) but keep stroke container visible
             if (uiController != null)
             {
                 uiController.HideDrawingPanel();

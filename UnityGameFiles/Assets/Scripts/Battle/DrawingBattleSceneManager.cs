@@ -110,11 +110,14 @@ namespace SketchBlossom.Battle
         /// </summary>
         private void LoadPlayerUnit()
         {
+            Texture2D playerDrawingTexture = null;
+
             if (DrawnUnitData.Instance != null && DrawnUnitData.Instance.HasData())
             {
                 playerPlantType = DrawnUnitData.Instance.plantType;
                 playerElement = DrawnUnitData.Instance.element;
                 playerPlantName = DrawnUnitData.Instance.plantDisplayName;
+                playerDrawingTexture = DrawnUnitData.Instance.drawingTexture;
 
                 var plantData = PlantRecognitionSystem.GetPlantData(playerPlantType);
                 playerMaxHP = plantData.baseHP;
@@ -122,6 +125,11 @@ namespace SketchBlossom.Battle
                 playerDefense = plantData.baseDefense;
 
                 Debug.Log($"Loaded player unit: {playerPlantName} (HP:{playerMaxHP}, ATK:{playerAttack}, DEF:{playerDefense})");
+
+                if (playerDrawingTexture != null)
+                {
+                    Debug.Log($"✓ Player drawing texture loaded! Size: {playerDrawingTexture.width}x{playerDrawingTexture.height}");
+                }
             }
             else
             {
@@ -137,10 +145,10 @@ namespace SketchBlossom.Battle
                 playerDefense = plantData.baseDefense;
             }
 
-            // Initialize player unit display
+            // Initialize player unit display with drawing texture
             if (playerUnit != null)
             {
-                playerUnit.Initialize(playerPlantType, playerElement, playerPlantName);
+                playerUnit.Initialize(playerPlantType, playerElement, playerPlantName, playerDrawingTexture, true);
             }
         }
 
@@ -162,10 +170,10 @@ namespace SketchBlossom.Battle
 
             Debug.Log($"Enemy unit: {enemyPlantName} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
 
-            // Initialize enemy unit display
+            // Initialize enemy unit display (no drawing texture for enemy)
             if (enemyUnit != null)
             {
-                enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName);
+                enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName, null, false);
             }
         }
 
@@ -635,32 +643,92 @@ namespace SketchBlossom.Battle
             [SerializeField] private TextMeshProUGUI unitNameText;
             [SerializeField] private Animator animator;
 
-            public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName)
+            public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName, Texture2D drawingTexture = null, bool isPlayerUnit = false)
             {
+                Debug.Log($"BattleUnitDisplay.Initialize() called - IsPlayer:{isPlayerUnit}, HasTexture:{drawingTexture != null}");
+
                 if (unitNameText != null)
                 {
                     unitNameText.text = displayName;
                 }
 
-                // TODO: Set sprite based on plant type
-                if (unitImage != null)
+                if (unitImage == null)
                 {
-                    // Set color based on element for now
-                    Color elementColor = Color.white;
-                    switch (element)
-                    {
-                        case PlantRecognitionSystem.ElementType.Fire:
-                            elementColor = new Color(1f, 0.3f, 0.3f);
-                            break;
-                        case PlantRecognitionSystem.ElementType.Grass:
-                            elementColor = new Color(0.3f, 1f, 0.3f);
-                            break;
-                        case PlantRecognitionSystem.ElementType.Water:
-                            elementColor = new Color(0.3f, 0.3f, 1f);
-                            break;
-                    }
-                    unitImage.color = elementColor;
+                    Debug.LogError("BattleUnitDisplay: unitImage is NULL! Cannot display sprite.");
+                    return;
                 }
+
+                // If we have a drawing texture (player's drawn plant), use it as the sprite
+                if (drawingTexture != null && isPlayerUnit)
+                {
+                    Debug.Log($"BattleUnitDisplay: Using player's drawing texture as sprite! Texture size: {drawingTexture.width}x{drawingTexture.height}");
+
+                    // Convert Texture2D to Sprite
+                    Sprite drawingSprite = Texture2DToSprite(drawingTexture);
+
+                    if (drawingSprite != null)
+                    {
+                        unitImage.sprite = drawingSprite;
+                        unitImage.color = Color.white; // Reset color to show texture properly
+                        unitImage.preserveAspect = true; // Keep aspect ratio
+                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {drawingSprite.bounds}");
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to convert drawing texture to sprite!");
+                        ApplyElementColor(element);
+                    }
+                }
+                else
+                {
+                    // No drawing texture - use element color as fallback (for enemy or if texture missing)
+                    if (drawingTexture == null && isPlayerUnit)
+                    {
+                        Debug.LogWarning("BattleUnitDisplay: Player unit has no drawing texture! Using fallback color.");
+                    }
+                    ApplyElementColor(element);
+                }
+            }
+
+            /// <summary>
+            /// Apply element-based color to the unit image (fallback when no sprite available)
+            /// </summary>
+            private void ApplyElementColor(PlantRecognitionSystem.ElementType element)
+            {
+                if (unitImage == null) return;
+
+                Color elementColor = Color.white;
+                switch (element)
+                {
+                    case PlantRecognitionSystem.ElementType.Fire:
+                        elementColor = new Color(1f, 0.3f, 0.3f);
+                        break;
+                    case PlantRecognitionSystem.ElementType.Grass:
+                        elementColor = new Color(0.3f, 1f, 0.3f);
+                        break;
+                    case PlantRecognitionSystem.ElementType.Water:
+                        elementColor = new Color(0.3f, 0.3f, 1f);
+                        break;
+                }
+                unitImage.color = elementColor;
+            }
+
+            /// <summary>
+            /// Convert a Texture2D to a Sprite
+            /// </summary>
+            private Sprite Texture2DToSprite(Texture2D texture)
+            {
+                if (texture == null) return null;
+
+                // Create sprite from texture
+                Sprite sprite = Sprite.Create(
+                    texture,
+                    new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f), // Pivot at center
+                    100f // Pixels per unit
+                );
+
+                return sprite;
             }
 
             public void PlayHitAnimation()

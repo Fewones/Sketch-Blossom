@@ -168,15 +168,56 @@ namespace SketchBlossom.Drawing
             SetPanelActive(drawingOverlay, true);
             SetPanelActive(drawingPanel, true);
 
+            // Re-enable all drawing UI controls
+            if (finishButton != null) finishButton.gameObject.SetActive(true);
+            if (clearButton != null) clearButton.gameObject.SetActive(true);
+            if (guideBookButton != null) guideBookButton.gameObject.SetActive(true);
+            if (strokeCountText != null) strokeCountText.gameObject.SetActive(true);
+            if (hintText != null) hintText.gameObject.SetActive(true);
+
+            // Re-enable any title elements that were hidden
+            if (drawingPanel != null)
+            {
+                foreach (Transform child in drawingPanel.transform)
+                {
+                    if (child.name.ToLower().Contains("title"))
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                }
+            }
+
             UpdateHint("Draw your plant! Choose a color and start drawing.");
         }
 
         public void HideDrawingPanel()
         {
-            SetPanelActive(drawingOverlay, false);
-            SetPanelActive(drawingPanel, false);
+            // Hide specific UI controls but keep panels active
+            // This allows the drawing strokes to remain visible
+            if (finishButton != null) finishButton.gameObject.SetActive(false);
+            if (clearButton != null) clearButton.gameObject.SetActive(false);
+            if (guideBookButton != null) guideBookButton.gameObject.SetActive(false);
+            if (strokeCountText != null) strokeCountText.gameObject.SetActive(false);
+            if (hintText != null) hintText.gameObject.SetActive(false);
 
-            // Keep strokes visible
+            // If there's a title element in the drawing panel, find and hide it
+            if (drawingPanel != null)
+            {
+                // Look for any TextMeshProUGUI with "title" in the name and hide it
+                foreach (Transform child in drawingPanel.transform)
+                {
+                    if (child.name.ToLower().Contains("title"))
+                    {
+                        child.gameObject.SetActive(false);
+                        Debug.Log($"✓ Hidden title element: {child.name}");
+                    }
+                }
+            }
+
+            // Keep panels active - only controls are hidden
+            Debug.Log("✓ Drawing UI controls hidden, panels and strokes remain visible");
+
+            // Ensure strokes are explicitly kept visible
             if (drawingCanvas != null && drawingCanvas.strokeContainer != null)
             {
                 drawingCanvas.strokeContainer.gameObject.SetActive(true);
