@@ -71,12 +71,12 @@ public class RestoreDrawingScreenLayout : EditorWindow
             RectTransform drawingAreaRect = drawingCanvas.drawingArea;
             Undo.RecordObject(drawingAreaRect, "Restore DrawingArea Size");
 
-            // Make it larger to fill most of the screen
+            // Smaller drawing area with height 700
             drawingAreaRect.anchorMin = new Vector2(0.5f, 0.5f);
             drawingAreaRect.anchorMax = new Vector2(0.5f, 0.5f);
             drawingAreaRect.pivot = new Vector2(0.5f, 0.5f);
             drawingAreaRect.anchoredPosition = new Vector2(0f, -30f); // Slightly down to leave room for UI
-            drawingAreaRect.sizeDelta = new Vector2(1700f, 950f); // Wider for better screen fit
+            drawingAreaRect.sizeDelta = new Vector2(1700f, 700f); // Height reduced to 700
 
             // Add RectMask2D to clip drawing to this area
             UnityEngine.UI.RectMask2D mask = drawingAreaRect.GetComponent<UnityEngine.UI.RectMask2D>();
@@ -87,7 +87,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
             }
 
             EditorUtility.SetDirty(drawingAreaRect.gameObject);
-            Debug.Log("✓ DrawingArea restored to 1700x950 centered with clipping mask");
+            Debug.Log("✓ DrawingArea restored to 1700x700 centered with clipping mask");
         }
 
         // Ensure stroke container is a child of drawing area for proper clipping
@@ -111,7 +111,10 @@ public class RestoreDrawingScreenLayout : EditorWindow
             Debug.Log($"DrawingArea top edge at Y={drawingAreaTop}, positioning UI at Y={uiYPosition}");
         }
 
-        // Find and position stroke counter centered above the WHITE drawing area rectangle
+        // Position stroke counter and color buttons in a single horizontal row above DrawingArea
+        // Total width: Stroke(150) + Red(120) + gap(50) + Green(120) + gap(50) + Blue(120) = 610px
+        // Start position to center the group: -305px from center
+
         if (drawingPanelTransform != null)
         {
             // Find StrokeCounter text
@@ -121,12 +124,12 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 RectTransform strokeRect = strokeCounterTransform.GetComponent<RectTransform>();
                 Undo.RecordObject(strokeRect, "Position Stroke Counter");
 
-                // Position above the white DrawingArea rectangle
+                // Position at the left of the centered group
                 strokeRect.anchorMin = new Vector2(0.5f, 0.5f);
                 strokeRect.anchorMax = new Vector2(0.5f, 0.5f);
-                strokeRect.pivot = new Vector2(1f, 0.5f); // Right-aligned pivot for stroke counter
-                strokeRect.anchoredPosition = new Vector2(-180f, uiYPosition);
-                strokeRect.sizeDelta = new Vector2(150f, 40f);
+                strokeRect.pivot = new Vector2(0f, 0.5f); // Left-aligned pivot
+                strokeRect.anchoredPosition = new Vector2(-305f, uiYPosition);
+                strokeRect.sizeDelta = new Vector2(150f, 50f); // Same height as buttons
 
                 // Increase font size if it has TextMeshProUGUI
                 TextMeshProUGUI strokeText = strokeCounterTransform.GetComponent<TextMeshProUGUI>();
@@ -134,30 +137,29 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 {
                     Undo.RecordObject(strokeText, "Increase Stroke Counter Text");
                     strokeText.fontSize = 20f;
-                    strokeText.alignment = TextAlignmentOptions.Right;
+                    strokeText.alignment = TextAlignmentOptions.Center;
                     EditorUtility.SetDirty(strokeText.gameObject);
                 }
 
                 EditorUtility.SetDirty(strokeCounterTransform.gameObject);
-                Debug.Log("✓ Stroke counter positioned above white DrawingArea rectangle");
+                Debug.Log("✓ Stroke counter positioned in horizontal toolbar");
             }
         }
 
-        // Find and reposition color buttons horizontally above the WHITE drawing area rectangle
+        // Position color buttons next to stroke counter with 50px gaps
         DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
         if (colorSelector != null)
         {
-            // Position buttons horizontally in a row, centered above the white DrawingArea
-            // Red button - first in row
+            // Red button - right after stroke counter
             if (colorSelector.redButton != null)
             {
                 Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Restore Red Button");
                 RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(90f, 50f); // Wider buttons
+                rect.sizeDelta = new Vector2(120f, 50f); // 120x50 buttons
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(-145f, uiYPosition); // Above white DrawingArea, left of center
+                rect.anchoredPosition = new Vector2(-95f, uiYPosition); // Center of button
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.redButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -169,19 +171,19 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 }
 
                 EditorUtility.SetDirty(colorSelector.redButton.gameObject);
-                Debug.Log("✓ Red button repositioned to 90x50");
+                Debug.Log("✓ Red button repositioned to 120x50");
             }
 
-            // Green button - second in row (center)
+            // Green button - 50px gap after red button
             if (colorSelector.greenButton != null)
             {
                 Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Restore Green Button");
                 RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(90f, 50f);
+                rect.sizeDelta = new Vector2(120f, 50f);
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(-45f, uiYPosition); // Above white DrawingArea, center
+                rect.anchoredPosition = new Vector2(75f, uiYPosition); // 50px gap from red
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.greenButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -193,19 +195,19 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 }
 
                 EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
-                Debug.Log("✓ Green button repositioned to 90x50");
+                Debug.Log("✓ Green button repositioned to 120x50");
             }
 
-            // Blue button - third in row (right)
+            // Blue button - 50px gap after green button
             if (colorSelector.blueButton != null)
             {
                 Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Restore Blue Button");
                 RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(90f, 50f);
+                rect.sizeDelta = new Vector2(120f, 50f);
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(55f, uiYPosition); // Above white DrawingArea, right of center
+                rect.anchoredPosition = new Vector2(245f, uiYPosition); // 50px gap from green
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.blueButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -217,10 +219,10 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 }
 
                 EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
-                Debug.Log("✓ Blue button repositioned to 90x50");
+                Debug.Log("✓ Blue button repositioned to 120x50");
             }
 
-            Debug.Log("✓ Color buttons repositioned horizontally above white DrawingArea rectangle");
+            Debug.Log("✓ Color buttons (120x50) positioned with 50px gaps in horizontal toolbar");
         }
 
 
@@ -424,10 +426,11 @@ public class RestoreDrawingScreenLayout : EditorWindow
         EditorUtility.DisplayDialog("Success",
             "Drawing screen layout has been updated!\n\n" +
             "✓ DrawingPanel: Full screen\n" +
-            "✓ DrawingArea: 1700x950 with RectMask2D clipping\n" +
+            "✓ DrawingArea: 1700x700 with RectMask2D clipping\n" +
             "✓ Stroke Container: Parented to drawing area for clipping\n" +
-            "✓ Stroke Counter: Centered above drawing rectangle\n" +
-            "✓ Color Buttons: Horizontal toolbar above drawing rectangle\n" +
+            "✓ Horizontal Toolbar: Stroke counter + 3 color buttons\n" +
+            "✓ Color Buttons: 120x50 with 50px spacing\n" +
+            "✓ UI positioned centered above white rectangle\n" +
             "✓ Button Text: Increased to 16pt\n" +
             "✓ Drawing restricted to white rectangle bounds\n" +
             "✓ Result Panel: Simple centered layout\n" +
