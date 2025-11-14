@@ -77,27 +77,26 @@ public class SimpleDrawingCanvas : MonoBehaviour
             Debug.LogWarning("DrawingArea is null! Cannot restrict drawing bounds.");
             return true; // If no area defined, allow anywhere
         }
-        if (mainCamera == null)
-        {
-            Debug.LogWarning("MainCamera is null! Cannot check bounds.");
-            return false;
-        }
 
-        // Get world corners of the drawing area
-        Vector3[] corners = new Vector3[4];
-        drawingArea.GetWorldCorners(corners);
+        // Use RectTransformUtility for proper UI bounds checking
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            drawingArea,
+            screenPos,
+            null, // null for Screen Space - Overlay canvas
+            out localPoint
+        );
 
-        // Convert to screen space
-        Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
-        Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
-
-        bool isInside = screenPos.x >= min.x && screenPos.x <= max.x &&
-                        screenPos.y >= min.y && screenPos.y <= max.y;
+        // Check if local point is within the rect
+        Rect rect = drawingArea.rect;
+        bool isInside = rect.Contains(localPoint);
 
         // Debug log on first check
         if (!hasLoggedBounds)
         {
-            Debug.Log($"Drawing area bounds - Min: {min}, Max: {max}, Size: {max - min}");
+            Debug.Log($"Drawing area rect: {rect}");
+            Debug.Log($"Screen pos: {screenPos} -> Local pos: {localPoint}");
+            Debug.Log($"Is inside: {isInside}");
             hasLoggedBounds = true;
         }
 
@@ -195,7 +194,23 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     Vector3 ScreenToWorld(Vector2 screenPos)
     {
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+        // For Screen Space - Overlay canvas, we need to handle this differently
+        // Convert screen position to world position at a fixed Z distance
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
+
+        if (mainCamera != null)
+        {
+            // Use a fixed Z distance from camera
+            return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+        }
+        else
+        {
+            // Fallback: just use screen coordinates as world coordinates (scaled down)
+            return new Vector3(screenPos.x / 100f, screenPos.y / 100f, 0f);
+        }
     }
 
     /// <summary>
