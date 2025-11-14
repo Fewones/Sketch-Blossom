@@ -13,7 +13,7 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 0.1f;
+        [SerializeField] private float lineWidth = 0.15f; // Increased for better visibility
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("Line Rendering")]
@@ -60,8 +60,8 @@ namespace SketchBlossom.Battle
             if (lineMaterial == null)
             {
                 lineMaterial = new Material(Shader.Find("Sprites/Default"));
-                lineMaterial.color = Color.white;
-                Debug.Log("BattleDrawingCanvas: Created default line material");
+                lineMaterial.color = Color.black; // BLACK so lines are visible on white background!
+                Debug.Log("BattleDrawingCanvas: Created default line material (BLACK)");
             }
         }
 

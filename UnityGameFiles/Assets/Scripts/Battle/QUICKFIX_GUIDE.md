@@ -169,5 +169,20 @@ This is exactly what Unity Inspector does when you drag-and-drop, but automated!
 
 ---
 
+## NEW: Fix White Line Color Issue
+
+If your lines are invisible (white on white), use:
+
+**Method 1:** `Tools → Sketch Blossom → Fix Drawing Canvas Colors`
+**Method 2:** `Tools → Sketch Blossom → Fix Drawing Canvas Colors (Quick)`
+**Method 3:** Select DrawingArea in Hierarchy → Inspector → Click **"Fix Colors (Make Lines BLACK)"** button
+
+This automatically fixes:
+- ✅ Drawing color: BLACK (visible on white background)
+- ✅ Line width: 0.15 (good visibility)
+- ✅ Material color: BLACK (not white!)
+
+---
+
 **Last Updated:** 2025-11-14
-**Quick Fix for Drawing & Action Text Issues**
+**Quick Fix for Drawing & Action Text + Line Color Issues**
