@@ -75,7 +75,24 @@ namespace SketchBlossom.Battle
 
         private void Start()
         {
+            // Ensure GuideBookManager exists
+            EnsureGuideBookManager();
+
             InitializeBattle();
+        }
+
+        /// <summary>
+        /// Ensure GuideBookManager exists in the scene
+        /// </summary>
+        private void EnsureGuideBookManager()
+        {
+            GuideBookManager manager = FindObjectOfType<GuideBookManager>();
+            if (manager == null)
+            {
+                GameObject managerObj = new GameObject("GuideBookManager");
+                manager = managerObj.AddComponent<GuideBookManager>();
+                Debug.Log("[BattleManager] Created GuideBookManager at runtime");
+            }
         }
 
         /// <summary>

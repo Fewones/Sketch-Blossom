@@ -24,6 +24,9 @@ namespace SketchBlossom.Battle
         private BattleHPBar createdEnemyHPBar;
         private Button createdFinishButton;
         private Button createdClearButton;
+        private Button createdGuideButton;
+        private GameObject createdGuidePanel;
+        private GuideBookManager createdGuideBookManager;
         private TextMeshProUGUI createdTurnIndicator;
         private TextMeshProUGUI createdActionText;
         private TextMeshProUGUI createdAvailableMovesText;
@@ -134,6 +137,32 @@ namespace SketchBlossom.Battle
             {
                 battleManager = managerObj.GetComponent<DrawingBattleSceneManager>();
                 Debug.Log("Using existing BattleManager");
+            }
+
+            // Create GuideBookManager
+            CreateGuideBookManager();
+        }
+
+        /// <summary>
+        /// Create the GuideBookManager GameObject and component
+        /// </summary>
+        private void CreateGuideBookManager()
+        {
+            GameObject guideManagerObj = GameObject.Find("GuideBookManager");
+            if (guideManagerObj == null)
+            {
+                guideManagerObj = new GameObject("GuideBookManager");
+                createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                Debug.Log("Created GuideBookManager");
+            }
+            else
+            {
+                createdGuideBookManager = guideManagerObj.GetComponent<GuideBookManager>();
+                if (createdGuideBookManager == null)
+                {
+                    createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                }
+                Debug.Log("Using existing GuideBookManager");
             }
         }
 
@@ -390,6 +419,18 @@ namespace SketchBlossom.Battle
             clearRT.sizeDelta = new Vector2(120, 50);
             createdClearButton = clearButton.GetComponent<Button>(); // Store reference
 
+            // Guide Book Button (below available moves)
+            GameObject guideButton = CreateButton("GuideBookButton", mainCanvas.transform, "How to Draw");
+            RectTransform guideRT = guideButton.GetComponent<RectTransform>();
+            guideRT.anchorMin = new Vector2(0, 0.4f);
+            guideRT.anchorMax = new Vector2(0, 0.4f);
+            guideRT.sizeDelta = new Vector2(160, 40);
+            guideRT.anchoredPosition = new Vector2(100, -100);
+            createdGuideButton = guideButton.GetComponent<Button>(); // Store reference
+
+            // Create the guide panel
+            CreateGuidePanel();
+
             Debug.Log("Created UI elements (buttons and text)");
         }
 
@@ -441,6 +482,306 @@ namespace SketchBlossom.Battle
             tmp.alignment = TextAlignmentOptions.Center;
 
             return buttonObj;
+        }
+
+        /// <summary>
+        /// Create the drawing guide panel
+        /// </summary>
+        private void CreateGuidePanel()
+        {
+            // Main panel (full screen overlay)
+            GameObject guidePanel = new GameObject("GuidePanel");
+            guidePanel.transform.SetParent(mainCanvas.transform);
+            RectTransform panelRT = guidePanel.AddComponent<RectTransform>();
+            panelRT.anchorMin = Vector2.zero;
+            panelRT.anchorMax = Vector2.one;
+            panelRT.offsetMin = Vector2.zero;
+            panelRT.offsetMax = Vector2.zero;
+
+            // Background overlay (semi-transparent)
+            Image panelBg = guidePanel.AddComponent<Image>();
+            panelBg.color = new Color(0, 0, 0, 0.8f);
+
+            // Content panel
+            GameObject contentPanel = new GameObject("ContentPanel");
+            contentPanel.transform.SetParent(guidePanel.transform);
+            RectTransform contentRT = contentPanel.AddComponent<RectTransform>();
+            contentRT.anchorMin = new Vector2(0.15f, 0.1f);
+            contentRT.anchorMax = new Vector2(0.85f, 0.9f);
+            contentRT.offsetMin = Vector2.zero;
+            contentRT.offsetMax = Vector2.zero;
+
+            Image contentBg = contentPanel.AddComponent<Image>();
+            contentBg.color = new Color(0.9f, 0.85f, 0.7f); // Parchment color
+
+            // Title
+            GameObject titleObj = CreateTextElement("Title", contentPanel.transform, "Drawing Guide", 32);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.92f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.92f);
+            titleRT.sizeDelta = new Vector2(400, 50);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+
+            // Create pages
+            CreateGuidePage0_Introduction(contentPanel.transform); // Page 0: Introduction
+            CreateGuidePage1_FireMoves(contentPanel.transform);     // Page 1: Fire Moves
+            CreateGuidePage2_GrassMoves(contentPanel.transform);    // Page 2: Grass Moves
+            CreateGuidePage3_WaterMoves(contentPanel.transform);    // Page 3: Water Moves
+
+            // Page indicator
+            GameObject pageIndicator = CreateTextElement("PageIndicator", contentPanel.transform, "Page 1 / 4", 16);
+            RectTransform pageRT = pageIndicator.GetComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0.5f, 0.12f);
+            pageRT.anchorMax = new Vector2(0.5f, 0.12f);
+            pageRT.sizeDelta = new Vector2(200, 30);
+            pageIndicator.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+
+            // Previous Page button
+            GameObject prevButton = CreateButton("PreviousPageButton", contentPanel.transform, "< Prev");
+            RectTransform prevRT = prevButton.GetComponent<RectTransform>();
+            prevRT.anchorMin = new Vector2(0.15f, 0.05f);
+            prevRT.anchorMax = new Vector2(0.15f, 0.05f);
+            prevRT.sizeDelta = new Vector2(120, 45);
+
+            // Next Page button
+            GameObject nextButton = CreateButton("NextPageButton", contentPanel.transform, "Next >");
+            RectTransform nextRT = nextButton.GetComponent<RectTransform>();
+            nextRT.anchorMin = new Vector2(0.85f, 0.05f);
+            nextRT.anchorMax = new Vector2(0.85f, 0.05f);
+            nextRT.sizeDelta = new Vector2(120, 45);
+
+            // Close button
+            GameObject closeButton = CreateButton("CloseButton", contentPanel.transform, "Close");
+            RectTransform closeRT = closeButton.GetComponent<RectTransform>();
+            closeRT.anchorMin = new Vector2(0.5f, 0.05f);
+            closeRT.anchorMax = new Vector2(0.5f, 0.05f);
+            closeRT.sizeDelta = new Vector2(120, 45);
+
+            createdGuidePanel = guidePanel;
+            guidePanel.SetActive(false); // Hidden by default
+
+            Debug.Log("Created GuidePanel with 4 pages");
+
+            // Wire up the GuideBookManager if it exists
+            WireUpGuideBookManager();
+        }
+
+        /// <summary>
+        /// Create Page 0: Introduction
+        /// </summary>
+        private void CreateGuidePage0_Introduction(Transform parent)
+        {
+            GameObject page = new GameObject("Page0_Introduction");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Intro text
+            string introText = "Welcome to the Drawing Guide!\n\n" +
+                "Draw patterns to execute battle moves.\n\n" +
+                "The quality of your drawing affects damage:\n" +
+                "• Perfect drawing = 1.5x damage\n" +
+                "• Good drawing = 1.0x damage\n" +
+                "• Poor drawing = 0.5x damage\n\n" +
+                "Use Next to see move guides organized by element type.";
+
+            GameObject textObj = CreateTextElement("IntroText", page.transform, introText, 18);
+            RectTransform textRT = textObj.GetComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = new Vector2(50, 0);
+            textRT.offsetMax = new Vector2(-50, 0);
+            textObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            textObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
+        }
+
+        /// <summary>
+        /// Create Page 1: Fire Moves
+        /// </summary>
+        private void CreateGuidePage1_FireMoves(Transform parent)
+        {
+            GameObject page = new GameObject("Page1_FireMoves");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Page title
+            GameObject titleObj = CreateTextElement("PageTitle", page.transform, "🔥 Fire Moves", 24);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.9f);
+            titleRT.sizeDelta = new Vector2(400, 40);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            titleObj.GetComponent<TextMeshProUGUI>().color = new Color(0.8f, 0.2f, 0.0f);
+
+            // Fire moves
+            CreateMoveGuideEntry(page.transform, "Block", "Draw any simple shape\n(Square, Circle, etc.)", 0.5f, 0.7f);
+            CreateMoveGuideEntry(page.transform, "Fireball", "Draw a circle or spiral\nClosed loop shape", 0.5f, 0.5f);
+            CreateMoveGuideEntry(page.transform, "Burn", "Draw zigzag or spiky lines\nSharp angles", 0.5f, 0.3f);
+            CreateMoveGuideEntry(page.transform, "Flame Wave", "Draw wavy horizontal lines\nSmooth curves", 0.5f, 0.1f);
+        }
+
+        /// <summary>
+        /// Create Page 2: Grass Moves
+        /// </summary>
+        private void CreateGuidePage2_GrassMoves(Transform parent)
+        {
+            GameObject page = new GameObject("Page2_GrassMoves");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Page title
+            GameObject titleObj = CreateTextElement("PageTitle", page.transform, "🌿 Grass Moves", 24);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.9f);
+            titleRT.sizeDelta = new Vector2(400, 40);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            titleObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.7f, 0.1f);
+
+            // Grass moves
+            CreateMoveGuideEntry(page.transform, "Block", "Draw any simple shape\n(Square, Circle, etc.)", 0.5f, 0.7f);
+            CreateMoveGuideEntry(page.transform, "Vine Whip", "Draw a curved S-shape\nSmooth flowing line", 0.5f, 0.5f);
+            CreateMoveGuideEntry(page.transform, "Leaf Storm", "Draw many small scattered marks\n5+ short strokes", 0.5f, 0.3f);
+            CreateMoveGuideEntry(page.transform, "Root Attack", "Draw vertical lines downward\nTall aspect ratio", 0.5f, 0.1f);
+        }
+
+        /// <summary>
+        /// Create Page 3: Water Moves
+        /// </summary>
+        private void CreateGuidePage3_WaterMoves(Transform parent)
+        {
+            GameObject page = new GameObject("Page3_WaterMoves");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Page title
+            GameObject titleObj = CreateTextElement("PageTitle", page.transform, "💧 Water Moves", 24);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.9f);
+            titleRT.sizeDelta = new Vector2(400, 40);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            titleObj.GetComponent<TextMeshProUGUI>().color = new Color(0.1f, 0.5f, 0.9f);
+
+            // Water moves
+            CreateMoveGuideEntry(page.transform, "Block", "Draw any simple shape\n(Square, Circle, etc.)", 0.5f, 0.7f);
+            CreateMoveGuideEntry(page.transform, "Water Splash", "Draw wavy horizontal lines\n2-5 curved strokes", 0.5f, 0.5f);
+            CreateMoveGuideEntry(page.transform, "Bubble", "Draw small circles (2-3)\nCompact circular shapes", 0.5f, 0.3f);
+            CreateMoveGuideEntry(page.transform, "Healing Wave", "Draw smooth horizontal wave\nGentle flowing curve", 0.5f, 0.1f);
+        }
+
+        /// <summary>
+        /// Wire up the GuideBookManager with all necessary references
+        /// </summary>
+        private void WireUpGuideBookManager()
+        {
+            if (createdGuideBookManager == null)
+            {
+                Debug.LogWarning("GuideBookManager not found, cannot wire up references");
+                return;
+            }
+
+            // Use reflection to set the private fields
+            var managerType = typeof(GuideBookManager);
+
+            SetPrivateFieldForManager(managerType, createdGuideBookManager, "openGuideButton", createdGuideButton);
+            SetPrivateFieldForManager(managerType, createdGuideBookManager, "guidePanel", createdGuidePanel);
+
+            // Find the close button
+            if (createdGuidePanel != null)
+            {
+                Button closeButton = null;
+                Button[] buttons = createdGuidePanel.GetComponentsInChildren<Button>(true);
+                foreach (Button btn in buttons)
+                {
+                    if (btn.name == "CloseButton")
+                    {
+                        closeButton = btn;
+                        break;
+                    }
+                }
+
+                if (closeButton != null)
+                {
+                    SetPrivateFieldForManager(managerType, createdGuideBookManager, "closeGuideButton", closeButton);
+                }
+            }
+
+            Debug.Log("✅ GuideBookManager wired up successfully!");
+        }
+
+        /// <summary>
+        /// Helper to set private serialized fields for GuideBookManager using reflection
+        /// </summary>
+        private void SetPrivateFieldForManager(System.Type type, object instance, string fieldName, object value)
+        {
+            var field = type.GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(instance, value);
+                Debug.Log($"  ✅ Set {fieldName} = {value != null}");
+            }
+            else
+            {
+                Debug.LogWarning($"Field '{fieldName}' not found in {type.Name}");
+            }
+        }
+
+        /// <summary>
+        /// Create a single move guide entry
+        /// </summary>
+        private void CreateMoveGuideEntry(Transform parent, string moveName, string description, float xPos, float yPos)
+        {
+            GameObject entry = new GameObject($"Guide_{moveName}");
+            entry.transform.SetParent(parent);
+            RectTransform entryRT = entry.AddComponent<RectTransform>();
+            entryRT.anchorMin = new Vector2(xPos, yPos);
+            entryRT.anchorMax = new Vector2(xPos, yPos);
+            entryRT.sizeDelta = new Vector2(600, 80);
+
+            // Background
+            Image entryBg = entry.AddComponent<Image>();
+            entryBg.color = new Color(0.85f, 0.8f, 0.65f, 0.3f);
+
+            // Move name (bold)
+            GameObject nameObj = CreateTextElement("Name", entry.transform, moveName, 18);
+            RectTransform nameRT = nameObj.GetComponent<RectTransform>();
+            nameRT.anchorMin = new Vector2(0, 0.5f);
+            nameRT.anchorMax = new Vector2(0.4f, 1f);
+            nameRT.offsetMin = new Vector2(10, 0);
+            nameRT.offsetMax = new Vector2(0, -5);
+            nameObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
+            nameObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            nameObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
+
+            // Description
+            GameObject descObj = CreateTextElement("Description", entry.transform, description, 14);
+            RectTransform descRT = descObj.GetComponent<RectTransform>();
+            descRT.anchorMin = new Vector2(0.4f, 0f);
+            descRT.anchorMax = new Vector2(1, 1f);
+            descRT.offsetMin = new Vector2(10, 5);
+            descRT.offsetMax = new Vector2(-10, -5);
+            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MidlineLeft;
+            descObj.GetComponent<TextMeshProUGUI>().color = new Color(0.3f, 0.2f, 0.1f);
         }
 
         /// <summary>
@@ -523,12 +864,37 @@ namespace SketchBlossom.Battle
             createdEnemyHPBar = FindComponentByName<BattleHPBar>("EnemyHPBar");
             createdFinishButton = FindComponentByName<Button>("FinishDrawingButton");
             createdClearButton = FindComponentByName<Button>("ClearDrawingButton");
+            createdGuideButton = FindComponentByName<Button>("GuideBookButton");
             createdTurnIndicator = FindComponentByName<TextMeshProUGUI>("TurnIndicator");
             createdActionText = FindComponentByName<TextMeshProUGUI>("ActionText");
             createdAvailableMovesText = FindComponentByName<TextMeshProUGUI>("AvailableMovesText");
 
+            // Find guide panel
+            GameObject guidePanelObj = GameObject.Find("GuidePanel");
+            if (guidePanelObj != null)
+            {
+                createdGuidePanel = guidePanelObj;
+                Debug.Log("✅ Found GuidePanel");
+            }
+
+            // Find or create GuideBookManager
+            createdGuideBookManager = FindObjectOfType<GuideBookManager>();
+            if (createdGuideBookManager == null)
+            {
+                GameObject guideManagerObj = new GameObject("GuideBookManager");
+                createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                Debug.Log("✅ Created new GuideBookManager");
+            }
+            else
+            {
+                Debug.Log("✅ Found existing GuideBookManager");
+            }
+
             // Wire them all up
             WireUpReferences();
+
+            // Wire up GuideBookManager
+            WireUpGuideBookManager();
 
             Debug.Log("✅ EXISTING SCENE FIXED!");
             Debug.Log("All references connected. Drawing and action text should now work!");
@@ -590,6 +956,44 @@ namespace SketchBlossom.Battle
                 cam.backgroundColor = new Color(0.8f, 0.9f, 1f); // Light blue sky
                 Debug.Log("Created Main Camera");
             }
+        }
+
+        /// <summary>
+        /// Fix guide book setup and wire up GuideBookManager
+        /// </summary>
+        [ContextMenu("Fix Guide Book Setup")]
+        public void FixGuideBookSetup()
+        {
+            Debug.Log("=== FIXING GUIDE BOOK SETUP ===");
+
+            // Find guide button
+            createdGuideButton = FindComponentByName<Button>("GuideBookButton");
+
+            // Find guide panel
+            GameObject guidePanelObj = GameObject.Find("GuidePanel");
+            if (guidePanelObj != null)
+            {
+                createdGuidePanel = guidePanelObj;
+                Debug.Log("✅ Found GuidePanel");
+            }
+
+            // Find or create GuideBookManager
+            createdGuideBookManager = FindObjectOfType<GuideBookManager>();
+            if (createdGuideBookManager == null)
+            {
+                GameObject guideManagerObj = new GameObject("GuideBookManager");
+                createdGuideBookManager = guideManagerObj.AddComponent<GuideBookManager>();
+                Debug.Log("✅ Created new GuideBookManager");
+            }
+            else
+            {
+                Debug.Log("✅ Found existing GuideBookManager");
+            }
+
+            // Wire up GuideBookManager
+            WireUpGuideBookManager();
+
+            Debug.Log("✅ GUIDE BOOK SETUP FIXED!");
         }
     }
 }
