@@ -645,38 +645,48 @@ namespace SketchBlossom.Battle
 
             public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName, Texture2D drawingTexture = null, bool isPlayerUnit = false)
             {
+                Debug.Log($"BattleUnitDisplay.Initialize() called - IsPlayer:{isPlayerUnit}, HasTexture:{drawingTexture != null}");
+
                 if (unitNameText != null)
                 {
                     unitNameText.text = displayName;
                 }
 
-                if (unitImage != null)
+                if (unitImage == null)
                 {
-                    // If we have a drawing texture (player's drawn plant), use it as the sprite
-                    if (drawingTexture != null && isPlayerUnit)
+                    Debug.LogError("BattleUnitDisplay: unitImage is NULL! Cannot display sprite.");
+                    return;
+                }
+
+                // If we have a drawing texture (player's drawn plant), use it as the sprite
+                if (drawingTexture != null && isPlayerUnit)
+                {
+                    Debug.Log($"BattleUnitDisplay: Using player's drawing texture as sprite! Texture size: {drawingTexture.width}x{drawingTexture.height}");
+
+                    // Convert Texture2D to Sprite
+                    Sprite drawingSprite = Texture2DToSprite(drawingTexture);
+
+                    if (drawingSprite != null)
                     {
-                        Debug.Log("BattleUnitDisplay: Using player's drawing texture as sprite!");
-
-                        // Convert Texture2D to Sprite
-                        Sprite drawingSprite = Texture2DToSprite(drawingTexture);
-
-                        if (drawingSprite != null)
-                        {
-                            unitImage.sprite = drawingSprite;
-                            unitImage.color = Color.white; // Reset color to show texture properly
-                            Debug.Log("✓ Drawing sprite applied to player unit!");
-                        }
-                        else
-                        {
-                            Debug.LogWarning("Failed to convert drawing texture to sprite!");
-                            ApplyElementColor(element);
-                        }
+                        unitImage.sprite = drawingSprite;
+                        unitImage.color = Color.white; // Reset color to show texture properly
+                        unitImage.preserveAspect = true; // Keep aspect ratio
+                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {drawingSprite.bounds}");
                     }
                     else
                     {
-                        // No drawing texture - use element color as fallback (for enemy or if texture missing)
+                        Debug.LogError("Failed to convert drawing texture to sprite!");
                         ApplyElementColor(element);
                     }
+                }
+                else
+                {
+                    // No drawing texture - use element color as fallback (for enemy or if texture missing)
+                    if (drawingTexture == null && isPlayerUnit)
+                    {
+                        Debug.LogWarning("BattleUnitDisplay: Player unit has no drawing texture! Using fallback color.");
+                    }
+                    ApplyElementColor(element);
                 }
             }
 

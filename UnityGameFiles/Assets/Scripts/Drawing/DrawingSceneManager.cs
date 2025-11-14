@@ -264,8 +264,12 @@ namespace SketchBlossom.Drawing
 
             Debug.Log("========== CAPTURING PLANT DRAWING ==========");
 
-            // Capture the drawing as a texture
-            Texture2D drawingTexture = captureHandler.CaptureDrawing(drawingCanvas.allStrokes, mainCamera);
+            // Capture the drawing as a texture (pass drawing area for screen capture option)
+            Texture2D drawingTexture = captureHandler.CaptureDrawing(
+                drawingCanvas.allStrokes,
+                mainCamera,
+                drawingCanvas.drawingArea
+            );
 
             if (drawingTexture != null)
             {
