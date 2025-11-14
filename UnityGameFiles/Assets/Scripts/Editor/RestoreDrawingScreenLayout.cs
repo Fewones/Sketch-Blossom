@@ -78,6 +78,16 @@ public class RestoreDrawingScreenLayout : EditorWindow
             drawingAreaRect.anchoredPosition = new Vector2(0f, -30f); // Slightly down to leave room for UI
             drawingAreaRect.sizeDelta = new Vector2(1700f, 700f); // Height reduced to 700
 
+            // Ensure DrawingArea has white background, not green
+            Image drawingAreaImage = drawingAreaRect.GetComponent<Image>();
+            if (drawingAreaImage != null)
+            {
+                Undo.RecordObject(drawingAreaImage, "Set DrawingArea to white");
+                drawingAreaImage.color = Color.white;
+                EditorUtility.SetDirty(drawingAreaImage.gameObject);
+                Debug.Log("✓ Set DrawingArea background to white");
+            }
+
             // Add RectMask2D to clip drawing to this area
             UnityEngine.UI.RectMask2D mask = drawingAreaRect.GetComponent<UnityEngine.UI.RectMask2D>();
             if (mask == null)
@@ -90,13 +100,20 @@ public class RestoreDrawingScreenLayout : EditorWindow
             Debug.Log("✓ DrawingArea restored to 1700x700 centered with clipping mask");
         }
 
-        // Ensure stroke container is a child of drawing area for proper clipping
-        if (drawingCanvas != null && drawingCanvas.strokeContainer != null && drawingCanvas.drawingArea != null)
+        // Keep stroke container as a sibling of DrawingPanel, NOT a child
+        // This allows strokes to remain visible when DrawingPanel is hidden
+        if (drawingCanvas != null && drawingCanvas.strokeContainer != null && drawingPanelTransform != null)
         {
-            if (drawingCanvas.strokeContainer.parent != drawingCanvas.drawingArea)
+            Transform panelParent = drawingPanelTransform.parent; // Should be Canvas
+            if (panelParent != null && drawingCanvas.strokeContainer.parent != panelParent)
             {
-                Undo.SetTransformParent(drawingCanvas.strokeContainer, drawingCanvas.drawingArea, "Move stroke container to drawing area");
-                Debug.Log("✓ Moved stroke container under drawing area for proper clipping");
+                Undo.SetTransformParent(drawingCanvas.strokeContainer, panelParent, "Move stroke container to Canvas level");
+                Debug.Log("✓ Moved stroke container to Canvas level (keeps strokes visible when panel hidden)");
+
+                // Set stroke container to render behind the DrawingPanel
+                int panelSiblingIndex = drawingPanelTransform.GetSiblingIndex();
+                drawingCanvas.strokeContainer.SetSiblingIndex(panelSiblingIndex); // Same index means behind it
+                Debug.Log("✓ Set stroke container to render behind DrawingPanel");
             }
         }
 
