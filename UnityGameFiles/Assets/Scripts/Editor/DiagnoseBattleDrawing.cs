@@ -1,487 +1,153 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEditor;
-using TMPro;
 
 /// <summary>
-/// Diagnoses and fixes the battle drawing panel structure and references
+/// Diagnoses LineRenderer visibility issues in battle scene
 /// </summary>
 public class DiagnoseBattleDrawing : EditorWindow
 {
-    [MenuItem("Tools/Sketch Blossom/Battle Scene/Diagnose Drawing System")]
-    public static void DiagnoseDrawingSystem()
+    [MenuItem("Tools/Sketch Blossom/Battle Scene/Diagnose LineRenderer Visibility")]
+    public static void DiagnoseVisibility()
     {
-        Debug.Log("========== DIAGNOSING BATTLE DRAWING SYSTEM ==========");
+        Debug.Log("========== DIAGNOSING LINE RENDERER VISIBILITY ==========\n");
 
-        // Verify we're in a battle scene
-        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        if (!sceneName.Contains("Battle"))
+        // Check camera
+        Camera mainCam = Camera.main;
+        if (mainCam == null)
         {
-            EditorUtility.DisplayDialog("Wrong Scene",
-                $"This tool is for Battle scenes only.\n\nCurrent scene: {sceneName}",
-                "OK");
+            Debug.LogError("❌ No Main Camera found!");
+            EditorUtility.DisplayDialog("Error", "No Main Camera found in scene!", "OK");
             return;
         }
 
-        bool hasErrors = false;
-        string errorReport = "";
-
-        // Find components
-        BattleDrawingManager battleManager = FindObjectOfType<BattleDrawingManager>();
-        SimpleDrawingCanvas drawingCanvas = FindObjectOfType<SimpleDrawingCanvas>();
-        CombatManager combatManager = FindObjectOfType<CombatManager>();
-        Canvas canvas = FindObjectOfType<Canvas>();
-
-        Debug.Log("=== CHECKING COMPONENTS ===");
-
-        // Check BattleDrawingManager
-        if (battleManager == null)
+        Debug.Log("CAMERA SETUP:");
+        Debug.Log($"  Name: {mainCam.name}");
+        Debug.Log($"  Position: {mainCam.transform.position}");
+        Debug.Log($"  Rotation: {mainCam.transform.eulerAngles}");
+        Debug.Log($"  Projection: {(mainCam.orthographic ? "Orthographic" : "Perspective")}");
+        if (mainCam.orthographic)
         {
-            Debug.LogError("❌ BattleDrawingManager NOT FOUND");
-            errorReport += "• BattleDrawingManager missing\n";
-            hasErrors = true;
+            Debug.Log($"  Orthographic Size: {mainCam.orthographicSize}");
+        }
+        Debug.Log($"  Near Clip: {mainCam.nearClipPlane}, Far Clip: {mainCam.farClipPlane}");
+
+        // Check if z=10 is within clip planes
+        float testZ = 10f;
+        if (testZ < mainCam.nearClipPlane || testZ > mainCam.farClipPlane)
+        {
+            Debug.LogError($"❌ LineRenderers at z={testZ} are OUTSIDE camera clip planes!");
+            Debug.LogError($"   Near: {mainCam.nearClipPlane}, Far: {mainCam.farClipPlane}");
+            Debug.LogError("   SOLUTION: Adjust camera far clip plane to at least 15");
         }
         else
         {
-            Debug.Log($"✓ BattleDrawingManager found: {battleManager.gameObject.name}");
-
-            // Check all references
-            SerializedObject so = new SerializedObject(battleManager);
-
-            if (so.FindProperty("drawingCanvas").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ BattleDrawingManager.drawingCanvas is NULL");
-                errorReport += "• BattleDrawingManager.drawingCanvas not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ drawingCanvas assigned");
-            }
-
-            if (so.FindProperty("drawingPanel").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ BattleDrawingManager.drawingPanel is NULL");
-                errorReport += "• BattleDrawingManager.drawingPanel not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ drawingPanel assigned");
-            }
-
-            if (so.FindProperty("drawingAreaImage").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ BattleDrawingManager.drawingAreaImage is NULL");
-                errorReport += "• BattleDrawingManager.drawingAreaImage not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ drawingAreaImage assigned");
-            }
-
-            if (so.FindProperty("submitButton").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ BattleDrawingManager.submitButton is NULL");
-                errorReport += "• BattleDrawingManager.submitButton not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ submitButton assigned");
-            }
+            Debug.Log($"✓ z={testZ} is within camera clip planes");
         }
 
-        // Check SimpleDrawingCanvas
-        if (drawingCanvas == null)
+        // Check BattleDrawingCanvas
+        BattleDrawingCanvas canvas = FindObjectOfType<BattleDrawingCanvas>();
+        if (canvas == null)
         {
-            Debug.LogError("❌ SimpleDrawingCanvas NOT FOUND");
-            errorReport += "• SimpleDrawingCanvas missing\n";
-            hasErrors = true;
+            Debug.LogError("\n❌ BattleDrawingCanvas NOT FOUND!");
+            Debug.LogError("   Please run: Tools > Sketch Blossom > Battle Scene > 2. Rebuild Drawing System");
+            return;
+        }
+
+        Debug.Log($"\n✓ BATTLEDRAWINGCANVAS FOUND");
+        Debug.Log($"  GameObject: {canvas.gameObject.name}");
+        Debug.Log($"  Enabled: {canvas.enabled}");
+        Debug.Log($"  Stroke Count: {canvas.GetStrokeCount()}");
+
+        // Check for wrong canvas types
+        SimpleDrawingCanvas[] simpleCanvases = FindObjectsOfType<SimpleDrawingCanvas>();
+        if (simpleCanvases.Length > 0)
+        {
+            Debug.LogWarning($"\n⚠️ FOUND {simpleCanvases.Length} SimpleDrawingCanvas (should only be in DrawingScene!)");
+            foreach (var sc in simpleCanvases)
+            {
+                Debug.LogWarning($"   - {sc.gameObject.name}");
+            }
+            Debug.LogWarning("   SOLUTION: Run cleanup script first!");
+        }
+
+        // Check LineRenderers
+        if (canvas.allStrokes.Count == 0)
+        {
+            Debug.LogWarning("\n⚠️ No strokes exist yet. Try drawing something in Play mode first!");
         }
         else
         {
-            Debug.Log($"✓ SimpleDrawingCanvas found: {drawingCanvas.gameObject.name}");
-
-            SerializedObject canvasSO = new SerializedObject(drawingCanvas);
-
-            if (canvasSO.FindProperty("mainCamera").objectReferenceValue == null)
+            Debug.Log($"\nLINERENDERER ANALYSIS ({canvas.allStrokes.Count} strokes):");
+            for (int i = 0; i < canvas.allStrokes.Count; i++)
             {
-                Debug.LogError("❌ SimpleDrawingCanvas.mainCamera is NULL");
-                errorReport += "• SimpleDrawingCanvas.mainCamera not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ mainCamera assigned");
-            }
-
-            if (canvasSO.FindProperty("drawingArea").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ SimpleDrawingCanvas.drawingArea is NULL");
-                errorReport += "• SimpleDrawingCanvas.drawingArea not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ drawingArea assigned");
-
-                // Check the drawing area RectTransform
-                RectTransform drawingAreaRect = canvasSO.FindProperty("drawingArea").objectReferenceValue as RectTransform;
-                if (drawingAreaRect != null)
+                LineRenderer lr = canvas.allStrokes[i];
+                if (lr == null)
                 {
-                    Debug.Log($"  Drawing area size: {drawingAreaRect.rect.size}");
-                    Debug.Log($"  Drawing area position: {drawingAreaRect.anchoredPosition}");
+                    Debug.LogWarning($"  Stroke #{i + 1}: NULL");
+                    continue;
+                }
 
-                    // Check if it has a RawImage for raycasting
-                    RawImage rawImage = drawingAreaRect.GetComponent<RawImage>();
-                    if (rawImage == null)
+                Debug.Log($"\n  Stroke #{i + 1}:");
+                Debug.Log($"    GameObject: {lr.gameObject.name}");
+                Debug.Log($"    Active: {lr.gameObject.activeSelf}");
+                Debug.Log($"    Enabled: {lr.enabled}");
+                Debug.Log($"    Width: {lr.startWidth}");
+                Debug.Log($"    Color: {lr.startColor}");
+                Debug.Log($"    Material: {(lr.material ? lr.material.name : "NULL")}");
+                if (lr.material)
+                {
+                    Debug.Log($"    Shader: {lr.material.shader.name}");
+                    Debug.Log($"    Material Color: {lr.material.color}");
+                }
+                Debug.Log($"    Points: {lr.positionCount}");
+                Debug.Log($"    Sorting Order: {lr.sortingOrder}");
+                Debug.Log($"    Use World Space: {lr.useWorldSpace}");
+
+                // Check if material is valid
+                if (lr.material == null)
+                {
+                    Debug.LogError("    ❌ Material is NULL!");
+                }
+                else if (lr.material.shader == null)
+                {
+                    Debug.LogError("    ❌ Shader is NULL!");
+                }
+
+                // Log positions
+                if (lr.positionCount > 0)
+                {
+                    Vector3[] positions = new Vector3[lr.positionCount];
+                    lr.GetPositions(positions);
+                    Debug.Log($"    First Point: {positions[0]}");
+                    if (lr.positionCount > 1)
                     {
-                        Debug.LogWarning("⚠️ DrawingArea has no RawImage component!");
-                        errorReport += "• DrawingArea missing RawImage (needed for mouse detection)\n";
-                        hasErrors = true;
+                        Debug.Log($"    Last Point: {positions[positions.Length - 1]}");
                     }
-                    else if (!rawImage.raycastTarget)
+
+                    // Check if positions are reasonable
+                    bool allAtOrigin = true;
+                    foreach (var pos in positions)
                     {
-                        Debug.LogWarning("⚠️ DrawingArea RawImage raycastTarget is DISABLED!");
-                        errorReport += "• DrawingArea RawImage raycastTarget disabled\n";
-                        hasErrors = true;
+                        if (pos.magnitude > 0.01f)
+                        {
+                            allAtOrigin = false;
+                            break;
+                        }
                     }
-                    else
+
+                    if (allAtOrigin)
                     {
-                        Debug.Log("✓ DrawingArea has RawImage with raycastTarget enabled");
-                    }
-                }
-            }
-
-            if (canvasSO.FindProperty("strokeContainer").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ SimpleDrawingCanvas.strokeContainer is NULL");
-                errorReport += "• SimpleDrawingCanvas.strokeContainer not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ strokeContainer assigned");
-            }
-
-            if (canvasSO.FindProperty("lineRendererPrefab").objectReferenceValue == null)
-            {
-                Debug.LogError("❌ SimpleDrawingCanvas.lineRendererPrefab is NULL");
-                errorReport += "• SimpleDrawingCanvas.lineRendererPrefab not assigned\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ lineRendererPrefab assigned");
-            }
-        }
-
-        // Check hierarchy structure
-        Debug.Log("\n=== CHECKING HIERARCHY STRUCTURE ===");
-        if (canvas != null)
-        {
-            Transform battlePanel = canvas.transform.Find("BattleDrawingPanel");
-            if (battlePanel == null)
-            {
-                Debug.LogError("❌ BattleDrawingPanel NOT FOUND in Canvas");
-                errorReport += "• BattleDrawingPanel missing from Canvas\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log($"✓ BattleDrawingPanel found");
-
-                // Check children
-                Transform drawingArea = battlePanel.Find("DrawingArea");
-                if (drawingArea == null)
-                {
-                    Debug.LogError("❌ DrawingArea NOT FOUND in BattleDrawingPanel");
-                    errorReport += "• DrawingArea missing from BattleDrawingPanel\n";
-                    hasErrors = true;
-                }
-                else
-                {
-                    Debug.Log("✓ DrawingArea found");
-                }
-
-                Transform submitBtn = battlePanel.Find("SubmitButton");
-                if (submitBtn == null)
-                {
-                    Debug.LogError("❌ SubmitButton NOT FOUND in BattleDrawingPanel");
-                    errorReport += "• SubmitButton missing\n";
-                    hasErrors = true;
-                }
-                else
-                {
-                    Debug.Log("✓ SubmitButton found");
-
-                    // Check button listener
-                    Button btn = submitBtn.GetComponent<Button>();
-                    if (btn != null && btn.onClick.GetPersistentEventCount() == 0)
-                    {
-                        Debug.LogWarning("⚠️ SubmitButton has no onClick listeners!");
-                        errorReport += "• SubmitButton has no onClick listeners\n";
-                        hasErrors = true;
+                        Debug.LogWarning("    ⚠️ All points are at origin (0,0,0)!");
                     }
                 }
-
-                Transform clearBtn = battlePanel.Find("ClearButton");
-                if (clearBtn == null)
-                {
-                    Debug.LogError("❌ ClearButton NOT FOUND in BattleDrawingPanel");
-                    errorReport += "• ClearButton missing\n";
-                    hasErrors = true;
-                }
-                else
-                {
-                    Debug.Log("✓ ClearButton found");
-                }
             }
-        }
-
-        // Check layering
-        Debug.Log("\n=== CHECKING LAYERING ===");
-        if (canvas != null)
-        {
-            Debug.Log($"Canvas renderMode: {canvas.renderMode}");
-            Debug.Log($"Canvas sortingOrder: {canvas.sortingOrder}");
-
-            GraphicRaycaster raycaster = canvas.GetComponent<GraphicRaycaster>();
-            if (raycaster == null)
-            {
-                Debug.LogError("❌ Canvas missing GraphicRaycaster!");
-                errorReport += "• Canvas missing GraphicRaycaster\n";
-                hasErrors = true;
-            }
-            else
-            {
-                Debug.Log("✓ Canvas has GraphicRaycaster");
-            }
-        }
-
-        // Check EventSystem
-        UnityEngine.EventSystems.EventSystem eventSystem = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
-        if (eventSystem == null)
-        {
-            Debug.LogError("❌ NO EventSystem in scene!");
-            errorReport += "• EventSystem missing\n";
-            hasErrors = true;
-        }
-        else
-        {
-            Debug.Log($"✓ EventSystem found: {eventSystem.gameObject.name}");
         }
 
         Debug.Log("\n========== DIAGNOSIS COMPLETE ==========");
-
-        if (hasErrors)
-        {
-            bool fix = EditorUtility.DisplayDialog("Issues Found!",
-                $"Found the following issues:\n\n{errorReport}\n" +
-                "Would you like to attempt automatic fixes?",
-                "Yes, Fix Issues", "No, Cancel");
-
-            if (fix)
-            {
-                FixDrawingSystem();
-            }
-        }
-        else
-        {
-            EditorUtility.DisplayDialog("No Issues Found",
-                "The battle drawing system appears to be set up correctly!\n\n" +
-                "If drawing still doesn't work, check the Console logs when:\n" +
-                "• The drawing panel appears\n" +
-                "• You try to draw\n" +
-                "• You click Submit\n\n" +
-                "The logs will show exactly what's happening.",
-                "OK");
-        }
-    }
-
-    [MenuItem("Tools/Sketch Blossom/Battle Scene/Fix Drawing System")]
-    public static void FixDrawingSystem()
-    {
-        Debug.Log("========== FIXING BATTLE DRAWING SYSTEM ==========");
-
-        Canvas canvas = FindObjectOfType<Canvas>();
-        if (canvas == null)
-        {
-            EditorUtility.DisplayDialog("Error", "No Canvas found in scene!", "OK");
-            return;
-        }
-
-        // Find or create BattleDrawingPanel
-        Transform battlePanelTransform = canvas.transform.Find("BattleDrawingPanel");
-        GameObject battlePanel;
-
-        if (battlePanelTransform == null)
-        {
-            Debug.LogError("❌ BattleDrawingPanel not found. Please run: Tools > Sketch Blossom > Battle Scene > 2. Rebuild Drawing System");
-            EditorUtility.DisplayDialog("Error",
-                "BattleDrawingPanel not found!\n\n" +
-                "Please run: Tools > Sketch Blossom > Battle Scene > 2. Rebuild Drawing System",
-                "OK");
-            return;
-        }
-
-        battlePanel = battlePanelTransform.gameObject;
-
-        // Find DrawingArea
-        Transform drawingAreaTransform = battlePanel.transform.Find("DrawingArea");
-        if (drawingAreaTransform == null)
-        {
-            Debug.LogError("❌ DrawingArea not found in BattleDrawingPanel!");
-            return;
-        }
-
-        RectTransform drawingAreaRect = drawingAreaTransform.GetComponent<RectTransform>();
-
-        // Fix DrawingArea - ensure it has RawImage with raycastTarget
-        RawImage drawingAreaImage = drawingAreaRect.GetComponent<RawImage>();
-        if (drawingAreaImage == null)
-        {
-            drawingAreaImage = drawingAreaRect.gameObject.AddComponent<RawImage>();
-            drawingAreaImage.color = new Color(0.05f, 0.05f, 0.05f, 1f);
-            Debug.Log("✓ Added RawImage to DrawingArea");
-        }
-
-        if (!drawingAreaImage.raycastTarget)
-        {
-            drawingAreaImage.raycastTarget = true;
-            EditorUtility.SetDirty(drawingAreaImage);
-            Debug.Log("✓ Enabled raycastTarget on DrawingArea");
-        }
-
-        // Ensure panel background doesn't block raycasts
-        Image panelImage = battlePanel.GetComponent<Image>();
-        if (panelImage != null && panelImage.raycastTarget)
-        {
-            panelImage.raycastTarget = false;
-            EditorUtility.SetDirty(panelImage);
-            Debug.Log("✓ Disabled raycastTarget on panel background");
-        }
-
-        // Find components
-        BattleDrawingManager battleManager = FindObjectOfType<BattleDrawingManager>();
-        SimpleDrawingCanvas drawingCanvas = FindObjectOfType<SimpleDrawingCanvas>();
-
-        // Wire up BattleDrawingManager
-        if (battleManager != null && drawingCanvas != null)
-        {
-            SerializedObject managerSO = new SerializedObject(battleManager);
-
-            SerializedProperty drawingCanvasProp = managerSO.FindProperty("drawingCanvas");
-            if (drawingCanvasProp.objectReferenceValue == null)
-            {
-                drawingCanvasProp.objectReferenceValue = drawingCanvas;
-                Debug.Log("✓ Assigned drawingCanvas to BattleDrawingManager");
-            }
-
-            SerializedProperty drawingPanelProp = managerSO.FindProperty("drawingPanel");
-            if (drawingPanelProp.objectReferenceValue == null)
-            {
-                drawingPanelProp.objectReferenceValue = battlePanel;
-                Debug.Log("✓ Assigned drawingPanel to BattleDrawingManager");
-            }
-
-            SerializedProperty drawingAreaImageProp = managerSO.FindProperty("drawingAreaImage");
-            if (drawingAreaImageProp.objectReferenceValue == null)
-            {
-                drawingAreaImageProp.objectReferenceValue = drawingAreaImage;
-                Debug.Log("✓ Assigned drawingAreaImage to BattleDrawingManager");
-            }
-
-            Transform submitBtn = battlePanel.transform.Find("SubmitButton");
-            if (submitBtn != null)
-            {
-                SerializedProperty submitButtonProp = managerSO.FindProperty("submitButton");
-                submitButtonProp.objectReferenceValue = submitBtn.GetComponent<Button>();
-                Debug.Log("✓ Assigned submitButton to BattleDrawingManager");
-            }
-
-            Transform clearBtn = battlePanel.transform.Find("ClearButton");
-            if (clearBtn != null)
-            {
-                SerializedProperty clearButtonProp = managerSO.FindProperty("clearButton");
-                clearButtonProp.objectReferenceValue = clearBtn.GetComponent<Button>();
-                Debug.Log("✓ Assigned clearButton to BattleDrawingManager");
-            }
-
-            Transform instructionText = battlePanel.transform.Find("InstructionText");
-            if (instructionText != null)
-            {
-                SerializedProperty instructionTextProp = managerSO.FindProperty("instructionText");
-                instructionTextProp.objectReferenceValue = instructionText.GetComponent<TextMeshProUGUI>();
-                Debug.Log("✓ Assigned instructionText to BattleDrawingManager");
-            }
-
-            CombatManager combatManager = FindObjectOfType<CombatManager>();
-            if (combatManager != null)
-            {
-                SerializedProperty combatManagerProp = managerSO.FindProperty("combatManager");
-                combatManagerProp.objectReferenceValue = combatManager;
-                Debug.Log("✓ Assigned combatManager to BattleDrawingManager");
-            }
-
-            managerSO.ApplyModifiedProperties();
-        }
-
-        // Wire up SimpleDrawingCanvas
-        if (drawingCanvas != null)
-        {
-            SerializedObject canvasSO = new SerializedObject(drawingCanvas);
-
-            SerializedProperty mainCameraProp = canvasSO.FindProperty("mainCamera");
-            if (mainCameraProp.objectReferenceValue == null)
-            {
-                mainCameraProp.objectReferenceValue = Camera.main;
-                Debug.Log("✓ Assigned mainCamera to SimpleDrawingCanvas");
-            }
-
-            SerializedProperty drawingAreaProp = canvasSO.FindProperty("drawingArea");
-            if (drawingAreaProp.objectReferenceValue == null)
-            {
-                drawingAreaProp.objectReferenceValue = drawingAreaRect;
-                Debug.Log("✓ Assigned drawingArea to SimpleDrawingCanvas");
-            }
-
-            canvasSO.ApplyModifiedProperties();
-        }
-
-        // Ensure Canvas has GraphicRaycaster
-        if (canvas.GetComponent<GraphicRaycaster>() == null)
-        {
-            canvas.gameObject.AddComponent<GraphicRaycaster>();
-            Debug.Log("✓ Added GraphicRaycaster to Canvas");
-        }
-
-        // Ensure EventSystem exists
-        UnityEngine.EventSystems.EventSystem eventSystem = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
-        if (eventSystem == null)
-        {
-            GameObject eventSystemObj = new GameObject("EventSystem");
-            eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
-            eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            Debug.Log("✓ Created EventSystem");
-        }
-
-        // Mark scene dirty
-        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene());
-
-        Debug.Log("========== FIX COMPLETE ==========");
-
-        EditorUtility.DisplayDialog("Fixes Applied!",
-            "The drawing system has been fixed.\n\n" +
-            "Key fixes:\n" +
-            "• DrawingArea has RawImage with raycastTarget\n" +
-            "• Panel background doesn't block clicks\n" +
-            "• All references wired up\n" +
-            "• EventSystem ensured\n\n" +
-            "Save your scene and test!",
-            "OK");
+        Debug.Log("\nCOMMON SOLUTIONS:");
+        Debug.Log("1. If you see 2 canvases: Run cleanup script");
+        Debug.Log("2. If camera far clip is too small: Increase it to 15+");
+        Debug.Log("3. If material/shader is NULL: Rebuild drawing system");
+        Debug.Log("4. If all points are at origin: Camera reference is wrong");
     }
 }
