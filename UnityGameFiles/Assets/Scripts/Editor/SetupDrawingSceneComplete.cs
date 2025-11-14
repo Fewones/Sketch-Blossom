@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine.UI;
 using TMPro;
 using SketchBlossom.Drawing;
+using SketchBlossom.Battle;
 
 namespace SketchBlossom.Editor
 {

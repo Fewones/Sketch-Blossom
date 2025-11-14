@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using SketchBlossom.Battle;
 
 namespace SketchBlossom.Drawing
 {
