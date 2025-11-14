@@ -112,8 +112,8 @@ public class RestoreDrawingScreenLayout : EditorWindow
         }
 
         // Position stroke counter and color buttons in a single horizontal row above DrawingArea
-        // Total width: Stroke(150) + Red(120) + gap(50) + Green(120) + gap(50) + Blue(120) = 610px
-        // Start position to center the group: -305px from center
+        // Total width: Stroke(150) + gap(50) + Red(120) + gap(50) + Green(120) + gap(50) + Blue(120) = 660px
+        // Start position to center the group: -330px from center (half of 660)
 
         if (drawingPanelTransform != null)
         {
@@ -124,11 +124,11 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 RectTransform strokeRect = strokeCounterTransform.GetComponent<RectTransform>();
                 Undo.RecordObject(strokeRect, "Position Stroke Counter");
 
-                // Position at the left of the centered group
+                // Position at the left of the centered group (center pivot for easier calculation)
                 strokeRect.anchorMin = new Vector2(0.5f, 0.5f);
                 strokeRect.anchorMax = new Vector2(0.5f, 0.5f);
-                strokeRect.pivot = new Vector2(0f, 0.5f); // Left-aligned pivot
-                strokeRect.anchoredPosition = new Vector2(-305f, uiYPosition);
+                strokeRect.pivot = new Vector2(0.5f, 0.5f); // Center pivot
+                strokeRect.anchoredPosition = new Vector2(-255f, uiYPosition); // -330 + 75 (half of 150)
                 strokeRect.sizeDelta = new Vector2(150f, 50f); // Same height as buttons
 
                 // Increase font size if it has TextMeshProUGUI
@@ -150,7 +150,10 @@ public class RestoreDrawingScreenLayout : EditorWindow
         DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
         if (colorSelector != null)
         {
-            // Red button - right after stroke counter
+            // Red button - 50px gap after stroke counter
+            // Stroke ends at: -255 + 75 = -180
+            // Gap of 50px
+            // Red center at: -180 + 50 + 60 = -70
             if (colorSelector.redButton != null)
             {
                 Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Restore Red Button");
@@ -159,7 +162,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(-95f, uiYPosition); // Center of button
+                rect.anchoredPosition = new Vector2(-70f, uiYPosition);
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.redButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -175,6 +178,9 @@ public class RestoreDrawingScreenLayout : EditorWindow
             }
 
             // Green button - 50px gap after red button
+            // Red ends at: -70 + 60 = -10
+            // Gap of 50px
+            // Green center at: -10 + 50 + 60 = 100
             if (colorSelector.greenButton != null)
             {
                 Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Restore Green Button");
@@ -183,7 +189,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(75f, uiYPosition); // 50px gap from red
+                rect.anchoredPosition = new Vector2(100f, uiYPosition);
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.greenButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -199,6 +205,9 @@ public class RestoreDrawingScreenLayout : EditorWindow
             }
 
             // Blue button - 50px gap after green button
+            // Green ends at: 100 + 60 = 160
+            // Gap of 50px
+            // Blue center at: 160 + 50 + 60 = 270
             if (colorSelector.blueButton != null)
             {
                 Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Restore Blue Button");
@@ -207,7 +216,7 @@ public class RestoreDrawingScreenLayout : EditorWindow
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(245f, uiYPosition); // 50px gap from green
+                rect.anchoredPosition = new Vector2(270f, uiYPosition);
 
                 // Increase text size
                 TextMeshProUGUI buttonText = colorSelector.blueButton.GetComponentInChildren<TextMeshProUGUI>();
