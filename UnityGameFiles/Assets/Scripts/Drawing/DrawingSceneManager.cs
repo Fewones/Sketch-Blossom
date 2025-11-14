@@ -249,6 +249,31 @@ namespace SketchBlossom.Drawing
                 return;
             }
 
+            // CRITICAL: Ensure stroke container is active before capturing
+            // The strokes must be visible for the camera to render them
+            if (drawingCanvas.strokeContainer != null)
+            {
+                drawingCanvas.strokeContainer.gameObject.SetActive(true);
+                Debug.Log("✓ Stroke container activated for capture");
+
+                // Also ensure all parent GameObjects are active
+                Transform parent = drawingCanvas.strokeContainer.parent;
+                while (parent != null)
+                {
+                    if (!parent.gameObject.activeSelf)
+                    {
+                        Debug.LogWarning($"Parent '{parent.name}' was inactive - activating for capture");
+                        parent.gameObject.SetActive(true);
+                    }
+                    parent = parent.parent;
+                }
+            }
+            else
+            {
+                Debug.LogError("Stroke container is null!");
+                return;
+            }
+
             // Get the main camera for rendering
             Camera mainCamera = drawingCanvas.mainCamera;
             if (mainCamera == null)

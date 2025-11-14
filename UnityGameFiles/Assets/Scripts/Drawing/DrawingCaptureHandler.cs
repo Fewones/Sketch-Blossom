@@ -33,6 +33,28 @@ public class DrawingCaptureHandler : MonoBehaviour
 
         Debug.Log($"DrawingCaptureHandler: Capturing {strokes.Count} strokes to texture ({textureWidth}x{textureHeight})");
 
+        // Ensure all strokes are active and visible
+        int activeStrokes = 0;
+        int inactiveStrokes = 0;
+        foreach (var stroke in strokes)
+        {
+            if (stroke != null)
+            {
+                // Force activate any inactive strokes
+                if (!stroke.gameObject.activeInHierarchy)
+                {
+                    Debug.LogWarning($"Stroke '{stroke.name}' was inactive - activating for capture");
+                    stroke.gameObject.SetActive(true);
+                    inactiveStrokes++;
+                }
+                else
+                {
+                    activeStrokes++;
+                }
+            }
+        }
+        Debug.Log($"Stroke status: {activeStrokes} active, {inactiveStrokes} were inactive (now activated)");
+
         // If drawing area is provided and screen capture is enabled, use screen capture method
         if (useScreenCapture && drawingArea != null)
         {
