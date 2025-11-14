@@ -259,36 +259,8 @@ public class DrawingManager : MonoBehaviour
             Debug.Log("✓ Hidden DrawingPanel");
         }
 
-        // HIDE the stroke container so strokes don't show over result panel
-        if (usingSimpleCanvas && simpleCanvas != null)
-        {
-            if (simpleCanvas.strokeContainer != null)
-            {
-                Debug.Log($"SimpleCanvas strokeContainer found: {simpleCanvas.strokeContainer.name}");
-                Debug.Log($"Stroke count before hiding: {simpleCanvas.allStrokes.Count}");
-
-                simpleCanvas.strokeContainer.gameObject.SetActive(false);
-                Debug.Log("✓ Hidden stroke container (strokes won't show over results)");
-            }
-            else
-            {
-                Debug.LogError("❌ SimpleCanvas.strokeContainer is NULL! Strokes will show over results!");
-            }
-        }
-        else if (usingLegacyCanvas && drawingCanvas != null)
-        {
-            // For legacy canvas, try to hide the stroke parent
-            Transform strokeParent = drawingCanvas.transform.Find("Strokes");
-            if (strokeParent != null)
-            {
-                strokeParent.gameObject.SetActive(false);
-                Debug.Log("✓ Hidden legacy stroke container");
-            }
-            else
-            {
-                Debug.LogWarning("⚠️ Legacy stroke container 'Strokes' not found");
-            }
-        }
+        // Leave strokes visible - they'll be in the background behind the result panel
+        Debug.Log("✓ Keeping strokes visible in background");
 
         // Show result data - PlantResultPanel will handle showing its own overlay/panel
         if (plantResultPanel != null)
@@ -315,22 +287,6 @@ public class DrawingManager : MonoBehaviour
         // Determine which canvas system we're using
         bool usingSimpleCanvas = (simpleCanvas != null);
         bool usingLegacyCanvas = (drawingCanvas != null);
-
-        // SHOW the stroke container again
-        if (usingSimpleCanvas && simpleCanvas != null && simpleCanvas.strokeContainer != null)
-        {
-            simpleCanvas.strokeContainer.gameObject.SetActive(true);
-            Debug.Log("✓ Shown stroke container for redrawing");
-        }
-        else if (usingLegacyCanvas && drawingCanvas != null)
-        {
-            Transform strokeParent = drawingCanvas.transform.Find("Strokes");
-            if (strokeParent != null)
-            {
-                strokeParent.gameObject.SetActive(true);
-                Debug.Log("✓ Shown legacy stroke container");
-            }
-        }
 
         // Clear the canvas
         if (usingSimpleCanvas)
