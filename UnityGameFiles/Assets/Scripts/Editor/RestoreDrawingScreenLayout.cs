@@ -49,15 +49,15 @@ public class RestoreDrawingScreenLayout : EditorWindow
             RectTransform drawingAreaRect = drawingCanvas.drawingArea;
             Undo.RecordObject(drawingAreaRect, "Restore DrawingArea Size");
 
-            // Center it with reasonable size (adjust these values if needed)
+            // Make it larger to fill most of the screen
             drawingAreaRect.anchorMin = new Vector2(0.5f, 0.5f);
             drawingAreaRect.anchorMax = new Vector2(0.5f, 0.5f);
             drawingAreaRect.pivot = new Vector2(0.5f, 0.5f);
-            drawingAreaRect.anchoredPosition = Vector2.zero;
-            drawingAreaRect.sizeDelta = new Vector2(800f, 600f); // Standard size
+            drawingAreaRect.anchoredPosition = new Vector2(0f, -30f); // Slightly down to leave room for UI
+            drawingAreaRect.sizeDelta = new Vector2(1200f, 800f); // Larger size for better screen fit
 
             EditorUtility.SetDirty(drawingAreaRect.gameObject);
-            Debug.Log("✓ DrawingArea restored to 800x600 centered");
+            Debug.Log("✓ DrawingArea restored to 1200x800 centered");
         }
 
         // Find and resize color buttons to normal size
@@ -289,9 +289,9 @@ public class RestoreDrawingScreenLayout : EditorWindow
 
         Debug.Log("========== DRAWING SCREEN RESTORED ==========");
         EditorUtility.DisplayDialog("Success",
-            "Drawing screen layout has been restored!\n\n" +
+            "Drawing screen layout has been restored and enlarged!\n\n" +
             "✓ DrawingPanel: Full screen\n" +
-            "✓ DrawingArea: 800x600 centered\n" +
+            "✓ DrawingArea: 1200x800 (larger for better screen fit)\n" +
             "✓ Color Buttons: 50x50\n" +
             "✓ Result Panel: Simple centered layout\n" +
             "✓ All extra backgrounds removed",
