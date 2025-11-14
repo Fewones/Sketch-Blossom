@@ -14,9 +14,10 @@ public class CombatManager : MonoBehaviour
     public BattleUnit enemyUnit;
 
     [Header("Drawing System")]
-    public GameObject drawingPanel;
-    public DrawingCanvas drawingCanvas;
-    public Button attackButton;
+    public BattleDrawingManager battleDrawingManager;
+    public GameObject drawingPanel; // Legacy - kept for backward compatibility
+    public DrawingCanvas drawingCanvas; // Legacy - kept for backward compatibility
+    public Button attackButton; // Legacy - kept for backward compatibility
 
     [Header("Move Detection System")]
     public MovesetDetector movesetDetector;
@@ -44,10 +45,25 @@ public class CombatManager : MonoBehaviour
     private bool attackSubmitted = false;
     private PlantRecognitionSystem.PlantType playerPlantType;
     private PlantRecognitionSystem.PlantType enemyPlantType;
+    private MovesetDetector.MoveDetectionResult currentMoveResult;
 
     private void Start()
     {
-        // Hide drawing panel initially
+        // Auto-find BattleDrawingManager if not assigned
+        if (battleDrawingManager == null)
+        {
+            battleDrawingManager = FindObjectOfType<BattleDrawingManager>();
+            if (battleDrawingManager != null)
+            {
+                Debug.Log("✓ Found BattleDrawingManager");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ BattleDrawingManager not found - using legacy drawing system");
+            }
+        }
+
+        // Hide drawing panel initially (legacy support)
         if (drawingPanel != null)
         {
             drawingPanel.SetActive(false);
@@ -60,7 +76,7 @@ public class CombatManager : MonoBehaviour
             nextEncounterButton.onClick.AddListener(OnNextEncounter);
         }
 
-        // Setup attack button - Clear any existing listeners first!
+        // Setup attack button - Clear any existing listeners first! (legacy support)
         if (attackButton != null)
         {
             attackButton.onClick.RemoveAllListeners(); // Remove DrawingCanvas listener
@@ -175,38 +191,71 @@ public class CombatManager : MonoBehaviour
         // Show available moves
         ShowAvailableMoves();
 
-        // Show drawing panel
-        if (drawingPanel != null)
-        {
-            drawingPanel.SetActive(true);
-        }
-
-        // Clear previous drawing
-        if (drawingCanvas != null)
-        {
-            drawingCanvas.ClearCanvas();
-        }
-
-        // Enable attack button after drawing starts
+        // Reset attack state
         attackSubmitted = false;
-        if (attackButton != null)
+        currentMoveResult = default;
+
+        // Use new BattleDrawingManager if available, otherwise fall back to legacy system
+        if (battleDrawingManager != null)
         {
-            attackButton.interactable = false;
+            // NEW SYSTEM: Show drawing panel through BattleDrawingManager
+            Debug.Log("Using BattleDrawingManager for player input");
+            battleDrawingManager.ShowDrawingPanel(playerPlantType);
+
+            // Wait for player to submit attack (no time limit)
+            while (!attackSubmitted)
+            {
+                yield return null;
+            }
+
+            Debug.Log("Attack submitted via BattleDrawingManager");
         }
-
-        // Monitor for drawing activity to enable button
-        StartCoroutine(MonitorDrawingForButton());
-
-        // Wait for player to submit attack (no time limit)
-        while (!attackSubmitted)
+        else
         {
-            yield return null;
-        }
+            // LEGACY SYSTEM: Use old drawing panel and attack button
+            Debug.Log("Using legacy drawing system for player input");
 
-        // Hide drawing panel
-        if (drawingPanel != null)
-        {
-            drawingPanel.SetActive(false);
+            // Show drawing panel
+            if (drawingPanel != null)
+            {
+                drawingPanel.SetActive(true);
+            }
+
+            // Clear previous drawing
+            if (drawingCanvas != null)
+            {
+                drawingCanvas.ClearCanvas();
+            }
+
+            // Enable attack button after drawing starts
+            if (attackButton != null)
+            {
+                attackButton.interactable = false;
+            }
+
+            // Monitor for drawing activity to enable button
+            StartCoroutine(MonitorDrawingForButton());
+
+            // Wait for player to submit attack (no time limit)
+            while (!attackSubmitted)
+            {
+                yield return null;
+            }
+
+            // Hide drawing panel
+            if (drawingPanel != null)
+            {
+                drawingPanel.SetActive(false);
+            }
+
+            // Detect the move from the drawing (legacy)
+            if (movesetDetector != null && drawingCanvas != null)
+            {
+                currentMoveResult = movesetDetector.DetectMove(
+                    drawingCanvas.GetAllStrokes(),
+                    playerPlantType
+                );
+            }
         }
 
         // Hide available moves text
@@ -215,57 +264,39 @@ public class CombatManager : MonoBehaviour
             availableMovesText.gameObject.SetActive(false);
         }
 
-        // Detect the move from the drawing
-        if (movesetDetector != null && drawingCanvas != null)
+        // Execute the detected move
+        if (currentMoveResult.wasRecognized)
         {
-            var detectionResult = movesetDetector.DetectMove(
-                drawingCanvas.GetAllStrokes(),
-                playerPlantType
-            );
+            // Move recognized - execute it with quality multiplier!
+            MoveData move = GetMoveData(currentMoveResult.detectedMove, playerPlantType);
 
-            if (detectionResult.wasRecognized)
+            if (move != null)
             {
-                // Move recognized - execute it with quality multiplier!
-                MoveData move = GetMoveData(detectionResult.detectedMove, playerPlantType);
-
-                if (move != null)
-                {
-                    if (actionText != null)
-                    {
-                        actionText.text = $"You used {move.moveName}! ({detectionResult.qualityRating})";
-                    }
-
-                    yield return StartCoroutine(
-                        moveExecutor.ExecuteMove(
-                            move,
-                            playerUnit,
-                            enemyUnit,
-                            playerPlantType,
-                            enemyPlantType,
-                            detectionResult.damageMultiplier)
-                    );
-                }
-            }
-            else
-            {
-                // Move not recognized - attack fails!
                 if (actionText != null)
                 {
-                    actionText.text = "Your attack failed!";
+                    actionText.text = $"You used {move.moveName}! ({currentMoveResult.qualityRating})";
                 }
 
-                yield return StartCoroutine(moveExecutor.ExecuteFailedAttack(playerUnit));
+                yield return StartCoroutine(
+                    moveExecutor.ExecuteMove(
+                        move,
+                        playerUnit,
+                        enemyUnit,
+                        playerPlantType,
+                        enemyPlantType,
+                        currentMoveResult.damageMultiplier)
+                );
             }
         }
         else
         {
-            // Fallback to basic attack if systems not initialized
-            int damage = CalculateAttackDamage();
+            // Move not recognized - attack fails!
             if (actionText != null)
             {
-                actionText.text = $"You attack for {damage} damage!";
+                actionText.text = "Your attack failed!";
             }
-            yield return StartCoroutine(playerUnit.AttackAnimation(enemyUnit, damage));
+
+            yield return StartCoroutine(moveExecutor.ExecuteFailedAttack(playerUnit));
         }
 
         // Wait to show the result
@@ -392,6 +423,34 @@ public class CombatManager : MonoBehaviour
         return Mathf.Max(1, totalDamage);
     }
 
+    /// <summary>
+    /// Called by BattleDrawingManager when player submits a move
+    /// </summary>
+    public void OnMoveSubmitted(MovesetDetector.MoveDetectionResult result)
+    {
+        Debug.Log($"========== MOVE SUBMITTED ==========");
+        Debug.Log($"Move: {result.detectedMove}");
+        Debug.Log($"Quality: {result.qualityRating}");
+        Debug.Log($"Damage Multiplier: {result.damageMultiplier:F2}x");
+
+        if (currentState != BattleState.PlayerTurn)
+        {
+            Debug.LogWarning("Move submitted but not player turn!");
+            return;
+        }
+
+        // Store the result
+        currentMoveResult = result;
+
+        // Mark attack as submitted
+        attackSubmitted = true;
+
+        Debug.Log("✓ Move accepted - continuing player turn");
+    }
+
+    /// <summary>
+    /// Called by legacy attack button (backward compatibility)
+    /// </summary>
     private void OnAttackButtonPressed()
     {
         Debug.Log($"✅ Attack button pressed! Current state: {currentState}");
