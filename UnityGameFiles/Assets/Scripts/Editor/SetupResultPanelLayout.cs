@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Editor script to automatically format PlantResultPanel layout
+/// Editor script to automatically format PlantResultPanel layout and drawing UI
 /// Positions all UI elements properly for a clean, readable result display
 /// </summary>
 public class SetupResultPanelLayout : EditorWindow
@@ -70,7 +70,7 @@ public class SetupResultPanelLayout : EditorWindow
             Debug.LogWarning("⚠️ DrawingArea not found, using default size");
         }
 
-        // Add/Update background color for panel window (transparent so drawing shows through)
+        // Make panel window background transparent
         Image panelWindowImage = panelWindow.GetComponent<Image>();
         if (panelWindowImage == null)
         {
@@ -78,7 +78,7 @@ public class SetupResultPanelLayout : EditorWindow
             Debug.Log("✓ Added Image component to Panel Window");
         }
         Undo.RecordObject(panelWindowImage, "Set Panel Background Color");
-        panelWindowImage.color = new Color(0.95f, 0.95f, 0.95f, 0f); // Transparent - let drawing show through
+        panelWindowImage.color = new Color(0f, 0f, 0f, 0f); // Fully transparent
         EditorUtility.SetDirty(panelWindowImage);
         Debug.Log("✓ Set Panel Window background to transparent");
 
@@ -117,9 +117,9 @@ public class SetupResultPanelLayout : EditorWindow
         frameRect.anchoredPosition = new Vector2(0f, -50f); // Slight offset down from center
         frameRect.sizeDelta = new Vector2(drawingWidth, drawingHeight);
 
-        // Make it a subtle outline frame
+        // Make it transparent (no visual frame, just a spacer)
         Undo.RecordObject(frameImage, "Set Frame Color");
-        frameImage.color = new Color(0.5f, 0.5f, 0.5f, 0.3f); // Semi-transparent gray
+        frameImage.color = new Color(0f, 0f, 0f, 0f); // Fully transparent
         EditorUtility.SetDirty(frameObj);
         Debug.Log($"✓ Created frame rectangle: {drawingWidth}x{drawingHeight}");
 
@@ -141,6 +141,7 @@ public class SetupResultPanelLayout : EditorWindow
             rect.sizeDelta = new Vector2(drawingWidth, 40f);
             titleText.alignment = TextAlignmentOptions.Center;
             titleText.fontSize = 28;
+            titleText.color = Color.white; // White text on dark background
             EditorUtility.SetDirty(titleText.gameObject);
             Debug.Log($"✓ Formatted Title: Above frame at y={frameTop + 100f}");
         }
@@ -157,6 +158,7 @@ public class SetupResultPanelLayout : EditorWindow
             rect.sizeDelta = new Vector2(drawingWidth, 40f);
             plantNameText.alignment = TextAlignmentOptions.Center;
             plantNameText.fontSize = 36;
+            // Color will be set by PlantResultPanel based on element type
             EditorUtility.SetDirty(plantNameText.gameObject);
             Debug.Log($"✓ Formatted Plant Name: Above frame at y={frameTop + 50f}");
         }
@@ -173,11 +175,75 @@ public class SetupResultPanelLayout : EditorWindow
             rect.sizeDelta = new Vector2(drawingWidth, 30f);
             elementText.alignment = TextAlignmentOptions.Center;
             elementText.fontSize = 22;
+            // Color will be set by PlantResultPanel based on element type
             EditorUtility.SetDirty(elementText.gameObject);
             Debug.Log($"✓ Formatted Element: Above frame at y={frameTop + 10f}");
         }
 
-        // Format Stats (left of frame)
+        // Create/Format background panel for header (title, name, element)
+        Transform existingHeaderBg = panelWindow.transform.Find("HeaderBackground");
+        GameObject headerBgObj;
+        if (existingHeaderBg != null)
+        {
+            headerBgObj = existingHeaderBg.gameObject;
+        }
+        else
+        {
+            headerBgObj = new GameObject("HeaderBackground");
+            headerBgObj.transform.SetParent(panelWindow.transform, false);
+            headerBgObj.transform.SetAsFirstSibling(); // Behind text
+        }
+
+        RectTransform headerBgRect = headerBgObj.GetComponent<RectTransform>();
+        if (headerBgRect == null) headerBgRect = headerBgObj.AddComponent<RectTransform>();
+
+        Image headerBgImage = headerBgObj.GetComponent<Image>();
+        if (headerBgImage == null) headerBgImage = headerBgObj.AddComponent<Image>();
+
+        Undo.RecordObject(headerBgRect, "Format Header Background");
+        headerBgRect.anchorMin = new Vector2(0.5f, 0.5f);
+        headerBgRect.anchorMax = new Vector2(0.5f, 0.5f);
+        headerBgRect.pivot = new Vector2(0.5f, 0f);
+        headerBgRect.anchoredPosition = new Vector2(0f, frameTop);
+        headerBgRect.sizeDelta = new Vector2(drawingWidth + 40f, 150f);
+
+        Undo.RecordObject(headerBgImage, "Set Header Background Color");
+        headerBgImage.color = new Color(0.15f, 0.15f, 0.15f, 0.9f); // Dark semi-transparent
+        EditorUtility.SetDirty(headerBgObj);
+        Debug.Log("✓ Created header background panel");
+
+        // Format Stats (left of frame) with background
+        Transform existingStatsBg = panelWindow.transform.Find("StatsBackground");
+        GameObject statsBgObj;
+        if (existingStatsBg != null)
+        {
+            statsBgObj = existingStatsBg.gameObject;
+        }
+        else
+        {
+            statsBgObj = new GameObject("StatsBackground");
+            statsBgObj.transform.SetParent(panelWindow.transform, false);
+            if (statsText != null) statsBgObj.transform.SetSiblingIndex(statsText.transform.GetSiblingIndex());
+        }
+
+        RectTransform statsBgRect = statsBgObj.GetComponent<RectTransform>();
+        if (statsBgRect == null) statsBgRect = statsBgObj.AddComponent<RectTransform>();
+
+        Image statsBgImage = statsBgObj.GetComponent<Image>();
+        if (statsBgImage == null) statsBgImage = statsBgObj.AddComponent<Image>();
+
+        Undo.RecordObject(statsBgRect, "Format Stats Background");
+        statsBgRect.anchorMin = new Vector2(0.5f, 0.5f);
+        statsBgRect.anchorMax = new Vector2(0.5f, 0.5f);
+        statsBgRect.pivot = new Vector2(1f, 0.5f);
+        statsBgRect.anchoredPosition = new Vector2(frameLeft - 20f, -50f);
+        statsBgRect.sizeDelta = new Vector2(220f, drawingHeight + 20f);
+
+        Undo.RecordObject(statsBgImage, "Set Stats Background Color");
+        statsBgImage.color = new Color(0.15f, 0.15f, 0.15f, 0.9f); // Dark semi-transparent
+        EditorUtility.SetDirty(statsBgObj);
+        Debug.Log("✓ Created stats background panel");
+
         if (statsText != null)
         {
             Undo.RecordObject(statsText.GetComponent<RectTransform>(), "Format Stats");
@@ -185,15 +251,47 @@ public class SetupResultPanelLayout : EditorWindow
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(1f, 0.5f); // Pivot on right edge
-            rect.anchoredPosition = new Vector2(frameLeft - 20f, -50f); // 20px left of frame
+            rect.anchoredPosition = new Vector2(frameLeft - 30f, -50f); // 30px left of frame (10px padding from bg)
             rect.sizeDelta = new Vector2(200f, drawingHeight);
             statsText.alignment = TextAlignmentOptions.TopLeft;
             statsText.fontSize = 20;
+            statsText.color = Color.white; // White text on dark background
             EditorUtility.SetDirty(statsText.gameObject);
-            Debug.Log($"✓ Formatted Stats: Left of frame at x={frameLeft - 20f}");
+            Debug.Log($"✓ Formatted Stats: Left of frame at x={frameLeft - 30f}");
         }
 
-        // Format Moves (right of frame)
+        // Format Moves (right of frame) with background
+        Transform existingMovesBg = panelWindow.transform.Find("MovesBackground");
+        GameObject movesBgObj;
+        if (existingMovesBg != null)
+        {
+            movesBgObj = existingMovesBg.gameObject;
+        }
+        else
+        {
+            movesBgObj = new GameObject("MovesBackground");
+            movesBgObj.transform.SetParent(panelWindow.transform, false);
+            if (movesText != null) movesBgObj.transform.SetSiblingIndex(movesText.transform.GetSiblingIndex());
+        }
+
+        RectTransform movesBgRect = movesBgObj.GetComponent<RectTransform>();
+        if (movesBgRect == null) movesBgRect = movesBgObj.AddComponent<RectTransform>();
+
+        Image movesBgImage = movesBgObj.GetComponent<Image>();
+        if (movesBgImage == null) movesBgImage = movesBgObj.AddComponent<Image>();
+
+        Undo.RecordObject(movesBgRect, "Format Moves Background");
+        movesBgRect.anchorMin = new Vector2(0.5f, 0.5f);
+        movesBgRect.anchorMax = new Vector2(0.5f, 0.5f);
+        movesBgRect.pivot = new Vector2(0f, 0.5f);
+        movesBgRect.anchoredPosition = new Vector2(frameRight + 20f, -50f);
+        movesBgRect.sizeDelta = new Vector2(220f, drawingHeight + 20f);
+
+        Undo.RecordObject(movesBgImage, "Set Moves Background Color");
+        movesBgImage.color = new Color(0.15f, 0.15f, 0.15f, 0.9f); // Dark semi-transparent
+        EditorUtility.SetDirty(movesBgObj);
+        Debug.Log("✓ Created moves background panel");
+
         if (movesText != null)
         {
             Undo.RecordObject(movesText.GetComponent<RectTransform>(), "Format Moves");
@@ -201,12 +299,13 @@ public class SetupResultPanelLayout : EditorWindow
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0f, 0.5f); // Pivot on left edge
-            rect.anchoredPosition = new Vector2(frameRight + 20f, -50f); // 20px right of frame
+            rect.anchoredPosition = new Vector2(frameRight + 30f, -50f); // 30px right of frame (10px padding from bg)
             rect.sizeDelta = new Vector2(200f, drawingHeight);
             movesText.alignment = TextAlignmentOptions.TopLeft;
             movesText.fontSize = 20;
+            movesText.color = Color.white; // White text on dark background
             EditorUtility.SetDirty(movesText.gameObject);
-            Debug.Log($"✓ Formatted Moves: Right of frame at x={frameRight + 20f}");
+            Debug.Log($"✓ Formatted Moves: Right of frame at x={frameRight + 30f}");
         }
 
         // Format Continue Button (below frame, right side)
@@ -237,19 +336,141 @@ public class SetupResultPanelLayout : EditorWindow
             Debug.Log($"✓ Formatted Redraw Button: Below frame at y={frameBottom - 35f}");
         }
 
+        // ===== FORMAT DRAWING UI ELEMENTS =====
+        Debug.Log("========== FORMATTING DRAWING UI ==========");
+
+        // Adjust drawing area to match frame size
+        if (drawingCanvas != null && drawingAreaRect != null)
+        {
+            Undo.RecordObject(drawingAreaRect, "Adjust Drawing Area Size");
+            drawingAreaRect.sizeDelta = new Vector2(drawingWidth, drawingHeight);
+            EditorUtility.SetDirty(drawingAreaRect.gameObject);
+            Debug.Log($"✓ Adjusted DrawingArea to match frame: {drawingWidth}x{drawingHeight}");
+        }
+
+        // Find and format color selector buttons
+        DrawingColorSelector colorSelector = FindFirstObjectByType<DrawingColorSelector>(FindObjectsInactive.Include);
+        if (colorSelector != null)
+        {
+            Debug.Log("✓ Found DrawingColorSelector");
+
+            // Find stroke counter text to position buttons next to it
+            Canvas mainCanvas = FindFirstObjectByType<Canvas>();
+            TextMeshProUGUI strokeCounter = null;
+            if (mainCanvas != null)
+            {
+                // Look for stroke counter in DrawingPanel
+                Transform drawingPanel = mainCanvas.transform.Find("DrawingPanel");
+                if (drawingPanel != null)
+                {
+                    // Search for StrokeCounter text
+                    foreach (Transform child in drawingPanel)
+                    {
+                        TextMeshProUGUI[] texts = child.GetComponentsInChildren<TextMeshProUGUI>(true);
+                        foreach (var text in texts)
+                        {
+                            if (text.gameObject.name.Contains("Stroke") || text.gameObject.name.Contains("Counter"))
+                            {
+                                strokeCounter = text;
+                                Debug.Log($"✓ Found stroke counter: {strokeCounter.gameObject.name}");
+                                break;
+                            }
+                        }
+                        if (strokeCounter != null) break;
+                    }
+                }
+            }
+
+            // Resize color buttons
+            if (colorSelector.redButton != null)
+            {
+                Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Resize Red Button");
+                RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(80f, 80f); // Larger button size
+                EditorUtility.SetDirty(colorSelector.redButton.gameObject);
+                Debug.Log("✓ Resized Red button to 80x80");
+            }
+
+            if (colorSelector.greenButton != null)
+            {
+                Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Resize Green Button");
+                RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(80f, 80f);
+                EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
+                Debug.Log("✓ Resized Green button to 80x80");
+            }
+
+            if (colorSelector.blueButton != null)
+            {
+                Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Resize Blue Button");
+                RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(80f, 80f);
+                EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
+                Debug.Log("✓ Resized Blue button to 80x80");
+            }
+
+            // If stroke counter found, reposition buttons next to it
+            if (strokeCounter != null)
+            {
+                RectTransform counterRect = strokeCounter.GetComponent<RectTransform>();
+
+                // Position color buttons horizontally next to stroke counter
+                if (colorSelector.redButton != null)
+                {
+                    Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Reposition Red Button");
+                    RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
+                    rect.anchorMin = counterRect.anchorMin;
+                    rect.anchorMax = counterRect.anchorMax;
+                    rect.pivot = new Vector2(0f, 0.5f);
+                    rect.anchoredPosition = new Vector2(counterRect.anchoredPosition.x + 150f, counterRect.anchoredPosition.y);
+                    EditorUtility.SetDirty(colorSelector.redButton.gameObject);
+                    Debug.Log("✓ Repositioned Red button next to stroke counter");
+                }
+
+                if (colorSelector.greenButton != null)
+                {
+                    Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Reposition Green Button");
+                    RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
+                    rect.anchorMin = counterRect.anchorMin;
+                    rect.anchorMax = counterRect.anchorMax;
+                    rect.pivot = new Vector2(0f, 0.5f);
+                    rect.anchoredPosition = new Vector2(counterRect.anchoredPosition.x + 240f, counterRect.anchoredPosition.y);
+                    EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
+                    Debug.Log("✓ Repositioned Green button next to stroke counter");
+                }
+
+                if (colorSelector.blueButton != null)
+                {
+                    Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Reposition Blue Button");
+                    RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
+                    rect.anchorMin = counterRect.anchorMin;
+                    rect.anchorMax = counterRect.anchorMax;
+                    rect.pivot = new Vector2(0f, 0.5f);
+                    rect.anchoredPosition = new Vector2(counterRect.anchoredPosition.x + 330f, counterRect.anchoredPosition.y);
+                    EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
+                    Debug.Log("✓ Repositioned Blue button next to stroke counter");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ DrawingColorSelector not found - color buttons not formatted");
+        }
+
         // Mark scene as dirty
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
         Debug.Log("========== LAYOUT FORMATTING COMPLETE ==========");
         EditorUtility.DisplayDialog("Success",
-            "PlantResultPanel layout formatted successfully!\n\n" +
-            "✓ Drawing Frame: Center (" + drawingWidth + "x" + drawingHeight + ")\n" +
+            "PlantResultPanel and Drawing UI formatted successfully!\n\n" +
+            "✓ Drawing Area: Adjusted to " + drawingWidth + "x" + drawingHeight + "\n" +
+            "✓ Color Buttons: Resized to 80x80 and repositioned\n" +
+            "✓ Result Panel: Dark backgrounds for readability\n" +
             "✓ Title/Type: Above frame\n" +
-            "✓ Stats: Left of frame\n" +
-            "✓ Moves: Right of frame\n" +
-            "✓ Buttons: Below frame\n" +
-            "✓ Background: Transparent (drawing visible)",
+            "✓ Stats: Left of frame (white text on dark bg)\n" +
+            "✓ Moves: Right of frame (white text on dark bg)\n" +
+            "✓ Buttons: Below frame",
             "OK");
     }
 }
