@@ -81,17 +81,7 @@ namespace SketchBlossom.Battle
             Debug.Log($"AttackAnimationManager: Creating projectile with texture {moveTexture.width}x{moveTexture.height}");
 
             // Create projectile
-            GameObject projectile = null;
-            try
-            {
-                projectile = CreateProjectile(moveTexture, source.position);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"AttackAnimationManager: Exception creating projectile: {e.Message}\n{e.StackTrace}");
-                yield return PlayFallbackAnimation(source, target, moveData);
-                yield break;
-            }
+            GameObject projectile = CreateProjectile(moveTexture, source.position);
 
             if (projectile == null)
             {
@@ -119,43 +109,51 @@ namespace SketchBlossom.Battle
         /// </summary>
         private GameObject CreateProjectile(Texture2D moveTexture, Vector3 spawnPosition)
         {
-            Debug.Log($"AttackAnimationManager: CreateProjectile at {spawnPosition}");
-
-            GameObject projectile = new GameObject("AttackProjectile");
-            projectile.transform.position = spawnPosition;
-
-            // Use SpriteRenderer instead of Canvas/Image for reliable world-space rendering
-            SpriteRenderer spriteRenderer = projectile.AddComponent<SpriteRenderer>();
-
-            // Convert texture to sprite
-            Sprite moveSprite = Texture2DToSprite(moveTexture);
-            if (moveSprite != null)
+            try
             {
-                spriteRenderer.sprite = moveSprite;
-                Debug.Log("AttackAnimationManager: Sprite assigned to SpriteRenderer");
+                Debug.Log($"AttackAnimationManager: CreateProjectile at {spawnPosition}");
+
+                GameObject projectile = new GameObject("AttackProjectile");
+                projectile.transform.position = spawnPosition;
+
+                // Use SpriteRenderer instead of Canvas/Image for reliable world-space rendering
+                SpriteRenderer spriteRenderer = projectile.AddComponent<SpriteRenderer>();
+
+                // Convert texture to sprite
+                Sprite moveSprite = Texture2DToSprite(moveTexture);
+                if (moveSprite != null)
+                {
+                    spriteRenderer.sprite = moveSprite;
+                    Debug.Log("AttackAnimationManager: Sprite assigned to SpriteRenderer");
+                }
+                else
+                {
+                    Debug.LogError("AttackAnimationManager: Failed to create sprite from texture!");
+                    Destroy(projectile);
+                    return null;
+                }
+
+                // Set sorting layer to render above battle elements
+                spriteRenderer.sortingOrder = 100;
+
+                // Set initial scale and rotation
+                projectile.transform.localScale = Vector3.one * projectileScale;
+                projectile.transform.rotation = Quaternion.Euler(projectileRotation);
+
+                // Set initial alpha to 0 for fade-in
+                Color color = spriteRenderer.color;
+                color.a = 0f;
+                spriteRenderer.color = color;
+
+                Debug.Log($"AttackAnimationManager: Projectile setup complete - Scale: {projectileScale}, Color: {color}");
+
+                return projectile;
             }
-            else
+            catch (System.Exception e)
             {
-                Debug.LogError("AttackAnimationManager: Failed to create sprite from texture!");
-                Destroy(projectile);
+                Debug.LogError($"AttackAnimationManager: Exception creating projectile: {e.Message}\n{e.StackTrace}");
                 return null;
             }
-
-            // Set sorting layer to render above battle elements
-            spriteRenderer.sortingOrder = 100;
-
-            // Set initial scale and rotation
-            projectile.transform.localScale = Vector3.one * projectileScale;
-            projectile.transform.rotation = Quaternion.Euler(projectileRotation);
-
-            // Set initial alpha to 0 for fade-in
-            Color color = spriteRenderer.color;
-            color.a = 0f;
-            spriteRenderer.color = color;
-
-            Debug.Log($"AttackAnimationManager: Projectile setup complete - Scale: {projectileScale}, Color: {color}");
-
-            return projectile;
         }
 
         /// <summary>
