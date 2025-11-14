@@ -266,8 +266,8 @@ public class DrawingManager : MonoBehaviour
         if (plantResultPanel != null)
         {
             Debug.Log("✓ Calling PlantResultPanel.ShowResults() - it will show its own UI");
-            // BATTLE SCENE DISABLED FOR TESTING - Pass null instead of LoadBattleScene
-            plantResultPanel.ShowResults(lastRecognitionResult, unitData, null, OnRedrawRequested);
+            // Pass LoadBattleScene as the continue callback
+            plantResultPanel.ShowResults(lastRecognitionResult, unitData, LoadBattleScene, OnRedrawRequested);
         }
         else
         {
@@ -402,13 +402,11 @@ public class DrawingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Load the battle scene - DISABLED FOR TESTING
+    /// Load the battle scene
     /// </summary>
     private void LoadBattleScene()
     {
-        Debug.LogWarning("⚠️ BATTLE SCENE LOADING DISABLED FOR TESTING ⚠️");
-        Debug.LogWarning($"Would have loaded: {battleSceneName}");
-        Debug.LogWarning("Stay in drawing scene to test plant recognition");
-        // SceneManager.LoadScene(battleSceneName);
+        Debug.Log($"Loading battle scene: {battleSceneName}");
+        SceneManager.LoadScene(battleSceneName);
     }
 }

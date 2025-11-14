@@ -30,7 +30,6 @@ public class CombatManager : MonoBehaviour
 
     [Header("Combat Settings")]
     public float turnDelay = 1f;
-    public float drawingTimeLimit = 5f;
 
     private enum BattleState
     {
@@ -198,11 +197,9 @@ public class CombatManager : MonoBehaviour
         // Monitor for drawing activity to enable button
         StartCoroutine(MonitorDrawingForButton());
 
-        // Wait for player to submit attack
-        float timeElapsed = 0f;
-        while (!attackSubmitted && timeElapsed < drawingTimeLimit)
+        // Wait for player to submit attack (no time limit)
+        while (!attackSubmitted)
         {
-            timeElapsed += Time.deltaTime;
             yield return null;
         }
 
