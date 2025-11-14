@@ -106,4 +106,12 @@ public class DrawnUnitData : MonoBehaviour
         plantDisplayName = "Unknown";
         detectionConfidence = 0f;
     }
+
+    /// <summary>
+    /// Check if unit has valid data (plant type is set and confidence > 0)
+    /// </summary>
+    public bool HasData()
+    {
+        return detectionConfidence > 0f || strokeCount > 0;
+    }
 }
