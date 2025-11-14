@@ -514,10 +514,10 @@ RectTransform:
   - {fileID: 1922990374}
   m_Father: {fileID: 1329619948}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.1, y: 0.05}
-  m_AnchorMax: {x: 0.9, y: 0.35}
-  m_AnchoredPosition: {x: 0, y: 6}
-  m_SizeDelta: {x: -516.2605, y: 0}
+  m_AnchorMin: {x: 0.30561817, y: 0.05536691}
+  m_AnchorMax: {x: 0.69200003, y: 0.37143886}
+  m_AnchoredPosition: {x: 1.5, y: -3.5}
+  m_SizeDelta: {x: -1.260498, y: -11}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &217268114
 MonoBehaviour:
@@ -533,10 +533,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.Battle.BattleDrawingCanvas
   drawingArea: {fileID: 0}
   canvas: {fileID: 0}
-  lineWidth: 5
-  drawingColor: {r: 1, g: 1, b: 1, a: 1}
+  lineWidth: 0.5
+  drawingColor: {r: 0, g: 0, b: 0, a: 1}
   lineRendererPrefab: {fileID: 0}
-  lineMaterial: {fileID: 0}
+  lineMaterial: {fileID: 1330469194}
   isDrawingEnabled: 0
 --- !u!114 &217268115
 MonoBehaviour:
@@ -1741,16 +1741,16 @@ MonoBehaviour:
     unitImage: {fileID: 0}
     unitNameText: {fileID: 0}
     animator: {fileID: 0}
-  playerHPBar: {fileID: 0}
-  enemyHPBar: {fileID: 0}
-  drawingCanvas: {fileID: 0}
-  finishDrawingButton: {fileID: 0}
-  clearDrawingButton: {fileID: 0}
-  movesetDetector: {fileID: 0}
-  moveRecognitionSystem: {fileID: 0}
-  turnIndicatorText: {fileID: 0}
-  actionText: {fileID: 0}
-  availableMovesText: {fileID: 0}
+  playerHPBar: {fileID: 1711897975}
+  enemyHPBar: {fileID: 569326275}
+  drawingCanvas: {fileID: 217268114}
+  finishDrawingButton: {fileID: 1369759735}
+  clearDrawingButton: {fileID: 2086528223}
+  movesetDetector: {fileID: 948641824}
+  moveRecognitionSystem: {fileID: 948641823}
+  turnIndicatorText: {fileID: 95599891}
+  actionText: {fileID: 622946911}
+  availableMovesText: {fileID: 919149399}
   playerTurnPanel: {fileID: 0}
   enemyTurnPanel: {fileID: 0}
   turnDelay: 1.5
@@ -2007,6 +2007,47 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!21 &1330469194
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sprites/Default
+  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - PixelSnap: 0
+    - _EnableExternalAlpha: 0
+    m_Colors:
+    - _Color: {r: 0, g: 0, b: 0, a: 1}
+    - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1369759733
 GameObject:
   m_ObjectHideFlags: 0
