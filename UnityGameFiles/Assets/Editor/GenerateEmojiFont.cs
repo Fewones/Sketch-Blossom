@@ -1,123 +1,93 @@
 using UnityEngine;
 using UnityEditor;
 using TMPro;
-using TMPro.EditorUtilities;
+using System.IO;
 
 /// <summary>
-/// Unity Editor script to generate a TextMeshPro SDF font asset from Noto Emoji
-/// with all the Unicode characters used in Sketch-Blossom game.
+/// Unity Editor script to help configure emoji support for Sketch-Blossom game.
+/// Provides multiple methods to add emoji support to TextMeshPro.
 ///
-/// Usage: In Unity Editor, go to Tools > Generate Emoji Font Asset
+/// Usage: In Unity Editor, go to Tools > Configure Emoji Support
 /// </summary>
 public class GenerateEmojiFont : MonoBehaviour
 {
     [MenuItem("Tools/Generate Emoji Font Asset")]
-    public static void CreateEmojiFont()
+    public static void GenerateEmojiFont()
     {
-        // Load the Noto Emoji font
-        Font sourceFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/TextMesh Pro/Fonts/NotoEmoji-Regular.ttf");
+        Debug.Log("========================================");
+        Debug.Log("GENERATING EMOJI FONT ASSET");
+        Debug.Log("========================================\n");
 
-        if (sourceFont == null)
+        // Try to load the Noto Emoji fonts
+        Font emojiFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/TextMesh Pro/Fonts/NotoEmoji-VariableFont_wght.ttf");
+
+        if (emojiFont == null)
         {
-            Debug.LogError("Could not find NotoEmoji-Regular.ttf! Make sure it's in Assets/TextMesh Pro/Fonts/");
+            emojiFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/TextMesh Pro/Fonts/NotoEmoji-Regular.ttf");
+        }
+
+        if (emojiFont == null)
+        {
+            Debug.LogError("ERROR: Could not find NotoEmoji font files!");
+            Debug.LogError("Expected location: Assets/TextMesh Pro/Fonts/");
+            Debug.LogError("Please make sure NotoEmoji-VariableFont_wght.ttf or NotoEmoji-Regular.ttf is in that folder.");
             return;
         }
 
-        // Define all Unicode characters used in the game
-        // Based on UNICODE_EMOJI_ANALYSIS.md
-        string unicodeCharacters =
-            // Element emojis
-            "\U0001F525" +  // 🔥 Fire
-            "\U0001F33F" +  // 🌿 Plant/Herb
-            "\U0001F4A7" +  // 💧 Water Droplet
+        Debug.Log($"✓ Found emoji font: {emojiFont.name}");
 
-            // Status/UI emojis
-            "\u274C" +      // ❌ Cross Mark
-            "\u2753" +      // ❓ Question Mark
-            "\u2605" +      // ★ Star (filled)
-            "\u2606" +      // ☆ Star (outline)
-            "\u2764" +      // ❤️ Heart
-            "\u2694" +      // ⚔️ Crossed Swords
-            "\U0001F6E1" +  // 🛡️ Shield (the one causing the error!)
-            "\u26A1" +      // ⚡ Lightning Bolt
-            "\U0001F331" +  // 🌱 Seedling
-            "\U0001F3A8" +  // 🎨 Artist Palette
-            "\u2713" +      // ✓ Check Mark
-            "\u25CB";       // ○ Circle
+        // Define all emojis used in the game
+        string emojiChars = "🔥🌿💧❌❓★☆❤⚔🛡⚡🌱🎨✓○";
 
-        Debug.Log($"Creating emoji font with {unicodeCharacters.Length} characters...");
+        Debug.Log($"Creating font asset with {emojiChars.Length} emoji characters...");
+        Debug.Log($"Characters: {emojiChars}\n");
 
-        // Create the font asset
-        TMP_FontAsset fontAsset = TMP_FontAsset.CreateFontAsset(
-            sourceFont,
-            90,        // Sampling point size (higher = better quality)
-            9,         // Atlas padding
-            GlyphRenderMode.SDFAA,  // Rendering mode
-            1024,      // Atlas width
-            1024,      // Atlas height
-            AtlasPopulationMode.Dynamic  // Population mode
-        );
+        Debug.Log("========================================");
+        Debug.Log("MANUAL STEPS REQUIRED:");
+        Debug.Log("========================================");
+        Debug.Log("Unity's TextMeshPro Font Asset Creator must be used manually.\n");
 
-        if (fontAsset == null)
-        {
-            Debug.LogError("Failed to create font asset!");
-            return;
-        }
+        Debug.Log("Follow these steps:\n");
+        Debug.Log("1. Go to: Window > TextMeshPro > Font Asset Creator\n");
+        Debug.Log("2. Configure these settings:");
+        Debug.Log($"   - Font Source: {emojiFont.name}");
+        Debug.Log("   - Sampling Point Size: 90");
+        Debug.Log("   - Padding: 5");
+        Debug.Log("   - Packing Method: Optimum");
+        Debug.Log("   - Atlas Resolution: 1024 x 1024");
+        Debug.Log("   - Character Set: Custom Characters\n");
 
-        // Set the character set
-        fontAsset.name = "NotoEmoji SDF";
+        Debug.Log("3. In 'Custom Character List', paste these emojis:");
+        Debug.Log($"   {emojiChars}\n");
 
-        // Save the asset
-        string savePath = "Assets/TextMesh Pro/Resources/Fonts & Materials/NotoEmoji SDF.asset";
-        AssetDatabase.CreateAsset(fontAsset, savePath);
+        Debug.Log("4. Click 'Generate Font Atlas'\n");
 
-        // Now we need to populate the atlas with our specific characters
-        // This requires regenerating the font asset with the custom character set
-        Debug.Log($"Font asset created at: {savePath}");
-        Debug.Log("IMPORTANT: You need to manually add the Unicode characters to the font asset:");
-        Debug.Log("1. Select the NotoEmoji SDF asset");
-        Debug.Log("2. Open Font Asset Creator (Window > TextMeshPro > Font Asset Creator)");
-        Debug.Log("3. Set 'Character Set' to 'Custom Characters'");
-        Debug.Log("4. Paste this into the 'Custom Character List' field:");
-        Debug.Log(unicodeCharacters);
-        Debug.Log("5. Click 'Generate Font Atlas'");
-        Debug.Log("\nAlternatively, use the Auto Font Asset Generator below:");
+        Debug.Log("5. Save as: NotoEmoji SDF");
+        Debug.Log("   Location: Assets/TextMesh Pro/Resources/Fonts & Materials/\n");
 
-        // Try to auto-generate with the character set
-        GenerateFontAtlasWithCharacters(sourceFont, unicodeCharacters);
+        Debug.Log("6. Add to TMP Settings:");
+        Debug.Log("   - Open: Assets/TextMesh Pro/Resources/TMP Settings.asset");
+        Debug.Log("   - Find: 'Fallback Font Assets'");
+        Debug.Log("   - Click '+' and add 'NotoEmoji SDF'\n");
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+        Debug.Log("========================================");
+        Debug.Log("ALTERNATIVE: Copy Character List");
+        Debug.Log("========================================");
+        Debug.Log("If you need Unicode decimal values, use:");
+        Debug.Log("Tools > List All Emoji Unicode Values");
+        Debug.Log("========================================\n");
 
-        Debug.Log("Emoji font asset generation complete!");
-        Debug.Log("Next step: Add this font to TMP Settings as a fallback font.");
+        // Copy to clipboard would be nice but requires additional packages
+        GUIUtility.systemCopyBuffer = emojiChars;
+        Debug.Log("✓ Emoji characters copied to clipboard!");
+        Debug.Log($"You can now paste them directly into Font Asset Creator.\n");
     }
 
-    private static void GenerateFontAtlasWithCharacters(Font sourceFont, string characters)
+    private static void ShowEmojiCharacterList()
     {
-        try
-        {
-            // This is an alternative method that tries to create the font with specific characters
-            // Using TMPro's internal API
-
-            string savePath = "Assets/TextMesh Pro/Resources/Fonts & Materials/NotoEmoji SDF.asset";
-
-            // Check if font asset creator window is available
-            // Note: This might require the FontAssetCreatorWindow to be open
-            Debug.Log("Attempting automatic atlas generation...");
-            Debug.Log("If this doesn't work, please follow the manual steps above.");
-
-            // You can also manually add characters after creation by:
-            // 1. Selecting the font asset
-            // 2. Inspector > Character Table > Add Character
-            // 3. Enter Unicode value for each emoji
-
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning($"Auto-generation failed: {e.Message}");
-            Debug.Log("Please use the manual method described above.");
-        }
+        string chars = "🔥🌿💧❌❓★☆❤⚔🛡⚡🌱🎨✓○";
+        Debug.Log($"    {chars}");
+        Debug.Log($"    Or copy from the custom character section below.");
     }
 
     [MenuItem("Tools/List All Emoji Unicode Values")]
