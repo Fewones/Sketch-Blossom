@@ -257,14 +257,26 @@ namespace SketchBlossom.Drawing
 
             if (lastResult != null)
             {
-                // Store in DrawnUnitData
-                unitData.SetPlantData(lastResult.plantData);
-                unitData.detectionConfidence = lastResult.confidence;
+                // Check if the plant is valid
+                if (!lastResult.isValidPlant)
+                {
+                    Debug.LogWarning("⚠️ Drawing does not meet plant requirements!");
+                    Debug.LogWarning("   User must redraw to create a valid plant.");
 
-                Debug.Log($"Detected: {lastResult.plantData.displayName}");
-                Debug.Log($"Element: {lastResult.element}");
-                Debug.Log($"Confidence: {lastResult.confidence:P0}");
-                Debug.Log("========================================");
+                    // DO NOT store invalid plant data
+                    // The result panel will show the error and offer Redraw option
+                }
+                else
+                {
+                    // Store valid plant data in DrawnUnitData
+                    unitData.SetPlantData(lastResult.plantData);
+                    unitData.detectionConfidence = lastResult.confidence;
+
+                    Debug.Log($"✓ VALID PLANT Detected: {lastResult.plantData.displayName}");
+                    Debug.Log($"Element: {lastResult.element}");
+                    Debug.Log($"Confidence: {lastResult.confidence:P0}");
+                    Debug.Log("========================================");
+                }
             }
             else
             {

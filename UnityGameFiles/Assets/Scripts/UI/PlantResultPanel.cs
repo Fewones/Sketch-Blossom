@@ -118,7 +118,89 @@ public class PlantResultPanel : MonoBehaviour
             Debug.LogWarning("PlantResultPanel: panelWindow is NULL - content may not be visible!");
         }
 
-        // Log detailed results to console
+        // Check if plant is valid
+        if (!result.isValidPlant)
+        {
+            // Show invalid plant error message
+            Debug.LogWarning("=== INVALID PLANT - DOES NOT MEET REQUIREMENTS ===");
+            Debug.LogWarning("Drawing does not meet the required pattern criteria!");
+            Debug.LogWarning("User must redraw to continue.");
+            Debug.LogWarning("==============================");
+
+            // Update title
+            if (titleText != null)
+            {
+                titleText.text = "Invalid Drawing!";
+            }
+
+            // Show error message
+            if (plantNameText != null)
+            {
+                plantNameText.text = "<size=48><b><color=red>❌ Not a Valid Plant!</color></b></size>";
+                plantNameText.color = Color.red;
+            }
+
+            // Show requirements message
+            if (elementText != null)
+            {
+                elementText.text = "<size=20>Drawing doesn't meet requirements</size>";
+                elementText.color = Color.red;
+            }
+
+            // Show redraw instruction
+            if (confidenceText != null)
+            {
+                confidenceText.text = "<size=18>Please try again!</size>";
+            }
+
+            // Show requirements for all plant types
+            if (statsText != null)
+            {
+                statsText.text = "<b><size=20>Requirements</size></b>\n\n" +
+                    "<size=14><b>🔥 Fire Plants (Red):</b>\n" +
+                    "• Sunflower: 4+ red circles + 1 green line\n" +
+                    "• Fire Rose: 5+ overlapping red strokes + 1 green line\n" +
+                    "• Flame Tulip: 3+ long vertical red strokes\n\n" +
+                    "<b>🌿 Grass Plants (Green):</b>\n" +
+                    "• Cactus: 2+ long vertical green strokes\n" +
+                    "• Vine Flower: 3+ curved green strokes\n" +
+                    "• Grass Sprout: 5+ short green strokes\n\n" +
+                    "<b>💧 Water Plants (Blue):</b>\n" +
+                    "• Water Lily: 3+ horizontal blue strokes\n" +
+                    "• Coral Bloom: 4+ overlapping blue strokes\n" +
+                    "• Bubble Flower: 3+ blue circles</size>";
+            }
+
+            // Hide moves
+            if (movesText != null)
+            {
+                movesText.text = "";
+            }
+
+            // Hide color info
+            if (colorInfoText != null)
+            {
+                colorInfoText.text = "";
+            }
+
+            // DISABLE Continue button (can't continue with invalid plant)
+            if (continueButton != null)
+            {
+                continueButton.gameObject.SetActive(false);
+                Debug.Log("Continue button DISABLED - plant is invalid");
+            }
+
+            // ENABLE Redraw button
+            if (redrawButton != null)
+            {
+                redrawButton.gameObject.SetActive(true);
+            }
+
+            Debug.Log("PlantResultPanel: Showing INVALID PLANT error");
+            return;
+        }
+
+        // VALID PLANT - Show normal results
         Debug.Log("=== PLANT RECOGNITION RESULTS ===");
         Debug.Log($"🌱 Plant: {result.plantData.displayName} ({result.plantType})");
         Debug.Log($"🔥 Element: {result.element}");
@@ -196,6 +278,18 @@ public class PlantResultPanel : MonoBehaviour
                 movesStr += $"<size=18>• {move.moveName}{powerText}</size>\n";
             }
             movesText.text = movesStr;
+        }
+
+        // ENABLE Continue button (plant is valid)
+        if (continueButton != null)
+        {
+            continueButton.gameObject.SetActive(true);
+        }
+
+        // ENABLE Redraw button
+        if (redrawButton != null)
+        {
+            redrawButton.gameObject.SetActive(true);
         }
 
         Debug.Log($"PlantResultPanel: Showing {result.plantData.displayName} ({result.element})");

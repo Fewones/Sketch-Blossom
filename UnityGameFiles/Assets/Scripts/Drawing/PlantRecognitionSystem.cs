@@ -64,14 +64,16 @@ public class PlantRecognitionSystem : MonoBehaviour
         public PlantData plantData;
         public float confidence;
         public Color dominantColor;
+        public bool isValidPlant;  // True if drawing meets threshold criteria
 
-        public RecognitionResult(PlantType type, ElementType elem, PlantData data, float conf, Color color)
+        public RecognitionResult(PlantType type, ElementType elem, PlantData data, float conf, Color color, bool isValid = true)
         {
             plantType = type;
             element = elem;
             plantData = data;
             confidence = conf;
             dominantColor = color;
+            isValidPlant = isValid;
         }
     }
 
@@ -162,7 +164,8 @@ public class PlantRecognitionSystem : MonoBehaviour
         LogShapeFeatures(features);
 
         // Step 3: Determine plant type based on element and shape
-        PlantType plantType = DeterminePlantType(element, features);
+        bool isValidPlant;
+        PlantType plantType = DeterminePlantType(element, features, out isValidPlant);
         Debug.Log($"Step 3: Plant type detected = {plantType}");
 
         // Step 4: Calculate confidence
@@ -171,9 +174,14 @@ public class PlantRecognitionSystem : MonoBehaviour
 
         // Step 5: Get plant data and create result
         PlantData data = plantDatabase[plantType];
-        RecognitionResult result = new RecognitionResult(plantType, element, data, confidence, dominantColor);
+        RecognitionResult result = new RecognitionResult(plantType, element, data, confidence, dominantColor, isValidPlant);
 
         Debug.Log("=== PLANT RECOGNITION COMPLETE ===");
+        if (!isValidPlant)
+        {
+            Debug.LogWarning("⚠️  DRAWING DOES NOT MEET REQUIREMENTS - NOT A VALID PLANT!");
+            Debug.LogWarning("   Please try again with the correct pattern.");
+        }
         LogResult(result);
 
         return result;
@@ -202,6 +210,24 @@ public class PlantRecognitionSystem : MonoBehaviour
         public bool isHorizontal;        // Wider than tall
         public bool isRadial;            // Strokes from center
         public bool isBranching;         // Multiple branches
+
+        // New robust detection features for Fire plants
+        public int redCircleCount;       // Number of red circular strokes
+        public int greenLineCount;       // Number of green line strokes
+        public int overlappingRedStrokes; // Number of overlapping red strokes
+        public int verticalRedStrokes;   // Number of vertical red strokes
+        public int longVerticalRedStrokes; // Number of long vertical red strokes
+
+        // Robust detection features for Grass plants
+        public int longVerticalGreenStrokes; // Number of long vertical green strokes
+        public int curvedGreenStrokes;       // Number of curved green strokes
+        public int shortGreenStrokes;        // Number of short green strokes
+        public float avgGreenCurviness;      // Average curviness of green strokes
+
+        // Robust detection features for Water plants
+        public int horizontalBlueStrokes;    // Number of horizontal blue strokes
+        public int overlappingBlueStrokes;   // Number of overlapping blue strokes
+        public int blueCircleCount;          // Number of blue circular strokes
     }
 
     private ShapeFeatures AnalyzeShapeFeatures(List<LineRenderer> strokes)
@@ -299,75 +325,331 @@ public class PlantRecognitionSystem : MonoBehaviour
         // Detect branching (multiple short strokes)
         features.isBranching = features.strokeCount >= 4 && features.avgStrokeLength < 3f;
 
+        // NEW ROBUST DETECTION: Analyze strokes by color and shape
+        List<LineRenderer> redStrokes = new List<LineRenderer>();
+        List<LineRenderer> greenStrokes = new List<LineRenderer>();
+
+        // Separate strokes by color
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null) continue;
+
+            Color strokeColor = GetStrokeColor(stroke);
+            if (IsColorRed(strokeColor))
+            {
+                redStrokes.Add(stroke);
+            }
+            else if (IsColorGreen(strokeColor))
+            {
+                greenStrokes.Add(stroke);
+            }
+        }
+
+        // Count red circles
+        features.redCircleCount = 0;
+        foreach (var stroke in redStrokes)
+        {
+            if (IsStrokeCircular(stroke))
+            {
+                features.redCircleCount++;
+            }
+        }
+
+        // Count green lines (non-circular green strokes)
+        features.greenLineCount = 0;
+        foreach (var stroke in greenStrokes)
+        {
+            if (!IsStrokeCircular(stroke))
+            {
+                features.greenLineCount++;
+            }
+        }
+
+        // Count overlapping red strokes
+        features.overlappingRedStrokes = 0;
+        for (int i = 0; i < redStrokes.Count; i++)
+        {
+            for (int j = i + 1; j < redStrokes.Count; j++)
+            {
+                if (DoStrokesOverlap(redStrokes[i], redStrokes[j]))
+                {
+                    features.overlappingRedStrokes++;
+                }
+            }
+        }
+
+        // Count vertical red strokes
+        features.verticalRedStrokes = 0;
+        features.longVerticalRedStrokes = 0;
+        const float LONG_STROKE_THRESHOLD = 2.0f; // Minimum length to be considered "long"
+
+        foreach (var stroke in redStrokes)
+        {
+            float strokeLength;
+            if (IsStrokeVertical(stroke, out strokeLength))
+            {
+                features.verticalRedStrokes++;
+                if (strokeLength >= LONG_STROKE_THRESHOLD)
+                {
+                    features.longVerticalRedStrokes++;
+                }
+            }
+        }
+
+        // GRASS PLANT DETECTION: Analyze green strokes
+        List<LineRenderer> blueStrokes = new List<LineRenderer>();
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null) continue;
+            Color strokeColor = GetStrokeColor(stroke);
+            if (IsColorBlue(strokeColor))
+            {
+                blueStrokes.Add(stroke);
+            }
+        }
+
+        // Count long vertical green strokes (for Cactus)
+        features.longVerticalGreenStrokes = 0;
+        foreach (var stroke in greenStrokes)
+        {
+            float strokeLength;
+            if (IsStrokeVertical(stroke, out strokeLength))
+            {
+                if (strokeLength >= LONG_STROKE_THRESHOLD)
+                {
+                    features.longVerticalGreenStrokes++;
+                }
+            }
+        }
+
+        // Count curved green strokes (for Vine Flower)
+        const float CURVED_THRESHOLD = 35f; // Degrees - high curviness
+        features.curvedGreenStrokes = 0;
+        float totalGreenCurviness = 0f;
+        foreach (var stroke in greenStrokes)
+        {
+            float curviness = CalculateStrokeCurviness(stroke);
+            totalGreenCurviness += curviness;
+            if (curviness >= CURVED_THRESHOLD)
+            {
+                features.curvedGreenStrokes++;
+            }
+        }
+        features.avgGreenCurviness = greenStrokes.Count > 0 ? totalGreenCurviness / greenStrokes.Count : 0f;
+
+        // Count short green strokes (for Grass Sprout)
+        const float SHORT_STROKE_THRESHOLD = 2.0f; // Maximum length to be considered "short"
+        features.shortGreenStrokes = 0;
+        foreach (var stroke in greenStrokes)
+        {
+            float strokeLength = CalculateStrokeLength(stroke);
+            if (strokeLength <= SHORT_STROKE_THRESHOLD)
+            {
+                features.shortGreenStrokes++;
+            }
+        }
+
+        // WATER PLANT DETECTION: Analyze blue strokes
+
+        // Count horizontal blue strokes (for Water Lily)
+        features.horizontalBlueStrokes = 0;
+        foreach (var stroke in blueStrokes)
+        {
+            if (IsStrokeHorizontal(stroke))
+            {
+                features.horizontalBlueStrokes++;
+            }
+        }
+
+        // Count overlapping blue strokes (for Coral Bloom)
+        features.overlappingBlueStrokes = 0;
+        for (int i = 0; i < blueStrokes.Count; i++)
+        {
+            for (int j = i + 1; j < blueStrokes.Count; j++)
+            {
+                if (DoStrokesOverlap(blueStrokes[i], blueStrokes[j]))
+                {
+                    features.overlappingBlueStrokes++;
+                }
+            }
+        }
+
+        // Count blue circles (for Bubble Flower)
+        features.blueCircleCount = 0;
+        foreach (var stroke in blueStrokes)
+        {
+            if (IsStrokeCircular(stroke))
+            {
+                features.blueCircleCount++;
+            }
+        }
+
         return features;
     }
 
-    private PlantType DeterminePlantType(ElementType element, ShapeFeatures features)
+    private PlantType DeterminePlantType(ElementType element, ShapeFeatures features, out bool isValid)
     {
         switch (element)
         {
             case ElementType.Fire:
-                return DetermineFirePlant(features);
+                return DetermineFirePlant(features, out isValid);
             case ElementType.Grass:
-                return DetermineGrassPlant(features);
+                return DetermineGrassPlant(features, out isValid);
             case ElementType.Water:
-                return DetermineWaterPlant(features);
+                return DetermineWaterPlant(features, out isValid);
             default:
+                isValid = true;
                 return PlantType.GrassSprout;
         }
     }
 
-    private PlantType DetermineFirePlant(ShapeFeatures features)
+    private PlantType DetermineFirePlant(ShapeFeatures features, out bool isValid)
     {
-        // Sunflower: Radial pattern, circular
-        if (features.isRadial && features.compactness > 0.4f)
+        Debug.Log("=== ROBUST FIRE PLANT DETECTION ===");
+        isValid = false;
+
+        // ROBUST DETECTION LOGIC - STRICT THRESHOLDS REQUIRED:
+        // Sunflower: Roughly 4 or more red circles + one green line
+        bool isSunflower = features.redCircleCount >= 4 && features.greenLineCount >= 1;
+        Debug.Log($"Sunflower check: {features.redCircleCount} red circles, {features.greenLineCount} green lines -> {isSunflower}");
+
+        if (isSunflower)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: SUNFLOWER (4+ red circles + green line)");
+            isValid = true;
             return PlantType.Sunflower;
+        }
 
-        // Fire Rose: Compact, many strokes, circular
-        if (features.strokeCount >= 6 && features.compactness > 0.5f)
+        // Fire Rose: At least 5 overlapping red strokes + one green line
+        bool isFireRose = features.overlappingRedStrokes >= 5 && features.greenLineCount >= 1;
+        Debug.Log($"Fire Rose check: {features.overlappingRedStrokes} overlapping red strokes, {features.greenLineCount} green lines -> {isFireRose}");
+
+        if (isFireRose)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: FIRE ROSE (5+ overlapping red strokes + green line)");
+            isValid = true;
             return PlantType.FireRose;
+        }
 
-        // Flame Tulip: Vertical, simple shape (few strokes)
-        if (features.isVertical || features.strokeCount <= 3)
+        // Flame Tulip: 3 long enough mostly vertical red strokes
+        bool isFlameTulip = features.longVerticalRedStrokes >= 3;
+        Debug.Log($"Flame Tulip check: {features.longVerticalRedStrokes} long vertical red strokes -> {isFlameTulip}");
+
+        if (isFlameTulip)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: FLAME TULIP (3+ long vertical red strokes)");
+            isValid = true;
             return PlantType.FlameTulip;
+        }
 
-        // Default
+        // NO VALID PLANT DETECTED
+        Debug.Log("✗ INVALID DRAWING: Does not meet any Fire plant criteria!");
+        Debug.Log("  Requirements:");
+        Debug.Log("    - Sunflower: 4+ red circles + 1 green line");
+        Debug.Log("    - Fire Rose: 5+ overlapping red strokes + 1 green line");
+        Debug.Log("    - Flame Tulip: 3+ long vertical red strokes");
+
+        // Return a default but mark as invalid
         return PlantType.Sunflower;
     }
 
-    private PlantType DetermineGrassPlant(ShapeFeatures features)
+    private PlantType DetermineGrassPlant(ShapeFeatures features, out bool isValid)
     {
-        // Cactus: Very vertical, straight lines
-        if (features.isVertical && features.curviness < 30f)
+        Debug.Log("=== ROBUST GRASS PLANT DETECTION ===");
+        isValid = false;
+
+        // ROBUST DETECTION LOGIC - STRICT THRESHOLDS REQUIRED:
+        // Cactus: 2+ long vertical green strokes
+        bool isCactus = features.longVerticalGreenStrokes >= 2;
+        Debug.Log($"Cactus check: {features.longVerticalGreenStrokes} long vertical green strokes -> {isCactus}");
+
+        if (isCactus)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: CACTUS (2+ long vertical green strokes)");
+            isValid = true;
             return PlantType.Cactus;
+        }
 
-        // Vine Flower: Curved, flowing
-        if (features.curviness > 40f && !features.isHorizontal)
+        // Vine Flower: 3+ curved green strokes
+        bool isVineFlower = features.curvedGreenStrokes >= 3;
+        Debug.Log($"Vine Flower check: {features.curvedGreenStrokes} curved green strokes (avg curviness: {features.avgGreenCurviness:F1}°) -> {isVineFlower}");
+
+        if (isVineFlower)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: VINE FLOWER (3+ curved green strokes)");
+            isValid = true;
             return PlantType.VineFlower;
+        }
 
-        // Grass Sprout: Short, bushy, many small strokes
-        if (features.strokeCount >= 5 || features.aspectRatio < 1.2f)
+        // Grass Sprout: 5+ short green strokes
+        bool isGrassSprout = features.shortGreenStrokes >= 5;
+        Debug.Log($"Grass Sprout check: {features.shortGreenStrokes} short green strokes -> {isGrassSprout}");
+
+        if (isGrassSprout)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: GRASS SPROUT (5+ short green strokes)");
+            isValid = true;
             return PlantType.GrassSprout;
+        }
 
-        // Default
+        // NO VALID PLANT DETECTED
+        Debug.Log("✗ INVALID DRAWING: Does not meet any Grass plant criteria!");
+        Debug.Log("  Requirements:");
+        Debug.Log("    - Cactus: 2+ long vertical green strokes");
+        Debug.Log("    - Vine Flower: 3+ curved green strokes");
+        Debug.Log("    - Grass Sprout: 5+ short green strokes");
+
+        // Return a default but mark as invalid
         return PlantType.Cactus;
     }
 
-    private PlantType DetermineWaterPlant(ShapeFeatures features)
+    private PlantType DetermineWaterPlant(ShapeFeatures features, out bool isValid)
     {
-        // Water Lily: Horizontal, spreading
-        if (features.isHorizontal)
+        Debug.Log("=== ROBUST WATER PLANT DETECTION ===");
+        isValid = false;
+
+        // ROBUST DETECTION LOGIC - STRICT THRESHOLDS REQUIRED:
+        // Water Lily: 3+ horizontal blue strokes
+        bool isWaterLily = features.horizontalBlueStrokes >= 3;
+        Debug.Log($"Water Lily check: {features.horizontalBlueStrokes} horizontal blue strokes -> {isWaterLily}");
+
+        if (isWaterLily)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: WATER LILY (3+ horizontal blue strokes)");
+            isValid = true;
             return PlantType.WaterLily;
+        }
 
-        // Coral Bloom: Branching pattern
-        if (features.isBranching || features.strokeCount >= 6)
+        // Coral Bloom: 4+ overlapping blue strokes
+        bool isCoralBloom = features.overlappingBlueStrokes >= 4;
+        Debug.Log($"Coral Bloom check: {features.overlappingBlueStrokes} overlapping blue strokes -> {isCoralBloom}");
+
+        if (isCoralBloom)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: CORAL BLOOM (4+ overlapping blue strokes)");
+            isValid = true;
             return PlantType.CoralBloom;
+        }
 
-        // Bubble Flower: Compact, clustered circles
-        if (features.compactness > 0.5f || features.strokeCount >= 4)
+        // Bubble Flower: 3+ blue circles
+        bool isBubbleFlower = features.blueCircleCount >= 3;
+        Debug.Log($"Bubble Flower check: {features.blueCircleCount} blue circles -> {isBubbleFlower}");
+
+        if (isBubbleFlower)
+        {
+            Debug.Log("✓ VALID PLANT DETECTED: BUBBLE FLOWER (3+ blue circles)");
+            isValid = true;
             return PlantType.BubbleFlower;
+        }
 
-        // Default
+        // NO VALID PLANT DETECTED
+        Debug.Log("✗ INVALID DRAWING: Does not meet any Water plant criteria!");
+        Debug.Log("  Requirements:");
+        Debug.Log("    - Water Lily: 3+ horizontal blue strokes");
+        Debug.Log("    - Coral Bloom: 4+ overlapping blue strokes");
+        Debug.Log("    - Bubble Flower: 3+ blue circles");
+
+        // Return a default but mark as invalid
         return PlantType.WaterLily;
     }
 
@@ -397,6 +679,245 @@ public class PlantRecognitionSystem : MonoBehaviour
         return new RecognitionResult(defaultType, element, data, 0.3f, color);
     }
 
+    /// <summary>
+    /// Checks if a stroke is circular (closed loop with round shape)
+    /// </summary>
+    private bool IsStrokeCircular(LineRenderer stroke)
+    {
+        if (stroke == null || stroke.positionCount < 10) return false;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        // Check if start and end points are close (closed loop)
+        float closedDistance = Vector3.Distance(positions[0], positions[positions.Length - 1]);
+
+        // Calculate the perimeter
+        float perimeter = 0f;
+        for (int i = 1; i < positions.Length; i++)
+        {
+            perimeter += Vector3.Distance(positions[i - 1], positions[i]);
+        }
+
+        // A closed loop should have start/end close together
+        if (closedDistance > perimeter * 0.2f) return false;
+
+        // Calculate center and average radius
+        Vector2 center = Vector2.zero;
+        foreach (var pos in positions)
+        {
+            center += new Vector2(pos.x, pos.y);
+        }
+        center /= positions.Length;
+
+        // Calculate radius variance (how consistent the radius is)
+        float avgRadius = 0f;
+        foreach (var pos in positions)
+        {
+            avgRadius += Vector2.Distance(new Vector2(pos.x, pos.y), center);
+        }
+        avgRadius /= positions.Length;
+
+        float radiusVariance = 0f;
+        foreach (var pos in positions)
+        {
+            float radius = Vector2.Distance(new Vector2(pos.x, pos.y), center);
+            radiusVariance += Mathf.Abs(radius - avgRadius);
+        }
+        radiusVariance /= positions.Length;
+
+        // A circle should have low radius variance
+        float varianceRatio = radiusVariance / Mathf.Max(0.01f, avgRadius);
+        return varianceRatio < 0.3f; // 30% variance threshold
+    }
+
+    /// <summary>
+    /// Checks if a stroke is mostly vertical
+    /// </summary>
+    private bool IsStrokeVertical(LineRenderer stroke, out float strokeLength)
+    {
+        strokeLength = 0f;
+        if (stroke == null || stroke.positionCount < 2) return false;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        // Calculate bounding box
+        float minY = float.MaxValue, maxY = float.MinValue;
+        float minX = float.MaxValue, maxX = float.MinValue;
+
+        foreach (var pos in positions)
+        {
+            minY = Mathf.Min(minY, pos.y);
+            maxY = Mathf.Max(maxY, pos.y);
+            minX = Mathf.Min(minX, pos.x);
+            maxX = Mathf.Max(maxX, pos.x);
+        }
+
+        float height = maxY - minY;
+        float width = maxX - minX;
+        strokeLength = height;
+
+        // Stroke is vertical if height > width * 1.5
+        return height > width * 1.5f;
+    }
+
+    /// <summary>
+    /// Checks if a stroke is mostly horizontal
+    /// </summary>
+    private bool IsStrokeHorizontal(LineRenderer stroke)
+    {
+        if (stroke == null || stroke.positionCount < 2) return false;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        // Calculate bounding box
+        float minY = float.MaxValue, maxY = float.MinValue;
+        float minX = float.MaxValue, maxX = float.MinValue;
+
+        foreach (var pos in positions)
+        {
+            minY = Mathf.Min(minY, pos.y);
+            maxY = Mathf.Max(maxY, pos.y);
+            minX = Mathf.Min(minX, pos.x);
+            maxX = Mathf.Max(maxX, pos.x);
+        }
+
+        float height = maxY - minY;
+        float width = maxX - minX;
+
+        // Stroke is horizontal if width > height * 1.5
+        return width > height * 1.5f;
+    }
+
+    /// <summary>
+    /// Calculate curviness of a single stroke
+    /// </summary>
+    private float CalculateStrokeCurviness(LineRenderer stroke)
+    {
+        if (stroke == null || stroke.positionCount < 3) return 0f;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        float totalAngleChange = 0f;
+        int segmentCount = 0;
+
+        for (int i = 2; i < positions.Length; i++)
+        {
+            Vector2 dir1 = new Vector2(positions[i - 1].x - positions[i - 2].x, positions[i - 1].y - positions[i - 2].y);
+            Vector2 dir2 = new Vector2(positions[i].x - positions[i - 1].x, positions[i].y - positions[i - 1].y);
+
+            if (dir1.magnitude > 0.01f && dir2.magnitude > 0.01f)
+            {
+                float angle = Vector2.Angle(dir1, dir2);
+                totalAngleChange += angle;
+                segmentCount++;
+            }
+        }
+
+        return totalAngleChange / Mathf.Max(1, segmentCount);
+    }
+
+    /// <summary>
+    /// Calculate length of a stroke
+    /// </summary>
+    private float CalculateStrokeLength(LineRenderer stroke)
+    {
+        if (stroke == null || stroke.positionCount < 2) return 0f;
+
+        Vector3[] positions = new Vector3[stroke.positionCount];
+        stroke.GetPositions(positions);
+
+        float length = 0f;
+        for (int i = 1; i < positions.Length; i++)
+        {
+            length += Vector3.Distance(positions[i - 1], positions[i]);
+        }
+
+        return length;
+    }
+
+    /// <summary>
+    /// Checks if two strokes overlap (have points close to each other)
+    /// </summary>
+    private bool DoStrokesOverlap(LineRenderer stroke1, LineRenderer stroke2, float threshold = 0.5f)
+    {
+        if (stroke1 == null || stroke2 == null) return false;
+
+        Vector3[] positions1 = new Vector3[stroke1.positionCount];
+        Vector3[] positions2 = new Vector3[stroke2.positionCount];
+        stroke1.GetPositions(positions1);
+        stroke2.GetPositions(positions2);
+
+        // Sample points to check for overlaps
+        int sampleRate = Mathf.Max(1, positions1.Length / 5); // Sample ~5 points
+        int overlapCount = 0;
+        int sampledPoints = 0;
+
+        for (int i = 0; i < positions1.Length; i += sampleRate)
+        {
+            sampledPoints++;
+            Vector2 point1 = new Vector2(positions1[i].x, positions1[i].y);
+
+            // Check if any point in stroke2 is close to this point
+            foreach (var pos2 in positions2)
+            {
+                Vector2 point2 = new Vector2(pos2.x, pos2.y);
+                if (Vector2.Distance(point1, point2) < threshold)
+                {
+                    overlapCount++;
+                    break;
+                }
+            }
+        }
+
+        // Consider overlapping if at least 40% of sampled points are close
+        return (float)overlapCount / sampledPoints >= 0.4f;
+    }
+
+    /// <summary>
+    /// Gets the color of a stroke
+    /// </summary>
+    private Color GetStrokeColor(LineRenderer stroke)
+    {
+        if (stroke == null) return Color.white;
+
+        // Get color from the material or gradient
+        if (stroke.material != null && stroke.material.HasProperty("_Color"))
+        {
+            return stroke.material.GetColor("_Color");
+        }
+
+        // Fallback to gradient start color
+        return stroke.startColor;
+    }
+
+    /// <summary>
+    /// Determines if a color is primarily red
+    /// </summary>
+    private bool IsColorRed(Color color)
+    {
+        return color.r > 0.5f && color.r > color.g && color.r > color.b;
+    }
+
+    /// <summary>
+    /// Determines if a color is primarily green
+    /// </summary>
+    private bool IsColorGreen(Color color)
+    {
+        return color.g > 0.5f && color.g > color.r && color.g > color.b;
+    }
+
+    /// <summary>
+    /// Determines if a color is primarily blue
+    /// </summary>
+    private bool IsColorBlue(Color color)
+    {
+        return color.b > 0.5f && color.b > color.r && color.b > color.g;
+    }
+
     private void LogShapeFeatures(ShapeFeatures features)
     {
         Debug.Log($"Shape Features:");
@@ -405,11 +926,27 @@ public class PlantRecognitionSystem : MonoBehaviour
         Debug.Log($"  - Curviness: {features.curviness:F1}°");
         Debug.Log($"  - Strokes: {features.strokeCount}, Avg Length: {features.avgStrokeLength:F2}");
         Debug.Log($"  - Radial: {features.isRadial}, Branching: {features.isBranching}");
+
+        Debug.Log($"FIRE Plant Metrics:");
+        Debug.Log($"  - Red Circles: {features.redCircleCount}, Green Lines: {features.greenLineCount}");
+        Debug.Log($"  - Overlapping Red Strokes: {features.overlappingRedStrokes}");
+        Debug.Log($"  - Vertical Red Strokes: {features.verticalRedStrokes}, Long Vertical: {features.longVerticalRedStrokes}");
+
+        Debug.Log($"GRASS Plant Metrics:");
+        Debug.Log($"  - Long Vertical Green: {features.longVerticalGreenStrokes}");
+        Debug.Log($"  - Curved Green: {features.curvedGreenStrokes}, Avg Curviness: {features.avgGreenCurviness:F1}°");
+        Debug.Log($"  - Short Green: {features.shortGreenStrokes}");
+
+        Debug.Log($"WATER Plant Metrics:");
+        Debug.Log($"  - Horizontal Blue: {features.horizontalBlueStrokes}");
+        Debug.Log($"  - Overlapping Blue: {features.overlappingBlueStrokes}");
+        Debug.Log($"  - Blue Circles: {features.blueCircleCount}");
     }
 
     private void LogResult(RecognitionResult result)
     {
         Debug.Log($"📋 FINAL RESULT:");
+        Debug.Log($"   ✅ Valid Plant: {result.isValidPlant}");
         Debug.Log($"   🌱 Plant: {result.plantData.displayName} ({result.plantType})");
         Debug.Log($"   🔥 Element: {result.element}");
         Debug.Log($"   ⭐ Confidence: {result.confidence:P0}");
