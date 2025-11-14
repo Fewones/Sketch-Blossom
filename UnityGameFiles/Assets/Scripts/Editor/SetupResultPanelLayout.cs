@@ -117,11 +117,11 @@ public class SetupResultPanelLayout : EditorWindow
         frameRect.anchoredPosition = new Vector2(0f, -50f); // Slight offset down from center
         frameRect.sizeDelta = new Vector2(drawingWidth, drawingHeight);
 
-        // Make it transparent (no visual frame, just a spacer)
+        // Make it white background so the drawing shows clearly
         Undo.RecordObject(frameImage, "Set Frame Color");
-        frameImage.color = new Color(0f, 0f, 0f, 0f); // Fully transparent
+        frameImage.color = new Color(1f, 1f, 1f, 1f); // White background
         EditorUtility.SetDirty(frameObj);
-        Debug.Log($"✓ Created frame rectangle: {drawingWidth}x{drawingHeight}");
+        Debug.Log($"✓ Created white frame rectangle: {drawingWidth}x{drawingHeight}");
 
         // Calculate positions based on frame
         float frameTop = -50f + drawingHeight / 2f;
