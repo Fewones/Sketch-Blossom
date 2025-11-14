@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using System.Collections.Generic;
 
 namespace SketchBlossom.Battle
 {
     /// <summary>
     /// Manages the drawing guide book UI panel.
-    /// Handles opening, closing, and button interactions for the guide book.
+    /// Handles opening, closing, page navigation, and button interactions for the guide book.
     /// </summary>
     public class GuideBookManager : MonoBehaviour
     {
@@ -13,6 +15,15 @@ namespace SketchBlossom.Battle
         [SerializeField] private Button openGuideButton;
         [SerializeField] private GameObject guidePanel;
         [SerializeField] private Button closeGuideButton;
+        [SerializeField] private Button previousPageButton;
+        [SerializeField] private Button nextPageButton;
+        [SerializeField] private TextMeshProUGUI pageIndicatorText;
+
+        [Header("Page Content")]
+        [SerializeField] private GameObject[] pages;
+
+        [Header("Page Settings")]
+        [SerializeField] private int currentPageIndex = 0;
 
         [Header("Debug")]
         [SerializeField] private bool debugMode = true;
@@ -21,6 +32,7 @@ namespace SketchBlossom.Battle
         {
             AutoWireReferences();
             SetupListeners();
+            SetupPages();
 
             // Initially hide the guide panel
             if (guidePanel != null)
@@ -80,6 +92,68 @@ namespace SketchBlossom.Battle
                 }
             }
 
+            // Find page navigation buttons
+            if (guidePanel != null)
+            {
+                Button[] buttons = guidePanel.GetComponentsInChildren<Button>(true);
+                foreach (Button btn in buttons)
+                {
+                    if (btn.name == "PreviousPageButton" && previousPageButton == null)
+                    {
+                        previousPageButton = btn;
+                        LogDebug("✅ Found PreviousPageButton");
+                    }
+                    else if (btn.name == "NextPageButton" && nextPageButton == null)
+                    {
+                        nextPageButton = btn;
+                        LogDebug("✅ Found NextPageButton");
+                    }
+                }
+            }
+
+            // Find page indicator text
+            if (pageIndicatorText == null && guidePanel != null)
+            {
+                TextMeshProUGUI[] texts = guidePanel.GetComponentsInChildren<TextMeshProUGUI>(true);
+                foreach (TextMeshProUGUI text in texts)
+                {
+                    if (text.name == "PageIndicator")
+                    {
+                        pageIndicatorText = text;
+                        LogDebug("✅ Found PageIndicator");
+                        break;
+                    }
+                }
+            }
+
+            // Find all pages
+            if (guidePanel != null)
+            {
+                List<GameObject> foundPages = new List<GameObject>();
+                Transform contentPanel = guidePanel.transform.Find("ContentPanel");
+                if (contentPanel != null)
+                {
+                    for (int i = 0; i < contentPanel.childCount; i++)
+                    {
+                        Transform child = contentPanel.GetChild(i);
+                        if (child.name.StartsWith("Page"))
+                        {
+                            foundPages.Add(child.gameObject);
+                        }
+                    }
+                }
+
+                if (foundPages.Count > 0)
+                {
+                    pages = foundPages.ToArray();
+                    LogDebug($"✅ Found {pages.Length} pages");
+                }
+                else
+                {
+                    LogDebug("❌ No pages found");
+                }
+            }
+
             LogDebug("=== Auto-wire complete ===");
         }
 
@@ -114,7 +188,52 @@ namespace SketchBlossom.Battle
                 LogDebug("❌ Cannot setup close button - button is null");
             }
 
+            // Setup previous page button
+            if (previousPageButton != null)
+            {
+                previousPageButton.onClick.RemoveAllListeners();
+                previousPageButton.onClick.AddListener(PreviousPage);
+                LogDebug("✅ Previous page button listener added");
+            }
+
+            // Setup next page button
+            if (nextPageButton != null)
+            {
+                nextPageButton.onClick.RemoveAllListeners();
+                nextPageButton.onClick.AddListener(NextPage);
+                LogDebug("✅ Next page button listener added");
+            }
+
             LogDebug("=== Listener setup complete ===");
+        }
+
+        /// <summary>
+        /// Setup pages and show the first page
+        /// </summary>
+        private void SetupPages()
+        {
+            LogDebug("=== Setting up pages ===");
+
+            if (pages == null || pages.Length == 0)
+            {
+                LogDebug("❌ No pages to setup");
+                return;
+            }
+
+            // Hide all pages
+            for (int i = 0; i < pages.Length; i++)
+            {
+                if (pages[i] != null)
+                {
+                    pages[i].SetActive(false);
+                }
+            }
+
+            // Show first page
+            currentPageIndex = 0;
+            ShowCurrentPage();
+
+            LogDebug($"✅ Pages setup complete. Total pages: {pages.Length}");
         }
 
         /// <summary>
@@ -127,6 +246,7 @@ namespace SketchBlossom.Battle
             if (guidePanel != null)
             {
                 guidePanel.SetActive(true);
+                ShowCurrentPage();
                 LogDebug("✅ Guide book opened successfully");
             }
             else
@@ -177,6 +297,101 @@ namespace SketchBlossom.Battle
         public bool IsGuideOpen()
         {
             return guidePanel != null && guidePanel.activeSelf;
+        }
+
+        /// <summary>
+        /// Go to the previous page
+        /// </summary>
+        public void PreviousPage()
+        {
+            if (pages == null || pages.Length == 0) return;
+
+            currentPageIndex--;
+            if (currentPageIndex < 0)
+            {
+                currentPageIndex = pages.Length - 1; // Wrap to last page
+            }
+
+            ShowCurrentPage();
+            LogDebug($"Navigated to page {currentPageIndex + 1}/{pages.Length}");
+        }
+
+        /// <summary>
+        /// Go to the next page
+        /// </summary>
+        public void NextPage()
+        {
+            if (pages == null || pages.Length == 0) return;
+
+            currentPageIndex++;
+            if (currentPageIndex >= pages.Length)
+            {
+                currentPageIndex = 0; // Wrap to first page
+            }
+
+            ShowCurrentPage();
+            LogDebug($"Navigated to page {currentPageIndex + 1}/{pages.Length}");
+        }
+
+        /// <summary>
+        /// Show the current page and hide others
+        /// </summary>
+        private void ShowCurrentPage()
+        {
+            if (pages == null || pages.Length == 0)
+            {
+                LogDebug("No pages to show");
+                return;
+            }
+
+            // Hide all pages
+            for (int i = 0; i < pages.Length; i++)
+            {
+                if (pages[i] != null)
+                {
+                    pages[i].SetActive(i == currentPageIndex);
+                }
+            }
+
+            // Update page indicator
+            UpdatePageIndicator();
+
+            // Update navigation button states
+            UpdateNavigationButtons();
+        }
+
+        /// <summary>
+        /// Update page indicator text
+        /// </summary>
+        private void UpdatePageIndicator()
+        {
+            if (pageIndicatorText != null && pages != null && pages.Length > 0)
+            {
+                pageIndicatorText.text = $"Page {currentPageIndex + 1} / {pages.Length}";
+            }
+        }
+
+        /// <summary>
+        /// Update navigation button interactability
+        /// </summary>
+        private void UpdateNavigationButtons()
+        {
+            if (pages == null || pages.Length <= 1)
+            {
+                // Disable navigation if only one or no pages
+                if (previousPageButton != null)
+                    previousPageButton.interactable = false;
+                if (nextPageButton != null)
+                    nextPageButton.interactable = false;
+            }
+            else
+            {
+                // Enable navigation buttons
+                if (previousPageButton != null)
+                    previousPageButton.interactable = true;
+                if (nextPageButton != null)
+                    nextPageButton.interactable = true;
+            }
         }
 
         /// <summary>

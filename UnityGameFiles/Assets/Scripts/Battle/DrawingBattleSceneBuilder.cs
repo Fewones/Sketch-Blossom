@@ -523,32 +523,170 @@ namespace SketchBlossom.Battle
             titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
             titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
 
-            // Instructions text
-            string instructions = "Draw the following patterns to execute moves:\n";
-            GameObject instructionsObj = CreateTextElement("Instructions", contentPanel.transform, instructions, 18);
-            RectTransform instructionsRT = instructionsObj.GetComponent<RectTransform>();
-            instructionsRT.anchorMin = new Vector2(0.5f, 0.85f);
-            instructionsRT.anchorMax = new Vector2(0.5f, 0.85f);
-            instructionsRT.sizeDelta = new Vector2(700, 40);
-            instructionsObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            // Create pages
+            CreateGuidePage0_Introduction(contentPanel.transform); // Page 0: Introduction
+            CreateGuidePage1_FireMoves(contentPanel.transform);     // Page 1: Fire Moves
+            CreateGuidePage2_GrassMoves(contentPanel.transform);    // Page 2: Grass Moves
+            CreateGuidePage3_WaterMoves(contentPanel.transform);    // Page 3: Water Moves
 
-            // Move guides
-            CreateMoveGuides(contentPanel.transform);
+            // Page indicator
+            GameObject pageIndicator = CreateTextElement("PageIndicator", contentPanel.transform, "Page 1 / 4", 16);
+            RectTransform pageRT = pageIndicator.GetComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0.5f, 0.12f);
+            pageRT.anchorMax = new Vector2(0.5f, 0.12f);
+            pageRT.sizeDelta = new Vector2(200, 30);
+            pageIndicator.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+
+            // Previous Page button
+            GameObject prevButton = CreateButton("PreviousPageButton", contentPanel.transform, "< Prev");
+            RectTransform prevRT = prevButton.GetComponent<RectTransform>();
+            prevRT.anchorMin = new Vector2(0.15f, 0.05f);
+            prevRT.anchorMax = new Vector2(0.15f, 0.05f);
+            prevRT.sizeDelta = new Vector2(120, 45);
+
+            // Next Page button
+            GameObject nextButton = CreateButton("NextPageButton", contentPanel.transform, "Next >");
+            RectTransform nextRT = nextButton.GetComponent<RectTransform>();
+            nextRT.anchorMin = new Vector2(0.85f, 0.05f);
+            nextRT.anchorMax = new Vector2(0.85f, 0.05f);
+            nextRT.sizeDelta = new Vector2(120, 45);
 
             // Close button
             GameObject closeButton = CreateButton("CloseButton", contentPanel.transform, "Close");
             RectTransform closeRT = closeButton.GetComponent<RectTransform>();
             closeRT.anchorMin = new Vector2(0.5f, 0.05f);
             closeRT.anchorMax = new Vector2(0.5f, 0.05f);
-            closeRT.sizeDelta = new Vector2(150, 45);
+            closeRT.sizeDelta = new Vector2(120, 45);
 
             createdGuidePanel = guidePanel;
             guidePanel.SetActive(false); // Hidden by default
 
-            Debug.Log("Created GuidePanel");
+            Debug.Log("Created GuidePanel with 4 pages");
 
             // Wire up the GuideBookManager if it exists
             WireUpGuideBookManager();
+        }
+
+        /// <summary>
+        /// Create Page 0: Introduction
+        /// </summary>
+        private void CreateGuidePage0_Introduction(Transform parent)
+        {
+            GameObject page = new GameObject("Page0_Introduction");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Intro text
+            string introText = "Welcome to the Drawing Guide!\n\n" +
+                "Draw patterns to execute battle moves.\n\n" +
+                "The quality of your drawing affects damage:\n" +
+                "• Perfect drawing = 1.5x damage\n" +
+                "• Good drawing = 1.0x damage\n" +
+                "• Poor drawing = 0.5x damage\n\n" +
+                "Use Next to see move guides organized by element type.";
+
+            GameObject textObj = CreateTextElement("IntroText", page.transform, introText, 18);
+            RectTransform textRT = textObj.GetComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = new Vector2(50, 0);
+            textRT.offsetMax = new Vector2(-50, 0);
+            textObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            textObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
+        }
+
+        /// <summary>
+        /// Create Page 1: Fire Moves
+        /// </summary>
+        private void CreateGuidePage1_FireMoves(Transform parent)
+        {
+            GameObject page = new GameObject("Page1_FireMoves");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Page title
+            GameObject titleObj = CreateTextElement("PageTitle", page.transform, "🔥 Fire Moves", 24);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.9f);
+            titleRT.sizeDelta = new Vector2(400, 40);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            titleObj.GetComponent<TextMeshProUGUI>().color = new Color(0.8f, 0.2f, 0.0f);
+
+            // Fire moves
+            CreateMoveGuideEntry(page.transform, "Block", "Draw any simple shape\n(Square, Circle, etc.)", 0.5f, 0.7f);
+            CreateMoveGuideEntry(page.transform, "Fireball", "Draw a circle or spiral\nClosed loop shape", 0.5f, 0.5f);
+            CreateMoveGuideEntry(page.transform, "Burn", "Draw zigzag or spiky lines\nSharp angles", 0.5f, 0.3f);
+            CreateMoveGuideEntry(page.transform, "Flame Wave", "Draw wavy horizontal lines\nSmooth curves", 0.5f, 0.1f);
+        }
+
+        /// <summary>
+        /// Create Page 2: Grass Moves
+        /// </summary>
+        private void CreateGuidePage2_GrassMoves(Transform parent)
+        {
+            GameObject page = new GameObject("Page2_GrassMoves");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Page title
+            GameObject titleObj = CreateTextElement("PageTitle", page.transform, "🌿 Grass Moves", 24);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.9f);
+            titleRT.sizeDelta = new Vector2(400, 40);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            titleObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.7f, 0.1f);
+
+            // Grass moves
+            CreateMoveGuideEntry(page.transform, "Block", "Draw any simple shape\n(Square, Circle, etc.)", 0.5f, 0.7f);
+            CreateMoveGuideEntry(page.transform, "Vine Whip", "Draw a curved S-shape\nSmooth flowing line", 0.5f, 0.5f);
+            CreateMoveGuideEntry(page.transform, "Leaf Storm", "Draw many small scattered marks\n5+ short strokes", 0.5f, 0.3f);
+            CreateMoveGuideEntry(page.transform, "Root Attack", "Draw vertical lines downward\nTall aspect ratio", 0.5f, 0.1f);
+        }
+
+        /// <summary>
+        /// Create Page 3: Water Moves
+        /// </summary>
+        private void CreateGuidePage3_WaterMoves(Transform parent)
+        {
+            GameObject page = new GameObject("Page3_WaterMoves");
+            page.transform.SetParent(parent);
+            RectTransform pageRT = page.AddComponent<RectTransform>();
+            pageRT.anchorMin = new Vector2(0, 0.15f);
+            pageRT.anchorMax = new Vector2(1, 0.85f);
+            pageRT.offsetMin = Vector2.zero;
+            pageRT.offsetMax = Vector2.zero;
+
+            // Page title
+            GameObject titleObj = CreateTextElement("PageTitle", page.transform, "💧 Water Moves", 24);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 0.9f);
+            titleRT.anchorMax = new Vector2(0.5f, 0.9f);
+            titleRT.sizeDelta = new Vector2(400, 40);
+            titleObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            titleObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
+            titleObj.GetComponent<TextMeshProUGUI>().color = new Color(0.1f, 0.5f, 0.9f);
+
+            // Water moves
+            CreateMoveGuideEntry(page.transform, "Block", "Draw any simple shape\n(Square, Circle, etc.)", 0.5f, 0.7f);
+            CreateMoveGuideEntry(page.transform, "Water Splash", "Draw wavy horizontal lines\n2-5 curved strokes", 0.5f, 0.5f);
+            CreateMoveGuideEntry(page.transform, "Bubble", "Draw small circles (2-3)\nCompact circular shapes", 0.5f, 0.3f);
+            CreateMoveGuideEntry(page.transform, "Healing Wave", "Draw smooth horizontal wave\nGentle flowing curve", 0.5f, 0.1f);
         }
 
         /// <summary>
@@ -609,46 +747,6 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Create visual guides for each move type
-        /// </summary>
-        private void CreateMoveGuides(Transform parent)
-        {
-            // Create a grid layout for move guides
-            string[,] moveGuides = new string[,]
-            {
-                { "Block", "Draw any simple shape\n(Square, Circle, etc.)" },
-                { "Fireball", "Draw a circle or spiral" },
-                { "Burn", "Draw zigzag or spiky lines" },
-                { "Flame Strike", "Draw vertical wavy line" },
-                { "Vine Whip", "Draw a curved S-shape" },
-                { "Leaf Storm", "Draw many small scattered marks" },
-                { "Root Attack", "Draw vertical lines downward" },
-                { "Water Splash", "Draw wavy horizontal lines" },
-                { "Bubble", "Draw small circles (2-3)" },
-                { "Healing Wave", "Draw smooth horizontal wave" }
-            };
-
-            int rows = 5;
-            int cols = 2;
-            float startY = 0.75f;
-            float spacing = 0.15f;
-
-            for (int i = 0; i < Mathf.Min(moveGuides.GetLength(0), rows * cols); i++)
-            {
-                int row = i / cols;
-                int col = i % cols;
-
-                float xPos = col == 0 ? 0.25f : 0.75f;
-                float yPos = startY - (row * spacing);
-
-                string moveName = moveGuides[i, 0];
-                string description = moveGuides[i, 1];
-
-                CreateMoveGuideEntry(parent, moveName, description, xPos, yPos);
-            }
-        }
-
-        /// <summary>
         /// Create a single move guide entry
         /// </summary>
         private void CreateMoveGuideEntry(Transform parent, string moveName, string description, float xPos, float yPos)
@@ -658,27 +756,31 @@ namespace SketchBlossom.Battle
             RectTransform entryRT = entry.AddComponent<RectTransform>();
             entryRT.anchorMin = new Vector2(xPos, yPos);
             entryRT.anchorMax = new Vector2(xPos, yPos);
-            entryRT.sizeDelta = new Vector2(300, 100);
+            entryRT.sizeDelta = new Vector2(600, 80);
+
+            // Background
+            Image entryBg = entry.AddComponent<Image>();
+            entryBg.color = new Color(0.85f, 0.8f, 0.65f, 0.3f);
 
             // Move name (bold)
-            GameObject nameObj = CreateTextElement("Name", entry.transform, moveName, 16);
+            GameObject nameObj = CreateTextElement("Name", entry.transform, moveName, 18);
             RectTransform nameRT = nameObj.GetComponent<RectTransform>();
-            nameRT.anchorMin = new Vector2(0, 0.6f);
-            nameRT.anchorMax = new Vector2(1, 1f);
-            nameRT.offsetMin = Vector2.zero;
-            nameRT.offsetMax = Vector2.zero;
-            nameObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.TopLeft;
+            nameRT.anchorMin = new Vector2(0, 0.5f);
+            nameRT.anchorMax = new Vector2(0.4f, 1f);
+            nameRT.offsetMin = new Vector2(10, 0);
+            nameRT.offsetMax = new Vector2(0, -5);
+            nameObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MiddleLeft;
             nameObj.GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.Bold;
             nameObj.GetComponent<TextMeshProUGUI>().color = new Color(0.2f, 0.1f, 0.05f);
 
             // Description
-            GameObject descObj = CreateTextElement("Description", entry.transform, description, 12);
+            GameObject descObj = CreateTextElement("Description", entry.transform, description, 14);
             RectTransform descRT = descObj.GetComponent<RectTransform>();
-            descRT.anchorMin = new Vector2(0, 0f);
-            descRT.anchorMax = new Vector2(1, 0.6f);
-            descRT.offsetMin = Vector2.zero;
-            descRT.offsetMax = Vector2.zero;
-            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.TopLeft;
+            descRT.anchorMin = new Vector2(0.4f, 0f);
+            descRT.anchorMax = new Vector2(1, 1f);
+            descRT.offsetMin = new Vector2(10, 5);
+            descRT.offsetMax = new Vector2(-10, -5);
+            descObj.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.MiddleLeft;
             descObj.GetComponent<TextMeshProUGUI>().color = new Color(0.3f, 0.2f, 0.1f);
         }
 
