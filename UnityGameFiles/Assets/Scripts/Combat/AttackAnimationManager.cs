@@ -32,6 +32,9 @@ namespace SketchBlossom.Battle
         [Header("References")]
         [SerializeField] private DrawnMoveStorage moveStorage;
 
+        [Header("Debug")]
+        [SerializeField] private bool useDebugSquare = true; // Use white square instead of drawing for testing
+
         private void Awake()
         {
             // Auto-find move storage if not assigned
@@ -81,8 +84,16 @@ namespace SketchBlossom.Battle
 
             Debug.Log($"AttackAnimationManager: Creating projectile with texture {moveTexture.width}x{moveTexture.height}");
 
+            // For debugging: optionally use a simple white square instead of the drawing
+            Texture2D projectileTexture = moveTexture;
+            if (useDebugSquare)
+            {
+                projectileTexture = CreateDebugSquareTexture();
+                Debug.Log("AttackAnimationManager: Using DEBUG WHITE SQUARE instead of drawing");
+            }
+
             // Create projectile
-            GameObject projectile = CreateProjectile(moveTexture, source.position);
+            GameObject projectile = CreateProjectile(projectileTexture, source.position);
 
             if (projectile == null)
             {
@@ -281,6 +292,27 @@ namespace SketchBlossom.Battle
             yield return new WaitForSeconds(0.5f);
 
             Debug.Log("AttackAnimationManager: Fallback animation complete");
+        }
+
+        /// <summary>
+        /// Create a simple white square texture for debugging
+        /// </summary>
+        private Texture2D CreateDebugSquareTexture()
+        {
+            int size = 256;
+            Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+
+            Color[] pixels = new Color[size * size];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = Color.white; // Solid white
+            }
+
+            texture.SetPixels(pixels);
+            texture.Apply();
+
+            Debug.Log($"AttackAnimationManager: Created debug square texture {size}x{size}");
+            return texture;
         }
 
         /// <summary>
