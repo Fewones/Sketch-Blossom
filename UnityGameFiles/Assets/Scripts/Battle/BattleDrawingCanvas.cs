@@ -203,26 +203,17 @@ namespace SketchBlossom.Battle
             isDrawing = true;
             currentStrokePoints = new List<Vector2>(); // Still track as Vector2 for move detection
 
-            // Create new line renderer
-            GameObject lineObj;
-            if (lineRendererPrefab != null)
-            {
-                lineObj = Instantiate(lineRendererPrefab, transform);
-            }
-            else
-            {
-                lineObj = new GameObject("BattleLine");
-                lineObj.transform.SetParent(transform);
-            }
+            // ALWAYS create new line renderer from scratch for UI canvas (don't use world-space prefab)
+            GameObject lineObj = new GameObject("BattleLine");
+            lineObj.transform.SetParent(transform);
 
             // CRITICAL: Reset local position to (0,0,0) to prevent offset
             lineObj.transform.localPosition = Vector3.zero;
             lineObj.transform.localRotation = Quaternion.identity;
             lineObj.transform.localScale = Vector3.one;
 
-            currentLine = lineObj.GetComponent<LineRenderer>();
-            if (currentLine == null)
-                currentLine = lineObj.AddComponent<LineRenderer>();
+            // Add LineRenderer component fresh (not from prefab)
+            currentLine = lineObj.AddComponent<LineRenderer>();
 
             // Configure line renderer
             currentLine.startWidth = lineWidth;
@@ -232,16 +223,34 @@ namespace SketchBlossom.Battle
             // For ScreenSpaceOverlay, MUST use local space since overlay doesn't exist in true world space
             currentLine.useWorldSpace = false;
 
-            // Set material and ensure it's applied correctly
+            // Set material - create fresh material for UI rendering
             if (lineMaterial != null)
             {
-                currentLine.material = lineMaterial;
-                currentLine.sharedMaterial = lineMaterial;
+                // Create instance of the material to avoid modifying the shared asset
+                currentLine.material = new Material(lineMaterial);
+            }
+            else
+            {
+                // Create a new material with UI-compatible shader
+                Shader shader = Shader.Find("UI/Default");
+                if (shader == null) shader = Shader.Find("Sprites/Default");
+                if (shader == null) shader = Shader.Find("Unlit/Color");
+
+                Material newMat = new Material(shader);
+                newMat.color = drawingColor;
+                currentLine.material = newMat;
+                Debug.Log($"Created new material with shader: {shader?.name}");
             }
 
             // Set colors - CRITICAL for visibility
             currentLine.startColor = drawingColor;
             currentLine.endColor = drawingColor;
+
+            // Also set color on material
+            if (currentLine.material != null)
+            {
+                currentLine.material.color = drawingColor;
+            }
 
             // Ensure proper 2D rendering
             currentLine.alignment = LineAlignment.TransformZ;
