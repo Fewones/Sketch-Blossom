@@ -1,16 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
 
-namespace SketchBlossom.Battle
+namespace SketchBlossom.Battle.Editor
 {
     /// <summary>
     /// Ensures GuideBookManager exists and is properly configured in the scene.
     /// Run this from the Unity menu: Tools > Setup Guide Book Manager
     /// </summary>
-    public class GuideBookSetup : MonoBehaviour
+    public static class GuideBookSetup
     {
-        [MenuItem("Tools/Setup Guide Book Manager")]
+        [UnityEditor.MenuItem("Tools/Setup Guide Book Manager")]
         public static void SetupGuideBookManager()
         {
             Debug.Log("=== SETTING UP GUIDE BOOK MANAGER ===");
@@ -43,13 +42,13 @@ namespace SketchBlossom.Battle
             manager.ForceReWire();
 
             // Select the manager in hierarchy
-            Selection.activeGameObject = manager.gameObject;
+            UnityEditor.Selection.activeGameObject = manager.gameObject;
 
             Debug.Log("✅ GUIDE BOOK MANAGER SETUP COMPLETE!");
             Debug.Log("GuideBookManager is now selected. Check the Inspector for debug buttons.");
         }
 
-        [MenuItem("Tools/Test Guide Book Navigation")]
+        [UnityEditor.MenuItem("Tools/Test Guide Book Navigation")]
         public static void TestGuideBookNavigation()
         {
             Debug.Log("=== TESTING GUIDE BOOK NAVIGATION ===");
@@ -70,7 +69,7 @@ namespace SketchBlossom.Battle
             manager.DebugCurrentState();
         }
 
-        [MenuItem("Tools/Fix Guide Book Pages")]
+        [UnityEditor.MenuItem("Tools/Fix Guide Book Pages")]
         public static void FixGuideBookPages()
         {
             Debug.Log("=== FIXING GUIDE BOOK PAGES ===");

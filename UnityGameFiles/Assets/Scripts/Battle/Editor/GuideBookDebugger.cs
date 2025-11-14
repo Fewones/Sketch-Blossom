@@ -1,13 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
 using TMPro;
 using System.Collections.Generic;
 
-namespace SketchBlossom.Battle
+namespace SketchBlossom.Battle.Editor
 {
-    [CustomEditor(typeof(GuideBookManager))]
-    public class GuideBookDebugger : Editor
+    [UnityEditor.CustomEditor(typeof(GuideBookManager))]
+    public class GuideBookDebugger : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -15,13 +14,13 @@ namespace SketchBlossom.Battle
 
             GuideBookManager manager = (GuideBookManager)target;
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Debug Tools", EditorStyles.boldLabel);
+            UnityEditor.EditorGUILayout.Space();
+            UnityEditor.EditorGUILayout.LabelField("Debug Tools", UnityEditor.EditorStyles.boldLabel);
 
             if (GUILayout.Button("Force Re-wire All References"))
             {
                 manager.ForceReWire();
-                EditorUtility.SetDirty(manager);
+                UnityEditor.EditorUtility.SetDirty(manager);
             }
 
             if (GUILayout.Button("Debug Guide Book Setup"))
@@ -215,7 +214,7 @@ namespace SketchBlossom.Battle
                 pageIndicator.text = $"Page 1 / {pages.Count}";
             }
 
-            EditorUtility.SetDirty(manager);
+            UnityEditor.EditorUtility.SetDirty(manager);
             Debug.Log("✅ PAGE NAVIGATION MANUALLY FIXED!");
             Debug.Log("Pages should now work correctly. Test with 'Test Next Page' and 'Test Previous Page' buttons.");
         }
