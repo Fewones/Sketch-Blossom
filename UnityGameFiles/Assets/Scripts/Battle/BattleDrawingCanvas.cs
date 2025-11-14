@@ -14,7 +14,7 @@ namespace SketchBlossom.Battle
         [Header("Canvas Settings")]
         [SerializeField] private RectTransform _drawingArea;
         [SerializeField] private Canvas canvas;
-        [SerializeField] private float lineWidth = 5f;
+        [SerializeField] private float lineWidth = 8f;
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("UI Drawing")]

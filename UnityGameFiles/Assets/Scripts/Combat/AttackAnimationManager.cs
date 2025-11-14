@@ -13,7 +13,7 @@ namespace SketchBlossom.Battle
         [SerializeField] private GameObject projectilePrefab;
         [SerializeField] private Transform playerAttackSpawnPoint;
         [SerializeField] private Transform enemyTargetPoint;
-        [SerializeField] private float projectileSpeed = 5f;
+        [SerializeField] private float projectileDuration = 0.8f; // Fixed duration instead of speed
         [SerializeField] private float projectileScale = 0.5f;
         [SerializeField] private Vector3 projectileRotation = Vector3.zero;
 
@@ -171,10 +171,10 @@ namespace SketchBlossom.Battle
             }
 
             float distance = Vector3.Distance(startPos, endPos);
-            float duration = distance / projectileSpeed;
+            float duration = projectileDuration; // Use fixed duration regardless of distance
             Vector3 initialScale = projectile.transform.localScale;
 
-            Debug.Log($"AttackAnimationManager: Distance: {distance}, Duration: {duration}s, Speed: {projectileSpeed}");
+            Debug.Log($"AttackAnimationManager: Distance: {distance}, Duration: {duration}s (fixed)");
 
             // Fade in
             Debug.Log("AttackAnimationManager: Starting fade in");
