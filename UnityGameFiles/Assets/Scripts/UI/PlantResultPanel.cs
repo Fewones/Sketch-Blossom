@@ -153,10 +153,22 @@ public class PlantResultPanel : MonoBehaviour
                 confidenceText.text = "<size=18>Please try again!</size>";
             }
 
-            // Hide stats (no valid plant to show stats for)
+            // Show requirements for all plant types
             if (statsText != null)
             {
-                statsText.text = "<b><size=20>Requirements</size></b>\n\n<size=16>Fire Plants:\n• Sunflower: 4+ red circles + 1 green line\n• Fire Rose: 5+ overlapping red strokes + 1 green line\n• Flame Tulip: 3+ long vertical red strokes</size>";
+                statsText.text = "<b><size=20>Requirements</size></b>\n\n" +
+                    "<size=14><b>🔥 Fire Plants (Red):</b>\n" +
+                    "• Sunflower: 4+ red circles + 1 green line\n" +
+                    "• Fire Rose: 5+ overlapping red strokes + 1 green line\n" +
+                    "• Flame Tulip: 3+ long vertical red strokes\n\n" +
+                    "<b>🌿 Grass Plants (Green):</b>\n" +
+                    "• Cactus: 2+ long vertical green strokes\n" +
+                    "• Vine Flower: 3+ curved green strokes\n" +
+                    "• Grass Sprout: 5+ short green strokes\n\n" +
+                    "<b>💧 Water Plants (Blue):</b>\n" +
+                    "• Water Lily: 3+ horizontal blue strokes\n" +
+                    "• Coral Bloom: 4+ overlapping blue strokes\n" +
+                    "• Bubble Flower: 3+ blue circles</size>";
             }
 
             // Hide moves
