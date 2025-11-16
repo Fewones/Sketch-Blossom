@@ -233,8 +233,19 @@ public class PostBattleManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
 
-        if (!string.IsNullOrEmpty(nextSceneName))
+        // Check if this was a world map encounter
+        if (EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.isWorldMapEncounter)
         {
+            // Clear encounter data
+            EnemyEncounterData.Instance.ClearEncounterData();
+
+            // Return to world map
+            Debug.Log("Returning to World Map...");
+            SceneManager.LoadScene("WorldMapScene");
+        }
+        else if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            // Default behavior: return to plant selection scene
             SceneManager.LoadScene(nextSceneName);
         }
         else

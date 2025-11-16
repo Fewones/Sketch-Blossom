@@ -269,7 +269,7 @@ namespace SketchBlossom.UI
         }
 
         /// <summary>
-        /// Confirms the plant selection and proceeds to battle
+        /// Confirms the plant selection and proceeds to battle or world map
         /// </summary>
         private void OnConfirmSelection()
         {
@@ -291,10 +291,21 @@ namespace SketchBlossom.UI
             // Load the selected plant into DrawnUnitData for battle
             inventory.LoadSelectedPlantForBattle();
 
-            Debug.Log($"Confirmed selection: {selectedPlant.plantName}. Proceeding to battle.");
+            Debug.Log($"Confirmed selection: {selectedPlant.plantName}.");
 
-            // Load battle scene
-            SceneManager.LoadScene("DrawingBattleScene");
+            // Check if this is a world map encounter battle
+            if (EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.isWorldMapEncounter)
+            {
+                // Player has selected a plant for a specific enemy encounter
+                Debug.Log("Proceeding to battle with selected enemy.");
+                SceneManager.LoadScene("DrawingBattleScene");
+            }
+            else
+            {
+                // Player is just selecting a plant, go to world map
+                Debug.Log("Proceeding to world map.");
+                SceneManager.LoadScene("WorldMapScene");
+            }
         }
 
         /// <summary>
