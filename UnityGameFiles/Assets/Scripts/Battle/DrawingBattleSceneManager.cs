@@ -98,8 +98,25 @@ namespace SketchBlossom.Battle
             LoadEnemyUnit();
 
             // Initialize HP bars
-            playerHPBar.Initialize(playerPlantName, playerMaxHP);
-            enemyHPBar.Initialize(enemyPlantName, enemyMaxHP);
+            if (playerHPBar != null)
+            {
+                playerHPBar.Initialize(playerPlantName, playerMaxHP);
+                Debug.Log($"✓ Player HP Bar initialized: {playerPlantName} with {playerMaxHP} HP");
+            }
+            else
+            {
+                Debug.LogError("❌ Player HP Bar is NULL! Cannot initialize.");
+            }
+
+            if (enemyHPBar != null)
+            {
+                enemyHPBar.Initialize(enemyPlantName, enemyMaxHP);
+                Debug.Log($"✓ Enemy HP Bar initialized: {enemyPlantName} with {enemyMaxHP} HP");
+            }
+            else
+            {
+                Debug.LogError("❌ Enemy HP Bar is NULL! Cannot initialize.");
+            }
 
             // Setup UI
             SetupUI();
@@ -622,8 +639,20 @@ namespace SketchBlossom.Battle
                     enemyIsBlocking
                 );
 
-                enemyHPBar.ModifyHP(-damage);
-                enemyHPBar.PlayDamageAnimation();
+                Debug.Log($"[DAMAGE] Player attacks enemy for {damage} damage");
+                Debug.Log($"[HP BEFORE] Enemy HP: {enemyHPBar.GetCurrentHP()}/{enemyHPBar.GetMaxHP()}");
+
+                if (enemyHPBar != null)
+                {
+                    enemyHPBar.ModifyHP(-damage);
+                    enemyHPBar.PlayDamageAnimation();
+                    Debug.Log($"[HP AFTER] Enemy HP: {enemyHPBar.GetCurrentHP()}/{enemyHPBar.GetMaxHP()}");
+                }
+                else
+                {
+                    Debug.LogError("❌ Enemy HP Bar is NULL! Cannot apply damage.");
+                }
+
                 UpdateActionText($"Dealt {damage} damage!");
 
                 if (enemyUnit != null)
@@ -676,8 +705,20 @@ namespace SketchBlossom.Battle
                     playerIsBlocking
                 );
 
-                playerHPBar.ModifyHP(-damage);
-                playerHPBar.PlayDamageAnimation();
+                Debug.Log($"[DAMAGE] Enemy attacks player for {damage} damage");
+                Debug.Log($"[HP BEFORE] Player HP: {playerHPBar.GetCurrentHP()}/{playerHPBar.GetMaxHP()}");
+
+                if (playerHPBar != null)
+                {
+                    playerHPBar.ModifyHP(-damage);
+                    playerHPBar.PlayDamageAnimation();
+                    Debug.Log($"[HP AFTER] Player HP: {playerHPBar.GetCurrentHP()}/{playerHPBar.GetMaxHP()}");
+                }
+                else
+                {
+                    Debug.LogError("❌ Player HP Bar is NULL! Cannot apply damage.");
+                }
+
                 UpdateActionText($"{enemyPlantName} dealt {damage} damage!");
 
                 if (playerUnit != null)

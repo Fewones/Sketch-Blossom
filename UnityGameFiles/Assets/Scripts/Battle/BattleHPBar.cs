@@ -58,7 +58,57 @@ namespace SketchBlossom.Battle
             targetFillAmount = 1f;
             currentFillAmount = 1f;
 
+            // Ensure HP bar components are visible and enabled
+            EnsureVisible();
+
             UpdateDisplay();
+
+            Debug.Log($"BattleHPBar.Initialize: {unitName} - HP:{currentHP}/{maxHP}, FillAmount:{currentFillAmount}");
+        }
+
+        /// <summary>
+        /// Ensure the HP bar is visible and all components are enabled
+        /// </summary>
+        public void EnsureVisible()
+        {
+            // Enable this GameObject
+            if (gameObject != null && !gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+                Debug.LogWarning("BattleHPBar: Had to activate HP bar GameObject!");
+            }
+
+            // Ensure fill image is enabled
+            if (hpFillImage != null)
+            {
+                if (!hpFillImage.enabled)
+                {
+                    hpFillImage.enabled = true;
+                    Debug.LogWarning("BattleHPBar: Had to enable hpFillImage!");
+                }
+
+                if (hpFillImage.gameObject != null && !hpFillImage.gameObject.activeSelf)
+                {
+                    hpFillImage.gameObject.SetActive(true);
+                    Debug.LogWarning("BattleHPBar: Had to activate hpFillImage GameObject!");
+                }
+            }
+            else
+            {
+                Debug.LogError("BattleHPBar: hpFillImage is NULL!");
+            }
+
+            // Ensure HP text is enabled
+            if (hpText != null && !hpText.enabled)
+            {
+                hpText.enabled = true;
+            }
+
+            // Ensure unit name text is enabled
+            if (unitNameText != null && !unitNameText.enabled)
+            {
+                unitNameText.enabled = true;
+            }
         }
 
         /// <summary>
@@ -66,14 +116,22 @@ namespace SketchBlossom.Battle
         /// </summary>
         public void SetHP(int newHP)
         {
+            int oldHP = currentHP;
             currentHP = Mathf.Clamp(newHP, 0, maxHP);
             targetFillAmount = maxHP > 0 ? (float)currentHP / maxHP : 0f;
+
+            Debug.Log($"BattleHPBar.SetHP: {oldHP} -> {currentHP} (target fill: {targetFillAmount:F2})");
 
             if (!animateChanges && hpFillImage != null)
             {
                 currentFillAmount = targetFillAmount;
                 hpFillImage.fillAmount = currentFillAmount;
                 UpdateHPColor(currentFillAmount);
+                Debug.Log($"BattleHPBar: Immediately set fill amount to {currentFillAmount:F2}");
+            }
+            else if (hpFillImage != null)
+            {
+                Debug.Log($"BattleHPBar: Animating from {currentFillAmount:F2} to {targetFillAmount:F2}");
             }
 
             UpdateDisplay();
@@ -84,6 +142,7 @@ namespace SketchBlossom.Battle
         /// </summary>
         public void ModifyHP(int delta)
         {
+            Debug.Log($"BattleHPBar.ModifyHP: Applying {delta:+0;-#} HP change");
             SetHP(currentHP + delta);
         }
 
@@ -125,12 +184,22 @@ namespace SketchBlossom.Battle
             if (hpText != null)
             {
                 hpText.text = $"{currentHP} / {maxHP}";
+                Debug.Log($"BattleHPBar.UpdateDisplay: Text updated to '{hpText.text}'");
+            }
+            else
+            {
+                Debug.LogWarning("BattleHPBar.UpdateDisplay: hpText is NULL!");
             }
 
             if (hpFillImage != null && !animateChanges)
             {
                 hpFillImage.fillAmount = targetFillAmount;
                 UpdateHPColor(targetFillAmount);
+                Debug.Log($"BattleHPBar.UpdateDisplay: Fill amount set to {targetFillAmount:F2}, Color: {hpFillImage.color}");
+            }
+            else if (hpFillImage == null)
+            {
+                Debug.LogError("BattleHPBar.UpdateDisplay: hpFillImage is NULL!");
             }
         }
 
