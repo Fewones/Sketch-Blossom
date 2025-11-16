@@ -365,6 +365,10 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator PlayerTurn()
         {
+            // Ensure both units are visible at the start of player's turn
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             UpdateTurnIndicator("YOUR TURN");
             UpdateActionText("Draw your move!");
             ShowPlayerTurnUI(true);
@@ -395,6 +399,10 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator EnemyTurn()
         {
+            // Ensure both units are visible at the start of enemy's turn
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             UpdateTurnIndicator("ENEMY TURN");
             ShowEnemyTurnUI(true);
             yield return new WaitForSeconds(turnDelay);
@@ -433,6 +441,11 @@ namespace SketchBlossom.Battle
             ExecuteEnemyMove(selectedMove);
 
             yield return new WaitForSeconds(actionTextDelay);
+
+            // Ensure both units are still visible after enemy attack
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             ShowEnemyTurnUI(false);
         }
 
@@ -626,6 +639,10 @@ namespace SketchBlossom.Battle
 
             // Reset blocking state
             enemyIsBlocking = false;
+
+            // Ensure both units are still visible after attack
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
 
             currentState = BattleState.EnemyTurn;
         }
@@ -908,6 +925,7 @@ namespace SketchBlossom.Battle
 
             private bool isDead = false;
             private MonoBehaviour coroutineRunner;
+            private Sprite assignedSprite; // Keep reference to prevent garbage collection
 
             public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName, Texture2D drawingTexture = null, bool isPlayerUnit = false)
             {
@@ -939,15 +957,16 @@ namespace SketchBlossom.Battle
                 {
                     Debug.Log($"BattleUnitDisplay: Using player's drawing texture as sprite! Texture size: {drawingTexture.width}x{drawingTexture.height}");
 
-                    // Convert Texture2D to Sprite
-                    Sprite drawingSprite = Texture2DToSprite(drawingTexture);
+                    // Convert Texture2D to Sprite and keep reference
+                    assignedSprite = Texture2DToSprite(drawingTexture);
 
-                    if (drawingSprite != null)
+                    if (assignedSprite != null)
                     {
-                        unitImage.sprite = drawingSprite;
+                        unitImage.sprite = assignedSprite;
                         unitImage.color = Color.white; // Reset color to show texture properly
                         unitImage.preserveAspect = true; // Keep aspect ratio
-                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {drawingSprite.bounds}");
+                        unitImage.enabled = true; // Ensure Image component is enabled
+                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {assignedSprite.bounds}");
                     }
                     else
                     {
@@ -963,6 +982,47 @@ namespace SketchBlossom.Battle
                         Debug.LogWarning("BattleUnitDisplay: Player unit has no drawing texture! Using fallback color.");
                     }
                     ApplyElementColor(element);
+                    unitImage.enabled = true; // Ensure Image component is enabled
+                }
+
+                // Final check to ensure everything is visible
+                EnsureVisible();
+            }
+
+            /// <summary>
+            /// Ensure the sprite remains visible (call this to prevent disappearing sprites)
+            /// </summary>
+            public void EnsureVisible()
+            {
+                if (isDead) return; // Don't make dead units visible
+
+                if (unitImage != null)
+                {
+                    // Ensure the Image component is enabled
+                    unitImage.enabled = true;
+
+                    // Ensure the GameObject is active
+                    if (unitImage.gameObject != null && !unitImage.gameObject.activeSelf)
+                    {
+                        unitImage.gameObject.SetActive(true);
+                        Debug.LogWarning($"BattleUnitDisplay: Had to reactivate unitImage GameObject!");
+                    }
+
+                    // Ensure we still have a sprite assigned
+                    if (unitImage.sprite == null && assignedSprite != null)
+                    {
+                        unitImage.sprite = assignedSprite;
+                        Debug.LogWarning($"BattleUnitDisplay: Had to reassign sprite!");
+                    }
+
+                    // Ensure alpha is not zero (unless fading out during death)
+                    Color currentColor = unitImage.color;
+                    if (currentColor.a < 0.1f && !isDead)
+                    {
+                        currentColor.a = 1f;
+                        unitImage.color = currentColor;
+                        Debug.LogWarning($"BattleUnitDisplay: Had to restore alpha!");
+                    }
                 }
             }
 
