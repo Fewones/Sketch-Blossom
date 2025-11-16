@@ -218,7 +218,7 @@ namespace SketchBlossom.Drawing
 
         private void HandleContinue()
         {
-            Debug.Log("DrawingSceneManager: Continue to battle - capturing drawing and loading battle scene");
+            Debug.Log("DrawingSceneManager: Continue - capturing drawing and transitioning to world map");
 
             // Capture the drawing and save it to DrawnUnitData
             CaptureAndSaveDrawing();
@@ -226,9 +226,11 @@ namespace SketchBlossom.Drawing
             // Add the plant to inventory if this is a valid plant
             AddPlantToInventory();
 
+            // Transition to WorldMapScene instead of battle
             if (enableBattleTransition)
             {
-                LoadBattleScene();
+                Debug.Log("Loading WorldMapScene...");
+                SceneManager.LoadScene("WorldMapScene");
             }
             else
             {

@@ -174,8 +174,9 @@ public class PostBattleManager : MonoBehaviour
         PlayerPrefs.SetString("GrowthMode", "WILD");
         PlayerPrefs.Save();
 
-        // Proceed to next scene
-        StartCoroutine(TransitionToNextScene());
+        // Transition to WildGrowthScene
+        Debug.Log("Loading WildGrowthScene...");
+        SceneManager.LoadScene("WildGrowthScene");
     }
 
     public void OnTameSelected()
@@ -225,8 +226,9 @@ public class PostBattleManager : MonoBehaviour
         PlayerPrefs.SetString("GrowthMode", "TAME");
         PlayerPrefs.Save();
 
-        // Proceed to next scene
-        StartCoroutine(TransitionToNextScene());
+        // Transition to TameScene
+        Debug.Log("Loading TameScene...");
+        SceneManager.LoadScene("TameScene");
     }
 
     private IEnumerator TransitionToNextScene()
