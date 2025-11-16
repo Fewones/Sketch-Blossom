@@ -24,6 +24,12 @@ EditorBuildSettings:
     path: Assets/Scenes/PostBattleScene.unity
     guid: d3fec56e18abf8e45bc33d2b9cda5c00
   - enabled: 1
+    path: Assets/Scenes/WildGrowthScene.unity
+    guid: 1e748901e18de48518014bbb1683acbd
+  - enabled: 1
+    path: Assets/Scenes/TameScene.unity
+    guid: ece6bebb833bc40de9dcb1e7568bbd56
+  - enabled: 1
     path: Assets/Scenes/InventoryScene.unity
     guid: 16f95a8985b5941259177d27b8159658
   m_configObjects:
