@@ -785,9 +785,19 @@ namespace SketchBlossom.Battle
             UpdateTurnIndicator("VICTORY!");
             UpdateActionText("You win!");
 
+            Debug.Log("=== VICTORY! Player wins the battle ===");
+
+            // Ensure player unit stays visible during victory
+            if (playerUnit != null)
+            {
+                playerUnit.EnsureVisible();
+                Debug.Log("Player unit visibility ensured during victory");
+            }
+
             // Trigger enemy death animation
             if (enemyUnit != null)
             {
+                Debug.Log("Triggering enemy death animation");
                 enemyUnit.Die(this);
             }
 
@@ -797,7 +807,14 @@ namespace SketchBlossom.Battle
             // Record victory for player's plant in inventory
             RecordPlayerVictory();
 
-            yield return new WaitForSeconds(3f);
+            // Keep ensuring player visibility during the victory wait period
+            yield return new WaitForSeconds(1.5f);
+            if (playerUnit != null)
+            {
+                playerUnit.EnsureVisible();
+            }
+
+            yield return new WaitForSeconds(1.5f);
 
             // Load PostBattleScene to choose Wild Growth or Tame
             SceneManager.LoadScene("PostBattleScene");
@@ -811,9 +828,19 @@ namespace SketchBlossom.Battle
             UpdateTurnIndicator("DEFEAT");
             UpdateActionText("You lost...");
 
+            Debug.Log("=== DEFEAT! Player loses the battle ===");
+
+            // Ensure enemy unit stays visible during defeat
+            if (enemyUnit != null)
+            {
+                enemyUnit.EnsureVisible();
+                Debug.Log("Enemy unit visibility ensured during defeat");
+            }
+
             // Trigger player death animation
             if (playerUnit != null)
             {
+                Debug.Log("Triggering player death animation");
                 playerUnit.Die(this);
             }
 
@@ -967,10 +994,12 @@ namespace SketchBlossom.Battle
             private bool isDead = false;
             private MonoBehaviour coroutineRunner;
             private Sprite assignedSprite; // Keep reference to prevent garbage collection
+            private string unitIdentifier = "Unknown"; // For debugging which unit this is
 
             public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName, Texture2D drawingTexture = null, bool isPlayerUnit = false)
             {
-                Debug.Log($"BattleUnitDisplay.Initialize() called - IsPlayer:{isPlayerUnit}, HasTexture:{drawingTexture != null}");
+                unitIdentifier = isPlayerUnit ? "PLAYER" : "ENEMY";
+                Debug.Log($"BattleUnitDisplay.Initialize() called - Unit: {unitIdentifier}, HasTexture:{drawingTexture != null}");
 
                 // Reset death state
                 isDead = false;
@@ -1035,7 +1064,11 @@ namespace SketchBlossom.Battle
             /// </summary>
             public void EnsureVisible()
             {
-                if (isDead) return; // Don't make dead units visible
+                if (isDead)
+                {
+                    Debug.Log($"BattleUnitDisplay ({unitIdentifier}): EnsureVisible skipped - unit is dead");
+                    return; // Don't make dead units visible
+                }
 
                 if (unitImage != null)
                 {
@@ -1046,14 +1079,14 @@ namespace SketchBlossom.Battle
                     if (unitImage.gameObject != null && !unitImage.gameObject.activeSelf)
                     {
                         unitImage.gameObject.SetActive(true);
-                        Debug.LogWarning($"BattleUnitDisplay: Had to reactivate unitImage GameObject!");
+                        Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Had to reactivate unitImage GameObject!");
                     }
 
                     // Ensure we still have a sprite assigned
                     if (unitImage.sprite == null && assignedSprite != null)
                     {
                         unitImage.sprite = assignedSprite;
-                        Debug.LogWarning($"BattleUnitDisplay: Had to reassign sprite!");
+                        Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Had to reassign sprite!");
                     }
 
                     // Ensure alpha is not zero (unless fading out during death)
@@ -1062,7 +1095,7 @@ namespace SketchBlossom.Battle
                     {
                         currentColor.a = 1f;
                         unitImage.color = currentColor;
-                        Debug.LogWarning($"BattleUnitDisplay: Had to restore alpha!");
+                        Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Had to restore alpha from {currentColor.a:F2} to 1.0!");
                     }
                 }
             }
@@ -1129,14 +1162,22 @@ namespace SketchBlossom.Battle
             /// </summary>
             public void Die(MonoBehaviour runner)
             {
-                if (isDead) return; // Already dead, don't fade again
+                if (isDead)
+                {
+                    Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Die() called but unit is already dead!");
+                    return; // Already dead, don't fade again
+                }
 
                 isDead = true;
-                Debug.Log($"BattleUnitDisplay: Unit is dying, starting fade out animation");
+                Debug.Log($"BattleUnitDisplay ({unitIdentifier}): Unit is dying, starting fade out animation");
 
                 if (runner != null && unitImage != null)
                 {
                     runner.StartCoroutine(FadeOutEffect());
+                }
+                else
+                {
+                    Debug.LogError($"BattleUnitDisplay ({unitIdentifier}): Cannot start fade - runner or unitImage is null!");
                 }
             }
 
@@ -1171,13 +1212,17 @@ namespace SketchBlossom.Battle
             /// </summary>
             private IEnumerator FadeOutEffect()
             {
-                if (unitImage == null) yield break;
+                if (unitImage == null)
+                {
+                    Debug.LogError($"BattleUnitDisplay ({unitIdentifier}): FadeOutEffect - unitImage is null!");
+                    yield break;
+                }
 
                 float fadeDuration = 1.0f;
                 float elapsed = 0f;
                 Color originalColor = unitImage.color;
 
-                Debug.Log($"BattleUnitDisplay: Starting fade from alpha {originalColor.a}");
+                Debug.Log($"BattleUnitDisplay ({unitIdentifier}): Starting fade from alpha {originalColor.a}");
 
                 while (elapsed < fadeDuration)
                 {
@@ -1189,7 +1234,7 @@ namespace SketchBlossom.Battle
 
                 // Set final alpha
                 unitImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.2f);
-                Debug.Log($"BattleUnitDisplay: Fade out complete");
+                Debug.Log($"BattleUnitDisplay ({unitIdentifier}): Fade out complete - final alpha: 0.2");
             }
 
             /// <summary>
