@@ -98,8 +98,25 @@ namespace SketchBlossom.Battle
             LoadEnemyUnit();
 
             // Initialize HP bars
-            playerHPBar.Initialize(playerPlantName, playerMaxHP);
-            enemyHPBar.Initialize(enemyPlantName, enemyMaxHP);
+            if (playerHPBar != null)
+            {
+                playerHPBar.Initialize(playerPlantName, playerMaxHP);
+                Debug.Log($"✓ Player HP Bar initialized: {playerPlantName} with {playerMaxHP} HP");
+            }
+            else
+            {
+                Debug.LogError("❌ Player HP Bar is NULL! Cannot initialize.");
+            }
+
+            if (enemyHPBar != null)
+            {
+                enemyHPBar.Initialize(enemyPlantName, enemyMaxHP);
+                Debug.Log($"✓ Enemy HP Bar initialized: {enemyPlantName} with {enemyMaxHP} HP");
+            }
+            else
+            {
+                Debug.LogError("❌ Enemy HP Bar is NULL! Cannot initialize.");
+            }
 
             // Setup UI
             SetupUI();
@@ -110,8 +127,39 @@ namespace SketchBlossom.Battle
             // Setup attack animation system
             SetupAttackAnimationSystem();
 
+            // Start continuous visibility monitoring
+            StartCoroutine(ContinuousVisibilityCheck());
+
             // Start battle
             StartCoroutine(BattleSequence());
+        }
+
+        /// <summary>
+        /// Continuously check and ensure unit visibility throughout the battle
+        /// This runs in the background to catch any edge cases where sprites might disappear
+        /// </summary>
+        private IEnumerator ContinuousVisibilityCheck()
+        {
+            Debug.Log("[VISIBILITY] Starting continuous visibility monitoring");
+
+            while (currentState != BattleState.Victory && currentState != BattleState.Defeat)
+            {
+                // Check every 0.1 seconds to avoid excessive logging
+                yield return new WaitForSeconds(0.1f);
+
+                // Only enforce visibility for units that aren't dead
+                if (playerUnit != null && !playerUnit.IsDead())
+                {
+                    playerUnit.EnsureVisible();
+                }
+
+                if (enemyUnit != null && !enemyUnit.IsDead())
+                {
+                    enemyUnit.EnsureVisible();
+                }
+            }
+
+            Debug.Log("[VISIBILITY] Stopping continuous visibility monitoring - battle ended");
         }
 
         /// <summary>
@@ -157,6 +205,7 @@ namespace SketchBlossom.Battle
             // Initialize player unit display with drawing texture
             if (playerUnit != null)
             {
+                playerUnit.SetCoroutineRunner(this);
                 playerUnit.Initialize(playerPlantType, playerElement, playerPlantName, playerDrawingTexture, true);
             }
         }
@@ -206,6 +255,7 @@ namespace SketchBlossom.Battle
             // Initialize enemy unit display (no drawing texture for enemy)
             if (enemyUnit != null)
             {
+                enemyUnit.SetCoroutineRunner(this);
                 enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName, null, false);
             }
         }
@@ -363,6 +413,10 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator PlayerTurn()
         {
+            // Ensure both units are visible at the start of player's turn
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             UpdateTurnIndicator("YOUR TURN");
             UpdateActionText("Draw your move!");
             ShowPlayerTurnUI(true);
@@ -378,14 +432,31 @@ namespace SketchBlossom.Battle
                 yield return null;
             }
 
+            Debug.Log("[BATTLE] Player finished drawing, executing move");
+
             // Execute move was already called by OnDrawingCompleted
             while (currentState == BattleState.PlayerExecuting)
             {
                 yield return null;
             }
 
+            Debug.Log("[BATTLE] Player move execution finished");
+
+            // Ensure both units are visible before hiding UI
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             ShowPlayerTurnUI(false);
+
+            // Ensure both units are still visible after hiding UI
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             yield return new WaitForSeconds(turnDelay);
+
+            // Final visibility check before turn ends
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
         }
 
         /// <summary>
@@ -393,6 +464,10 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator EnemyTurn()
         {
+            // Ensure both units are visible at the start of enemy's turn
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             UpdateTurnIndicator("ENEMY TURN");
             ShowEnemyTurnUI(true);
             yield return new WaitForSeconds(turnDelay);
@@ -431,6 +506,11 @@ namespace SketchBlossom.Battle
             ExecuteEnemyMove(selectedMove);
 
             yield return new WaitForSeconds(actionTextDelay);
+
+            // Ensure both units are still visible after enemy attack
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             ShowEnemyTurnUI(false);
         }
 
@@ -561,6 +641,10 @@ namespace SketchBlossom.Battle
             UpdateActionText($"You used {moveData.moveName}! (Quality: {result.qualityRating})");
             yield return new WaitForSeconds(0.5f);
 
+            // Ensure both units are visible before attack animation
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             // PLAY ATTACK ANIMATION WITH THE CAPTURED MOVE DRAWING
             if (attackAnimationManager != null && !moveData.isDefensiveMove && !moveData.isHealingMove)
             {
@@ -569,18 +653,24 @@ namespace SketchBlossom.Battle
 
                 if (playerTransform != null && enemyTransform != null)
                 {
+                    Debug.Log("[BATTLE] Starting attack animation");
                     // Play the attack animation using the drawn move
                     yield return StartCoroutine(attackAnimationManager.PlayAttackAnimation(
                         playerTransform,
                         enemyTransform,
                         moveData
                     ));
+                    Debug.Log("[BATTLE] Attack animation completed");
                 }
                 else
                 {
                     Debug.LogWarning("Could not get unit transforms for attack animation");
                 }
             }
+
+            // Ensure both units are still visible after attack animation
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
 
             // Calculate and apply move effects
             if (moveData.isDefensiveMove)
@@ -607,8 +697,20 @@ namespace SketchBlossom.Battle
                     enemyIsBlocking
                 );
 
-                enemyHPBar.ModifyHP(-damage);
-                enemyHPBar.PlayDamageAnimation();
+                Debug.Log($"[DAMAGE] Player attacks enemy for {damage} damage");
+                Debug.Log($"[HP BEFORE] Enemy HP: {enemyHPBar.GetCurrentHP()}/{enemyHPBar.GetMaxHP()}");
+
+                if (enemyHPBar != null)
+                {
+                    enemyHPBar.ModifyHP(-damage);
+                    enemyHPBar.PlayDamageAnimation();
+                    Debug.Log($"[HP AFTER] Enemy HP: {enemyHPBar.GetCurrentHP()}/{enemyHPBar.GetMaxHP()}");
+                }
+                else
+                {
+                    Debug.LogError("❌ Enemy HP Bar is NULL! Cannot apply damage.");
+                }
+
                 UpdateActionText($"Dealt {damage} damage!");
 
                 if (enemyUnit != null)
@@ -619,11 +721,25 @@ namespace SketchBlossom.Battle
 
             yield return new WaitForSeconds(actionTextDelay);
 
+            // Ensure both units are visible before clearing canvas
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             // Clear the canvas for the next turn
             drawingCanvas.ClearCanvas();
 
+            // Ensure both units are still visible after clearing canvas
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
+
             // Reset blocking state
             enemyIsBlocking = false;
+
+            Debug.Log("[BATTLE] Player move execution complete, transitioning to enemy turn");
+
+            // Ensure both units are visible before state change
+            if (playerUnit != null) playerUnit.EnsureVisible();
+            if (enemyUnit != null) enemyUnit.EnsureVisible();
 
             currentState = BattleState.EnemyTurn;
         }
@@ -657,8 +773,20 @@ namespace SketchBlossom.Battle
                     playerIsBlocking
                 );
 
-                playerHPBar.ModifyHP(-damage);
-                playerHPBar.PlayDamageAnimation();
+                Debug.Log($"[DAMAGE] Enemy attacks player for {damage} damage");
+                Debug.Log($"[HP BEFORE] Player HP: {playerHPBar.GetCurrentHP()}/{playerHPBar.GetMaxHP()}");
+
+                if (playerHPBar != null)
+                {
+                    playerHPBar.ModifyHP(-damage);
+                    playerHPBar.PlayDamageAnimation();
+                    Debug.Log($"[HP AFTER] Player HP: {playerHPBar.GetCurrentHP()}/{playerHPBar.GetMaxHP()}");
+                }
+                else
+                {
+                    Debug.LogError("❌ Player HP Bar is NULL! Cannot apply damage.");
+                }
+
                 UpdateActionText($"{enemyPlantName} dealt {damage} damage!");
 
                 if (playerUnit != null)
@@ -725,13 +853,36 @@ namespace SketchBlossom.Battle
             UpdateTurnIndicator("VICTORY!");
             UpdateActionText("You win!");
 
+            Debug.Log("=== VICTORY! Player wins the battle ===");
+
+            // Ensure player unit stays visible during victory
+            if (playerUnit != null)
+            {
+                playerUnit.EnsureVisible();
+                Debug.Log("Player unit visibility ensured during victory");
+            }
+
+            // Trigger enemy death animation
+            if (enemyUnit != null)
+            {
+                Debug.Log("Triggering enemy death animation");
+                enemyUnit.Die(this);
+            }
+
             // Store enemy plant data for potential taming
             StoreEnemyPlantData();
 
             // Record victory for player's plant in inventory
             RecordPlayerVictory();
 
-            yield return new WaitForSeconds(3f);
+            // Keep ensuring player visibility during the victory wait period
+            yield return new WaitForSeconds(1.5f);
+            if (playerUnit != null)
+            {
+                playerUnit.EnsureVisible();
+            }
+
+            yield return new WaitForSeconds(1.5f);
 
             // Load PostBattleScene to choose Wild Growth or Tame
             SceneManager.LoadScene("PostBattleScene");
@@ -744,10 +895,27 @@ namespace SketchBlossom.Battle
         {
             UpdateTurnIndicator("DEFEAT");
             UpdateActionText("You lost...");
+
+            Debug.Log("=== DEFEAT! Player loses the battle ===");
+
+            // Ensure enemy unit stays visible during defeat
+            if (enemyUnit != null)
+            {
+                enemyUnit.EnsureVisible();
+                Debug.Log("Enemy unit visibility ensured during defeat");
+            }
+
+            // Trigger player death animation
+            if (playerUnit != null)
+            {
+                Debug.Log("Triggering player death animation");
+                playerUnit.Die(this);
+            }
+
             yield return new WaitForSeconds(3f);
 
-            // Return to main menu
-            SceneManager.LoadScene("MainMenu");
+            // Return to world map instead of main menu
+            SceneManager.LoadScene("WorldMapScene");
         }
 
         /// <summary>
@@ -891,9 +1059,20 @@ namespace SketchBlossom.Battle
             [SerializeField] private TextMeshProUGUI unitNameText;
             [SerializeField] private Animator animator;
 
+            private bool isDead = false;
+            private MonoBehaviour coroutineRunner;
+            private Sprite assignedSprite; // Keep reference to prevent garbage collection
+            private string unitIdentifier = "Unknown"; // For debugging which unit this is
+            private bool hasLoggedDeadSkip = false; // Track if we've already logged the dead skip message
+
             public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName, Texture2D drawingTexture = null, bool isPlayerUnit = false)
             {
-                Debug.Log($"BattleUnitDisplay.Initialize() called - IsPlayer:{isPlayerUnit}, HasTexture:{drawingTexture != null}");
+                unitIdentifier = isPlayerUnit ? "PLAYER" : "ENEMY";
+                Debug.Log($"BattleUnitDisplay.Initialize() called - Unit: {unitIdentifier}, HasTexture:{drawingTexture != null}");
+
+                // Reset death state and logging flags
+                isDead = false;
+                hasLoggedDeadSkip = false;
 
                 if (unitNameText != null)
                 {
@@ -906,20 +1085,28 @@ namespace SketchBlossom.Battle
                     return;
                 }
 
+                // Ensure the unit image GameObject is active and visible
+                if (unitImage.gameObject != null)
+                {
+                    unitImage.gameObject.SetActive(true);
+                    Debug.Log($"BattleUnitDisplay: Ensured unitImage GameObject is active");
+                }
+
                 // If we have a drawing texture (player's drawn plant), use it as the sprite
                 if (drawingTexture != null && isPlayerUnit)
                 {
                     Debug.Log($"BattleUnitDisplay: Using player's drawing texture as sprite! Texture size: {drawingTexture.width}x{drawingTexture.height}");
 
-                    // Convert Texture2D to Sprite
-                    Sprite drawingSprite = Texture2DToSprite(drawingTexture);
+                    // Convert Texture2D to Sprite and keep reference
+                    assignedSprite = Texture2DToSprite(drawingTexture);
 
-                    if (drawingSprite != null)
+                    if (assignedSprite != null)
                     {
-                        unitImage.sprite = drawingSprite;
+                        unitImage.sprite = assignedSprite;
                         unitImage.color = Color.white; // Reset color to show texture properly
                         unitImage.preserveAspect = true; // Keep aspect ratio
-                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {drawingSprite.bounds}");
+                        unitImage.enabled = true; // Ensure Image component is enabled
+                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {assignedSprite.bounds}");
                     }
                     else
                     {
@@ -935,6 +1122,56 @@ namespace SketchBlossom.Battle
                         Debug.LogWarning("BattleUnitDisplay: Player unit has no drawing texture! Using fallback color.");
                     }
                     ApplyElementColor(element);
+                    unitImage.enabled = true; // Ensure Image component is enabled
+                }
+
+                // Final check to ensure everything is visible
+                EnsureVisible();
+            }
+
+            /// <summary>
+            /// Ensure the sprite remains visible (call this to prevent disappearing sprites)
+            /// </summary>
+            public void EnsureVisible()
+            {
+                if (isDead)
+                {
+                    // Only log this once to avoid spam
+                    if (!hasLoggedDeadSkip)
+                    {
+                        Debug.Log($"BattleUnitDisplay ({unitIdentifier}): EnsureVisible skipped - unit is dead");
+                        hasLoggedDeadSkip = true;
+                    }
+                    return; // Don't make dead units visible
+                }
+
+                if (unitImage != null)
+                {
+                    // Ensure the Image component is enabled
+                    unitImage.enabled = true;
+
+                    // Ensure the GameObject is active
+                    if (unitImage.gameObject != null && !unitImage.gameObject.activeSelf)
+                    {
+                        unitImage.gameObject.SetActive(true);
+                        Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Had to reactivate unitImage GameObject!");
+                    }
+
+                    // Ensure we still have a sprite assigned
+                    if (unitImage.sprite == null && assignedSprite != null)
+                    {
+                        unitImage.sprite = assignedSprite;
+                        Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Had to reassign sprite!");
+                    }
+
+                    // Ensure alpha is not zero (unless fading out during death)
+                    Color currentColor = unitImage.color;
+                    if (currentColor.a < 0.1f && !isDead)
+                    {
+                        currentColor.a = 1f;
+                        unitImage.color = currentColor;
+                        Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Had to restore alpha from {currentColor.a:F2} to 1.0!");
+                    }
                 }
             }
 
@@ -981,24 +1218,106 @@ namespace SketchBlossom.Battle
 
             public void PlayHitAnimation()
             {
+                // Don't play hit animation if already dead
+                if (isDead) return;
+
                 if (animator != null)
                 {
                     animator.SetTrigger("Hit");
                 }
-                else if (unitImage != null)
+                else if (unitImage != null && coroutineRunner != null)
                 {
                     // Simple shake effect
-                    StartShake();
+                    coroutineRunner.StartCoroutine(ShakeEffect());
                 }
             }
 
-            private void StartShake()
+            /// <summary>
+            /// Mark this unit as dead and play death animation
+            /// </summary>
+            public void Die(MonoBehaviour runner)
             {
-                // Simple implementation - could be enhanced
-                if (unitImage != null)
+                if (isDead)
                 {
-                    // Would need MonoBehaviour context for coroutine
+                    Debug.LogWarning($"BattleUnitDisplay ({unitIdentifier}): Die() called but unit is already dead!");
+                    return; // Already dead, don't fade again
                 }
+
+                isDead = true;
+                Debug.Log($"BattleUnitDisplay ({unitIdentifier}): Unit is dying, starting fade out animation");
+
+                if (runner != null && unitImage != null)
+                {
+                    runner.StartCoroutine(FadeOutEffect());
+                }
+                else
+                {
+                    Debug.LogError($"BattleUnitDisplay ({unitIdentifier}): Cannot start fade - runner or unitImage is null!");
+                }
+            }
+
+            /// <summary>
+            /// Shake effect for taking damage
+            /// </summary>
+            private IEnumerator ShakeEffect()
+            {
+                if (unitImage == null) yield break;
+
+                Vector3 originalPosition = unitImage.transform.localPosition;
+                float shakeDuration = 0.3f;
+                float shakeAmount = 5f;
+                float elapsed = 0f;
+
+                while (elapsed < shakeDuration)
+                {
+                    float x = originalPosition.x + Random.Range(-shakeAmount, shakeAmount);
+                    float y = originalPosition.y + Random.Range(-shakeAmount, shakeAmount);
+                    unitImage.transform.localPosition = new Vector3(x, y, originalPosition.z);
+
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+
+                // Reset to original position
+                unitImage.transform.localPosition = originalPosition;
+            }
+
+            /// <summary>
+            /// Fade out effect when unit dies
+            /// </summary>
+            private IEnumerator FadeOutEffect()
+            {
+                if (unitImage == null)
+                {
+                    Debug.LogError($"BattleUnitDisplay ({unitIdentifier}): FadeOutEffect - unitImage is null!");
+                    yield break;
+                }
+
+                float fadeDuration = 1.0f;
+                float elapsed = 0f;
+                Color originalColor = unitImage.color;
+
+                Debug.Log($"BattleUnitDisplay ({unitIdentifier}): Starting fade from alpha {originalColor.a}");
+
+                while (elapsed < fadeDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float alpha = Mathf.Lerp(1f, 0.2f, elapsed / fadeDuration);
+                    unitImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
+                    yield return null;
+                }
+
+                // Set final alpha
+                unitImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.2f);
+                Debug.Log($"BattleUnitDisplay ({unitIdentifier}): Fade out complete - final alpha: 0.2");
+            }
+
+            /// <summary>
+            /// Set the MonoBehaviour that will run coroutines for this display
+            /// </summary>
+            public void SetCoroutineRunner(MonoBehaviour runner)
+            {
+                coroutineRunner = runner;
             }
 
             /// <summary>
@@ -1011,6 +1330,14 @@ namespace SketchBlossom.Battle
                     return unitImage.transform;
                 }
                 return null;
+            }
+
+            /// <summary>
+            /// Check if this unit is dead
+            /// </summary>
+            public bool IsDead()
+            {
+                return isDead;
             }
         }
     }
