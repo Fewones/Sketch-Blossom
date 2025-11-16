@@ -23,6 +23,9 @@ namespace SketchBlossom.UI
         [SerializeField] private GameObject newGamePrompt;
         [SerializeField] private GameObject continuePrompt;
 
+        [Header("Panels")]
+        [SerializeField] private SettingsPanel settingsPanel;
+
         private void Start()
         {
             SetupButtons();
@@ -116,12 +119,20 @@ namespace SketchBlossom.UI
         }
 
         /// <summary>
-        /// Opens settings (placeholder)
+        /// Opens the settings panel
         /// </summary>
         private void OnSettingsButtonClicked()
         {
-            Debug.Log("Settings clicked - not yet implemented");
-            // TODO: Implement settings scene
+            Debug.Log("Settings clicked");
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.Show();
+            }
+            else
+            {
+                Debug.LogWarning("Settings panel reference not set in MainMenuController");
+            }
         }
 
         /// <summary>
