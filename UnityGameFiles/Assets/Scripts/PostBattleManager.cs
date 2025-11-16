@@ -174,8 +174,9 @@ public class PostBattleManager : MonoBehaviour
         PlayerPrefs.SetString("GrowthMode", "WILD");
         PlayerPrefs.Save();
 
-        // Proceed to next scene
-        StartCoroutine(TransitionToNextScene());
+        // Transition to WildGrowthScene
+        Debug.Log("Loading WildGrowthScene...");
+        SceneManager.LoadScene("WildGrowthScene");
     }
 
     public void OnTameSelected()
@@ -225,16 +226,28 @@ public class PostBattleManager : MonoBehaviour
         PlayerPrefs.SetString("GrowthMode", "TAME");
         PlayerPrefs.Save();
 
-        // Proceed to next scene
-        StartCoroutine(TransitionToNextScene());
+        // Transition to TameScene
+        Debug.Log("Loading TameScene...");
+        SceneManager.LoadScene("TameScene");
     }
 
     private IEnumerator TransitionToNextScene()
     {
         yield return new WaitForSeconds(0.5f);
 
-        if (!string.IsNullOrEmpty(nextSceneName))
+        // Check if this was a world map encounter
+        if (EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.isWorldMapEncounter)
         {
+            // Clear encounter data
+            EnemyEncounterData.Instance.ClearEncounterData();
+
+            // Return to world map
+            Debug.Log("Returning to World Map...");
+            SceneManager.LoadScene("WorldMapScene");
+        }
+        else if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            // Default behavior: return to plant selection scene
             SceneManager.LoadScene(nextSceneName);
         }
         else

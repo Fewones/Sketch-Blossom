@@ -162,22 +162,46 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Load enemy unit (random for now)
+        /// Load enemy unit (from world map encounter or random)
         /// </summary>
         private void LoadEnemyUnit()
         {
-            // Pick a random enemy
-            PlantRecognitionSystem.PlantType[] allPlants = (PlantRecognitionSystem.PlantType[])System.Enum.GetValues(typeof(PlantRecognitionSystem.PlantType));
-            enemyPlantType = allPlants[Random.Range(0, allPlants.Length)];
+            // Check if this is a world map encounter
+            if (EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.isWorldMapEncounter)
+            {
+                // Use the enemy data from the world map encounter
+                enemyPlantType = EnemyEncounterData.Instance.encounterPlantType;
+                enemyElement = EnemyEncounterData.Instance.encounterElement;
+                enemyPlantName = EnemyEncounterData.Instance.encounterDisplayName;
 
-            var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
-            enemyPlantName = plantData.displayName;
-            enemyElement = plantData.element;
-            enemyMaxHP = plantData.baseHP;
-            enemyAttack = plantData.baseAttack;
-            enemyDefense = plantData.baseDefense;
+                // Get base stats and potentially scale by difficulty
+                var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
+                int difficulty = EnemyEncounterData.Instance.encounterDifficulty;
 
-            Debug.Log($"Enemy unit: {enemyPlantName} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
+                // Scale enemy stats based on difficulty (1-5)
+                float difficultyMultiplier = 1.0f + ((difficulty - 1) * 0.15f); // 1.0x to 1.6x
+                enemyMaxHP = Mathf.RoundToInt(plantData.baseHP * difficultyMultiplier);
+                enemyAttack = Mathf.RoundToInt(plantData.baseAttack * difficultyMultiplier);
+                enemyDefense = Mathf.RoundToInt(plantData.baseDefense * difficultyMultiplier);
+
+                Debug.Log($"World Map Encounter! Enemy: {enemyPlantName} (Difficulty: {difficulty}★)");
+                Debug.Log($"Enemy stats: HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense}");
+            }
+            else
+            {
+                // Pick a random enemy (legacy behavior)
+                PlantRecognitionSystem.PlantType[] allPlants = (PlantRecognitionSystem.PlantType[])System.Enum.GetValues(typeof(PlantRecognitionSystem.PlantType));
+                enemyPlantType = allPlants[Random.Range(0, allPlants.Length)];
+
+                var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
+                enemyPlantName = plantData.displayName;
+                enemyElement = plantData.element;
+                enemyMaxHP = plantData.baseHP;
+                enemyAttack = plantData.baseAttack;
+                enemyDefense = plantData.baseDefense;
+
+                Debug.Log($"Random enemy: {enemyPlantName} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
+            }
 
             // Initialize enemy unit display (no drawing texture for enemy)
             if (enemyUnit != null)

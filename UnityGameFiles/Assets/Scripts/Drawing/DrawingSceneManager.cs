@@ -218,7 +218,7 @@ namespace SketchBlossom.Drawing
 
         private void HandleContinue()
         {
-            Debug.Log("DrawingSceneManager: Continue to battle - capturing drawing and loading battle scene");
+            Debug.Log("DrawingSceneManager: Continue - capturing drawing and transitioning to world map");
 
             // Capture the drawing and save it to DrawnUnitData
             CaptureAndSaveDrawing();
@@ -226,9 +226,11 @@ namespace SketchBlossom.Drawing
             // Add the plant to inventory if this is a valid plant
             AddPlantToInventory();
 
+            // Transition to WorldMapScene instead of battle
             if (enableBattleTransition)
             {
-                LoadBattleScene();
+                Debug.Log("Loading WorldMapScene...");
+                SceneManager.LoadScene("WorldMapScene");
             }
             else
             {
@@ -470,17 +472,27 @@ namespace SketchBlossom.Drawing
                 return;
             }
 
-            // Add the plant to inventory
-            PlantInventoryEntry newPlant = inventory.AddPlant(DrawnUnitData.Instance);
+            // Check if this is a brand new plant (inventory empty) or if we should add it
+            int currentPlantCount = inventory.GetPlantCount();
+            Debug.Log($"DrawingScene: Current inventory count: {currentPlantCount}");
 
-            // Set this plant as the selected plant for the first battle
-            if (inventory.GetPlantCount() == 1)
+            // Only add the plant if:
+            // 1. This is the very first plant (inventory is empty), OR
+            // 2. We explicitly want to allow multiple of the same type (for now, just first plant)
+            if (currentPlantCount == 0)
             {
+                // This is the first plant - add it
+                PlantInventoryEntry newPlant = inventory.AddPlant(DrawnUnitData.Instance);
                 inventory.SelectPlant(newPlant.plantId);
-                Debug.Log($"Set {newPlant.plantName} as the selected plant for first battle");
+                Debug.Log($"Added first plant: {newPlant.plantName} to inventory! Total plants: {inventory.GetPlantCount()}");
             }
-
-            Debug.Log($"Added {newPlant.plantName} to inventory! Total plants: {inventory.GetPlantCount()}");
+            else
+            {
+                // Player already has plants - this shouldn't happen in DrawingScene
+                // DrawingScene should only be visited once for the first plant
+                Debug.LogWarning($"Player already has {currentPlantCount} plant(s). Skipping add. DrawingScene should only be for first plant!");
+                Debug.LogWarning("If you see this repeatedly, check your scene flow - you might be returning to DrawingScene incorrectly.");
+            }
         }
 
         #endregion
