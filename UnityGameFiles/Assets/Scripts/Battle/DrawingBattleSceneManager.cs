@@ -157,6 +157,7 @@ namespace SketchBlossom.Battle
             // Initialize player unit display with drawing texture
             if (playerUnit != null)
             {
+                playerUnit.SetCoroutineRunner(this);
                 playerUnit.Initialize(playerPlantType, playerElement, playerPlantName, playerDrawingTexture, true);
             }
         }
@@ -206,6 +207,7 @@ namespace SketchBlossom.Battle
             // Initialize enemy unit display (no drawing texture for enemy)
             if (enemyUnit != null)
             {
+                enemyUnit.SetCoroutineRunner(this);
                 enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName, null, false);
             }
         }
@@ -725,6 +727,12 @@ namespace SketchBlossom.Battle
             UpdateTurnIndicator("VICTORY!");
             UpdateActionText("You win!");
 
+            // Trigger enemy death animation
+            if (enemyUnit != null)
+            {
+                enemyUnit.Die(this);
+            }
+
             // Store enemy plant data for potential taming
             StoreEnemyPlantData();
 
@@ -744,10 +752,17 @@ namespace SketchBlossom.Battle
         {
             UpdateTurnIndicator("DEFEAT");
             UpdateActionText("You lost...");
+
+            // Trigger player death animation
+            if (playerUnit != null)
+            {
+                playerUnit.Die(this);
+            }
+
             yield return new WaitForSeconds(3f);
 
-            // Return to main menu
-            SceneManager.LoadScene("MainMenu");
+            // Return to world map instead of main menu
+            SceneManager.LoadScene("WorldMapScene");
         }
 
         /// <summary>
@@ -891,9 +906,15 @@ namespace SketchBlossom.Battle
             [SerializeField] private TextMeshProUGUI unitNameText;
             [SerializeField] private Animator animator;
 
+            private bool isDead = false;
+            private MonoBehaviour coroutineRunner;
+
             public void Initialize(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element, string displayName, Texture2D drawingTexture = null, bool isPlayerUnit = false)
             {
                 Debug.Log($"BattleUnitDisplay.Initialize() called - IsPlayer:{isPlayerUnit}, HasTexture:{drawingTexture != null}");
+
+                // Reset death state
+                isDead = false;
 
                 if (unitNameText != null)
                 {
@@ -904,6 +925,13 @@ namespace SketchBlossom.Battle
                 {
                     Debug.LogError("BattleUnitDisplay: unitImage is NULL! Cannot display sprite.");
                     return;
+                }
+
+                // Ensure the unit image GameObject is active and visible
+                if (unitImage.gameObject != null)
+                {
+                    unitImage.gameObject.SetActive(true);
+                    Debug.Log($"BattleUnitDisplay: Ensured unitImage GameObject is active");
                 }
 
                 // If we have a drawing texture (player's drawn plant), use it as the sprite
@@ -981,24 +1009,94 @@ namespace SketchBlossom.Battle
 
             public void PlayHitAnimation()
             {
+                // Don't play hit animation if already dead
+                if (isDead) return;
+
                 if (animator != null)
                 {
                     animator.SetTrigger("Hit");
                 }
-                else if (unitImage != null)
+                else if (unitImage != null && coroutineRunner != null)
                 {
                     // Simple shake effect
-                    StartShake();
+                    coroutineRunner.StartCoroutine(ShakeEffect());
                 }
             }
 
-            private void StartShake()
+            /// <summary>
+            /// Mark this unit as dead and play death animation
+            /// </summary>
+            public void Die(MonoBehaviour runner)
             {
-                // Simple implementation - could be enhanced
-                if (unitImage != null)
+                if (isDead) return; // Already dead, don't fade again
+
+                isDead = true;
+                Debug.Log($"BattleUnitDisplay: Unit is dying, starting fade out animation");
+
+                if (runner != null && unitImage != null)
                 {
-                    // Would need MonoBehaviour context for coroutine
+                    runner.StartCoroutine(FadeOutEffect());
                 }
+            }
+
+            /// <summary>
+            /// Shake effect for taking damage
+            /// </summary>
+            private IEnumerator ShakeEffect()
+            {
+                if (unitImage == null) yield break;
+
+                Vector3 originalPosition = unitImage.transform.localPosition;
+                float shakeDuration = 0.3f;
+                float shakeAmount = 5f;
+                float elapsed = 0f;
+
+                while (elapsed < shakeDuration)
+                {
+                    float x = originalPosition.x + Random.Range(-shakeAmount, shakeAmount);
+                    float y = originalPosition.y + Random.Range(-shakeAmount, shakeAmount);
+                    unitImage.transform.localPosition = new Vector3(x, y, originalPosition.z);
+
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+
+                // Reset to original position
+                unitImage.transform.localPosition = originalPosition;
+            }
+
+            /// <summary>
+            /// Fade out effect when unit dies
+            /// </summary>
+            private IEnumerator FadeOutEffect()
+            {
+                if (unitImage == null) yield break;
+
+                float fadeDuration = 1.0f;
+                float elapsed = 0f;
+                Color originalColor = unitImage.color;
+
+                Debug.Log($"BattleUnitDisplay: Starting fade from alpha {originalColor.a}");
+
+                while (elapsed < fadeDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float alpha = Mathf.Lerp(1f, 0.2f, elapsed / fadeDuration);
+                    unitImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
+                    yield return null;
+                }
+
+                // Set final alpha
+                unitImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.2f);
+                Debug.Log($"BattleUnitDisplay: Fade out complete");
+            }
+
+            /// <summary>
+            /// Set the MonoBehaviour that will run coroutines for this display
+            /// </summary>
+            public void SetCoroutineRunner(MonoBehaviour runner)
+            {
+                coroutineRunner = runner;
             }
 
             /// <summary>
@@ -1011,6 +1109,14 @@ namespace SketchBlossom.Battle
                     return unitImage.transform;
                 }
                 return null;
+            }
+
+            /// <summary>
+            /// Check if this unit is dead
+            /// </summary>
+            public bool IsDead()
+            {
+                return isDead;
             }
         }
     }
