@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         // Move the player using physics
-        rb.velocity = movement * moveSpeed;
+        rb.linearVelocity = movement * moveSpeed;
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ public class PlayerController : MonoBehaviour
         this.enabled = enabled;
         if (!enabled)
         {
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
             movement = Vector2.zero;
         }
     }

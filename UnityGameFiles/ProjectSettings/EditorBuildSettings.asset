@@ -6,14 +6,26 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/MainMenuScene.unity
+    guid: 3f033c7ed42dd4e3fb362a8f3c1ad8f2
+  - enabled: 1
     path: Assets/Scenes/DrawingScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1
     path: Assets/Scenes/DrawingBattleScene.unity
     guid: b5aba6cebe99ddc4fb5044d975d0e936
   - enabled: 1
-    path: Assets/Scenes/MainMenuScene.unity
-    guid: 3f033c7ed42dd4e3fb362a8f3c1ad8f2
+    path: Assets/Scenes/PlantSelectionScene.unity
+    guid: 2552837c7ec3648bda3a865cc562221b
+  - enabled: 1
+    path: Assets/Scenes/PostBattleScene.unity
+    guid: d3fec56e18abf8e45bc33d2b9cda5c00
+  - enabled: 1
+    path: Assets/Scenes/WorldMapScene.unity
+    guid: 6445abf805dfd4b6491106b64887805a
+  - enabled: 1
+    path: Assets/Scenes/InventoryScene.unity
+    guid: 16f95a8985b5941259177d27b8159658
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 3590b91b4603b465dbb4216d601bff33, type: 3}
   m_UseUCBPForAssetBundles: 0
