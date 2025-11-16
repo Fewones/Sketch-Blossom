@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -7706788487438311687, guid: 1ddc9afd21fec77489b1248d18f31b68, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1d5c2b524d7734240a82bc6b06f841c8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -131,7 +131,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.32, y: 0.32}
+    oldSize: {x: 0.37, y: 0.65}
     newSize: {x: 0.32, y: 0.32}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -156,7 +156,7 @@ MonoBehaviour:
   enemyDisplayName: 
   difficulty: 1
   flavorText: 
-  interactionRange: 2
+  interactionRange: 1
   interactionKey: 101
   interactionPrompt: {fileID: 6162482825631162576}
   spriteRenderer: {fileID: 0}
