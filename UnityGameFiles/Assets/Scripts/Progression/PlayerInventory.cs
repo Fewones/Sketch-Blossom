@@ -254,6 +254,30 @@ namespace SketchBlossom.Progression
             SaveInventory();
         }
 
+        /// <summary>
+        /// Removes a plant from the inventory (permanent death in rogue-like)
+        /// </summary>
+        public void RemovePlant(string plantId)
+        {
+            PlantInventoryEntry plant = GetPlantById(plantId);
+            if (plant == null)
+            {
+                Debug.LogError($"Cannot remove plant with ID {plantId} - not found");
+                return;
+            }
+
+            plants.Remove(plant);
+
+            // Clear selection if this was the selected plant
+            if (selectedPlantId == plantId)
+            {
+                selectedPlantId = "";
+            }
+
+            Debug.Log($"Removed {plant.plantName} from inventory (permanent death). Remaining plants: {plants.Count}");
+            SaveInventory();
+        }
+
         #endregion
 
         #region Applying to Battle
