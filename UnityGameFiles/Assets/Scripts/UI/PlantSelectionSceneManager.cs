@@ -77,10 +77,12 @@ namespace SketchBlossom.UI
             ClearPlantCards();
 
             List<PlantInventoryEntry> plants = inventory.GetAllPlants();
+            Debug.Log($"PlantSelectionScene: Refreshing with {plants.Count} plants in inventory");
 
             // Show empty state if no plants
             if (plants.Count == 0)
             {
+                Debug.Log("PlantSelectionScene: No plants found - showing empty state");
                 ShowEmptyState();
                 return;
             }
@@ -94,11 +96,15 @@ namespace SketchBlossom.UI
             // Get currently selected plant from inventory
             PlantInventoryEntry currentSelection = inventory.GetSelectedPlant();
             if (currentSelection != null)
+            {
                 selectedPlant = currentSelection;
+                Debug.Log($"PlantSelectionScene: Pre-selected plant: {selectedPlant.plantName}");
+            }
 
             // Create a card for each plant
             foreach (PlantInventoryEntry plant in plants)
             {
+                Debug.Log($"PlantSelectionScene: Creating card for {plant.plantName} (ID: {plant.plantId})");
                 CreatePlantCard(plant);
             }
 
@@ -344,6 +350,11 @@ namespace SketchBlossom.UI
 
             if (emptyStatePanel != null)
                 emptyStatePanel.SetActive(false);
+
+            // Ensure selected plant panel is initially hidden
+            // It will be shown when a plant is selected
+            if (selectedPlantPanel != null && selectedPlant == null)
+                selectedPlantPanel.SetActive(false);
         }
 
         /// <summary>
