@@ -51,9 +51,9 @@ namespace SketchBlossom.Progression
             elementType = plantData.element;
             plantName = plantData.displayName;
 
-            maxHealth = plantData.hp;
-            attack = plantData.atk;
-            defense = plantData.def;
+            maxHealth = plantData.baseHP;
+            attack = plantData.baseAttack;
+            defense = plantData.baseDefense;
             currentHealth = maxHealth;
 
             level = 1;
