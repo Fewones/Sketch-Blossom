@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using SketchBlossom.Progression;
 
 namespace SketchBlossom.Battle
 {
@@ -699,10 +700,17 @@ namespace SketchBlossom.Battle
         {
             UpdateTurnIndicator("VICTORY!");
             UpdateActionText("You win!");
+
+            // Store enemy plant data for potential taming
+            StoreEnemyPlantData();
+
+            // Record victory for player's plant in inventory
+            RecordPlayerVictory();
+
             yield return new WaitForSeconds(3f);
 
-            // Return to main menu or next scene
-            SceneManager.LoadScene("MainMenu");
+            // Load PostBattleScene to choose Wild Growth or Tame
+            SceneManager.LoadScene("PostBattleScene");
         }
 
         /// <summary>
@@ -716,6 +724,73 @@ namespace SketchBlossom.Battle
 
             // Return to main menu
             SceneManager.LoadScene("MainMenu");
+        }
+
+        /// <summary>
+        /// Stores enemy plant data in EnemyUnitData singleton for potential taming
+        /// </summary>
+        private void StoreEnemyPlantData()
+        {
+            // Create or find EnemyUnitData singleton
+            if (EnemyUnitData.Instance == null)
+            {
+                GameObject enemyDataObj = new GameObject("EnemyUnitData");
+                enemyDataObj.AddComponent<EnemyUnitData>();
+            }
+
+            if (EnemyUnitData.Instance != null)
+            {
+                // Get color based on element
+                Color enemyColor = GetElementColor(enemyElement);
+
+                // Store enemy data
+                EnemyUnitData.Instance.SetPlantData(
+                    enemyPlantType,
+                    enemyElement,
+                    enemyPlantName,
+                    enemyMaxHP,
+                    enemyAttack,
+                    enemyDefense,
+                    enemyColor
+                );
+
+                Debug.Log($"Stored enemy plant data: {enemyPlantName} for potential taming");
+            }
+        }
+
+        /// <summary>
+        /// Records the victory for the player's plant in the inventory
+        /// </summary>
+        private void RecordPlayerVictory()
+        {
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory != null)
+            {
+                PlantInventoryEntry selectedPlant = inventory.GetSelectedPlant();
+                if (selectedPlant != null)
+                {
+                    inventory.RecordVictory(selectedPlant.plantId);
+                    Debug.Log($"Recorded victory for {selectedPlant.plantName}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a color based on element type
+        /// </summary>
+        private Color GetElementColor(PlantRecognitionSystem.ElementType element)
+        {
+            switch (element)
+            {
+                case PlantRecognitionSystem.ElementType.Fire:
+                    return new Color(1f, 0.3f, 0.2f); // Red
+                case PlantRecognitionSystem.ElementType.Water:
+                    return new Color(0.2f, 0.5f, 1f); // Blue
+                case PlantRecognitionSystem.ElementType.Grass:
+                    return new Color(0.3f, 0.9f, 0.3f); // Green
+                default:
+                    return Color.gray;
+            }
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using SketchBlossom.Battle;
+using SketchBlossom.Progression;
 
 namespace SketchBlossom.Drawing
 {
@@ -222,6 +223,9 @@ namespace SketchBlossom.Drawing
             // Capture the drawing and save it to DrawnUnitData
             CaptureAndSaveDrawing();
 
+            // Add the plant to inventory if this is a valid plant
+            AddPlantToInventory();
+
             if (enableBattleTransition)
             {
                 LoadBattleScene();
@@ -441,6 +445,42 @@ namespace SketchBlossom.Drawing
 
             Debug.Log($"Loading battle scene: {battleSceneName}");
             SceneManager.LoadScene(battleSceneName);
+        }
+
+        /// <summary>
+        /// Adds the drawn plant to the player's inventory
+        /// Only adds if the inventory is empty (first plant) or if this is a new unique plant
+        /// </summary>
+        private void AddPlantToInventory()
+        {
+            // Create or find PlayerInventory instance
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory == null)
+            {
+                // Create the inventory singleton if it doesn't exist
+                GameObject inventoryObj = new GameObject("PlayerInventory");
+                inventory = inventoryObj.AddComponent<PlayerInventory>();
+                Debug.Log("Created PlayerInventory instance");
+            }
+
+            // Check if we have valid plant data
+            if (DrawnUnitData.Instance == null || !DrawnUnitData.Instance.HasData())
+            {
+                Debug.LogWarning("No plant data to add to inventory!");
+                return;
+            }
+
+            // Add the plant to inventory
+            PlantInventoryEntry newPlant = inventory.AddPlant(DrawnUnitData.Instance);
+
+            // Set this plant as the selected plant for the first battle
+            if (inventory.GetPlantCount() == 1)
+            {
+                inventory.SelectPlant(newPlant.plantId);
+                Debug.Log($"Set {newPlant.plantName} as the selected plant for first battle");
+            }
+
+            Debug.Log($"Added {newPlant.plantName} to inventory! Total plants: {inventory.GetPlantCount()}");
         }
 
         #endregion

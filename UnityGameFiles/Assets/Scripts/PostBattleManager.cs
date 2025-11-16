@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using SketchBlossom.Progression;
 
 public class PostBattleManager : MonoBehaviour
 {
@@ -25,7 +26,7 @@ public class PostBattleManager : MonoBehaviour
     [SerializeField] private Button closeGuideButton;
 
     [Header("Scene Settings")]
-    [SerializeField] private string nextSceneName = "DrawingScene";
+    [SerializeField] private string nextSceneName = "PlantSelectionScene";
 
     private int currentPage = 0;
     private readonly string[] pageTitles = new string[]
@@ -147,22 +148,84 @@ public class PostBattleManager : MonoBehaviour
     public void OnWildGrowthSelected()
     {
         Debug.Log("Wild Growth selected!");
+
+        // Get the inventory instance
+        PlayerInventory inventory = PlayerInventory.Instance;
+        if (inventory == null)
+        {
+            Debug.LogError("PlayerInventory not found! Cannot apply Wild Growth.");
+            return;
+        }
+
+        // Get the currently selected plant
+        PlantInventoryEntry selectedPlant = inventory.GetSelectedPlant();
+        if (selectedPlant != null)
+        {
+            // Apply Wild Growth upgrade
+            inventory.ApplyWildGrowth(selectedPlant.plantId);
+            Debug.Log($"Applied Wild Growth to {selectedPlant.plantName}!");
+        }
+        else
+        {
+            Debug.LogWarning("No plant selected for Wild Growth!");
+        }
+
         // Store the choice
         PlayerPrefs.SetString("GrowthMode", "WILD");
         PlayerPrefs.Save();
 
-        // Proceed to next scene or apply wild growth effect
+        // Proceed to next scene
         StartCoroutine(TransitionToNextScene());
     }
 
     public void OnTameSelected()
     {
         Debug.Log("Tame selected!");
+
+        // Get the inventory instance
+        PlayerInventory inventory = PlayerInventory.Instance;
+        if (inventory == null)
+        {
+            Debug.LogError("PlayerInventory not found! Cannot tame plant.");
+            return;
+        }
+
+        // Get the enemy plant data
+        if (EnemyUnitData.Instance != null && EnemyUnitData.Instance.HasData())
+        {
+            // Create plant data from enemy
+            PlantRecognitionSystem.PlantData enemyPlantData = new PlantRecognitionSystem.PlantData(
+                EnemyUnitData.Instance.plantType,
+                EnemyUnitData.Instance.element,
+                EnemyUnitData.Instance.plantDisplayName,
+                EnemyUnitData.Instance.health,
+                EnemyUnitData.Instance.attack,
+                EnemyUnitData.Instance.defense,
+                ""
+            );
+
+            // Add to inventory
+            PlantInventoryEntry tamedPlant = inventory.AddPlant(
+                enemyPlantData,
+                EnemyUnitData.Instance.unitColor,
+                null // Enemy doesn't have a drawing texture
+            );
+
+            Debug.Log($"Tamed {tamedPlant.plantName} and added to inventory!");
+
+            // Clear enemy data
+            EnemyUnitData.Instance.Clear();
+        }
+        else
+        {
+            Debug.LogWarning("No enemy plant data found to tame!");
+        }
+
         // Store the choice
         PlayerPrefs.SetString("GrowthMode", "TAME");
         PlayerPrefs.Save();
 
-        // Proceed to next scene or add unit to roster
+        // Proceed to next scene
         StartCoroutine(TransitionToNextScene());
     }
 
