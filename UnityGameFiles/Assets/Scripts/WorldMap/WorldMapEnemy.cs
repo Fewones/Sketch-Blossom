@@ -57,11 +57,71 @@ public class WorldMapEnemy : MonoBehaviour
         // Find the scene manager
         sceneManager = FindObjectOfType<WorldMapSceneManager>();
 
+        // Create interaction prompt if it doesn't exist
+        if (interactionPrompt == null)
+        {
+            CreateInteractionPrompt();
+        }
+
         // Hide interaction prompt initially
         if (interactionPrompt != null)
         {
             interactionPrompt.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// Dynamically creates a simple interaction prompt above the enemy
+    /// </summary>
+    private void CreateInteractionPrompt()
+    {
+        // Create a simple world space canvas for the prompt
+        GameObject promptObj = new GameObject("InteractionPrompt");
+        promptObj.transform.SetParent(transform);
+        promptObj.transform.localPosition = new Vector3(0, 1.5f, 0); // Above the enemy
+
+        Canvas canvas = promptObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+
+        // Make it small in world space (1 unit = reasonable size)
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+        canvasRect.sizeDelta = new Vector2(2f, 0.5f); // 2 units wide, 0.5 units tall
+        canvasRect.localScale = new Vector3(0.01f, 0.01f, 0.01f); // Scale down for crisp text
+
+        // Add text
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(promptObj.transform);
+
+        UnityEngine.UI.Text text = textObj.AddComponent<UnityEngine.UI.Text>();
+        text.text = "Press E";
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.fontSize = 24;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.color = Color.white;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+
+        RectTransform textRect = text.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        // Add background panel for visibility
+        GameObject bgObj = new GameObject("Background");
+        bgObj.transform.SetParent(promptObj.transform);
+        bgObj.transform.SetAsFirstSibling(); // Behind text
+
+        UnityEngine.UI.Image bgImage = bgObj.AddComponent<UnityEngine.UI.Image>();
+        bgImage.color = new Color(0, 0, 0, 0.7f); // Semi-transparent black
+
+        RectTransform bgRect = bgImage.GetComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.offsetMin = Vector2.zero;
+        bgRect.offsetMax = Vector2.zero;
+
+        interactionPrompt = promptObj;
     }
 
     private void Update()

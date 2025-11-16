@@ -2,6 +2,28 @@
 
 This guide will help you set up the World Map scene in Unity for Sketch Blossom.
 
+## 🚀 Quick Fixes for Common Issues
+
+### Issue: Scene transitions don't work (still using old flow)
+**✅ FIXED!** The Build Settings have been updated to include all scenes.
+- Just restart Unity or reload the scene
+- All scene transitions should now work properly
+
+### Issue: "Press E" UI is too large / off-screen
+**✅ FIXED!** The interaction prompt is now auto-created with proper scaling.
+- **Quick fix:** Set Main Camera **Orthographic Size to 8-10**
+- Camera must be Orthographic (not Perspective)
+- The prompt will appear as a small label above enemies
+
+### Issue: World map appears too small
+**Solution:** Increase the Main Camera's **Orthographic Size**
+- Select Main Camera in WorldMapScene
+- Inspector → Camera → Projection: Orthographic
+- Orthographic Size: Set to **8** (default is 5)
+- Higher values = wider field of view
+
+---
+
 ## Overview
 
 The World Map system allows players to:
@@ -51,25 +73,20 @@ All scripts are located in `Assets/Scripts/WorldMap/`:
 1. Create an empty GameObject: `GameObject > Create Empty`
 2. Name it `EnemyPrefab`
 3. Add a **SpriteRenderer** component
-4. Add a **BoxCollider2D** component (for collision detection)
+   - Create a simple colored sprite (temp placeholder): `Sprite > Create > Sprites > Square`
+   - Set color based on element (red/blue/green)
+   - Scale to about `(1, 1, 1)`
+4. Add a **BoxCollider2D** component
+   - Size: `(1, 1)` to match the sprite
 5. Attach the **WorldMapEnemy** script
 6. Configure WorldMapEnemy settings in Inspector:
    - Interaction Range: `2.0`
    - Interaction Key: `E`
-7. Create a Canvas as a child of EnemyPrefab:
-   - Right-click EnemyPrefab > `UI > Canvas`
-   - Set Canvas Render Mode to `World Space`
-   - Set Canvas width/height to `100x30`
-   - Position it above the enemy sprite (Y: 1.5)
-8. Add a TextMeshProUGUI as a child of the Canvas:
-   - Name it `InteractionPrompt`
-   - Text: `"Press E to Interact"`
-   - Font Size: `12`
-   - Alignment: Center
-   - Auto Size: Enabled
-9. Link the `InteractionPrompt` GameObject to the WorldMapEnemy script's `interactionPrompt` field
-10. Drag the EnemyPrefab to `Assets/Prefabs/` to create a prefab
-11. Delete the original from the scene
+   - **Note:** The "Press E" prompt will be created automatically!
+7. Drag the EnemyPrefab to `Assets/Prefabs/` to create a prefab
+8. Delete the original from the scene
+
+**The interaction prompt is now created automatically by the script - no manual setup needed!**
 
 ### Step 4: Create Battle Preview UI
 
@@ -217,20 +234,31 @@ On each WorldMapEnemy:
 On PlayerController:
 - **Move Speed**: Adjust player movement speed (default: 5)
 
-## Camera Setup
+## Camera Setup ⚠️ IMPORTANT
+
+**Proper camera setup is crucial for the world map to look correct!**
 
 For a top-down view:
-1. Select Main Camera
+1. Select **Main Camera** in the WorldMapScene
 2. Set Position: `(0, 0, -10)`
 3. Set Rotation: `(0, 0, 0)`
-4. Set Projection to Orthographic
-5. Orthographic Size: `5` (adjust to fit your map)
+4. **Set Projection to Orthographic** (not Perspective!)
+5. **Orthographic Size: `5`** (This is the key setting!)
+   - If UI appears too large: **Increase** this value (try 7-10)
+   - If everything is too small: **Decrease** this value (try 3-4)
+   - Recommended range: 5-8 for comfortable play
+
+**Quick Fix for "UI Too Large" Issue:**
+- The most common issue is Orthographic Size being too small
+- Try setting it to `8` or `10` if the interaction prompt looks huge
+- This gives you a wider field of view
 
 Optional: Add **Cinemachine Virtual Camera** to follow the player:
 1. Install Cinemachine package: `Window > Package Manager > Cinemachine > Install`
 2. `GameObject > Cinemachine > 2D Camera`
 3. Set Follow target to Player
-4. Adjust Dead Zone and Soft Zone as needed
+4. Set Orthographic Size to `8`
+5. Adjust Dead Zone and Soft Zone as needed
 
 ## Troubleshooting
 
@@ -249,10 +277,35 @@ Optional: Add **Cinemachine Virtual Camera** to follow the player:
 - Verify all UI elements are linked in Inspector
 - Check Console for errors
 
-### Scene doesn't transition
-- Verify scene names are correct: "PlantSelectionScene", "DrawingBattleScene", "WorldMapScene"
-- Check that all scenes are added to Build Settings
-- Look for errors in Console
+### Scene doesn't transition (FIXED!)
+**This issue has been fixed by updating the Build Settings.**
+- ✅ All scenes are now registered in Build Settings
+- ✅ Scene transitions will work properly
+- If still having issues:
+  - Check Unity Console for "Scene ... could not be loaded" errors
+  - Verify scene names match exactly: "WorldMapScene" (case-sensitive)
+  - Make sure you saved the WorldMapScene after setting it up
+
+### "Press E" prompt is too large / off-screen
+**This issue is now automatically fixed!**
+- ✅ The interaction prompt is now created dynamically with proper scaling
+- ✅ World space UI is now properly sized (0.01x scale)
+- If the prompt still looks too large:
+  1. **Increase Camera Orthographic Size** to 8-10
+  2. Check that the camera is set to Orthographic (not Perspective)
+  3. The prompt should appear as a small label above enemies
+
+### BattlePreviewUI popup is too large
+- The popup is screen-space and should scale correctly
+- Check Canvas Scaler is set to "Scale With Screen Size"
+- Reference Resolution should be 1920x1080
+- If still too large, reduce the popup panel width/height (try 400x300)
+
+### Enemies spawn but can't see them
+- Check Camera Orthographic Size (increase it to see more area)
+- Verify enemy positions are near (0, 0, 0)
+- Add a colored sprite to enemies for visibility
+- Check that enemies have SpriteRenderer with a sprite assigned
 
 ### Enemy stats aren't scaling with difficulty
 - Check that EnemyEncounterData singleton exists in scene
