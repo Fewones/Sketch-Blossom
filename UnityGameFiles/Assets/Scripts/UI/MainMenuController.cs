@@ -28,6 +28,10 @@ namespace SketchBlossom.UI
 
         private void Start()
         {
+            // Rogue-like behavior: Reset inventory when returning to main menu
+            // This ensures each run starts fresh
+            ResetGameProgress();
+
             SetupButtons();
             UpdateUI();
         }
