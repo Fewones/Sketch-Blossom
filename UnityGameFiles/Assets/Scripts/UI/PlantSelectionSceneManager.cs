@@ -46,9 +46,50 @@ namespace SketchBlossom.UI
                 return;
             }
 
+            // Initialize UI state - hide selected plant panel initially
+            if (selectedPlantPanel != null)
+            {
+                selectedPlantPanel.SetActive(false);
+            }
+
+            // Setup grid layout if not configured
+            EnsureGridLayoutSetup();
+
             // Setup UI
             SetupButtons();
             RefreshPlantSelection();
+        }
+
+        /// <summary>
+        /// Ensures the plant grid container has a GridLayoutGroup component
+        /// </summary>
+        private void EnsureGridLayoutSetup()
+        {
+            if (plantGridContainer == null)
+            {
+                Debug.LogError("PlantGridContainer is not assigned!");
+                return;
+            }
+
+            // Check if GridLayoutGroup exists
+            GridLayoutGroup gridLayout = plantGridContainer.GetComponent<GridLayoutGroup>();
+            if (gridLayout == null)
+            {
+                // Add GridLayoutGroup if missing
+                gridLayout = plantGridContainer.gameObject.AddComponent<GridLayoutGroup>();
+                Debug.LogWarning("GridLayoutGroup was missing on plantGridContainer - added automatically");
+            }
+
+            // Configure grid layout settings
+            gridLayout.cellSize = new Vector2(200, 250); // Adjust based on your card size
+            gridLayout.spacing = new Vector2(20, 20);
+            gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            gridLayout.childAlignment = TextAnchor.UpperLeft;
+            gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            gridLayout.constraintCount = 3; // 3 columns
+
+            Debug.Log("Grid layout configured: 3 columns, 200x250 cells, 20px spacing");
         }
 
         private void SetupButtons()
@@ -93,13 +134,10 @@ namespace SketchBlossom.UI
             if (titleText != null)
                 titleText.text = "Choose Your Plant";
 
-            // Get currently selected plant from inventory
-            PlantInventoryEntry currentSelection = inventory.GetSelectedPlant();
-            if (currentSelection != null)
-            {
-                selectedPlant = currentSelection;
-                Debug.Log($"PlantSelectionScene: Pre-selected plant: {selectedPlant.plantName}");
-            }
+            // Don't pre-select any plant - player must choose
+            // (Inventory remembers last selection, but UI should start fresh)
+            selectedPlant = null;
+            Debug.Log("PlantSelectionScene: No plant pre-selected - player must choose");
 
             // Create a card for each plant
             foreach (PlantInventoryEntry plant in plants)
@@ -108,7 +146,7 @@ namespace SketchBlossom.UI
                 CreatePlantCard(plant);
             }
 
-            // Update selection display
+            // Update selection display (should hide panel since selectedPlant is null)
             UpdateSelectionDisplay();
         }
 
