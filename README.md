@@ -436,274 +436,296 @@ UnityGameFiles/
 
 ---
 
-## 🚀 **NEXT IMPLEMENTATION PRIORITIES**
+## 🚀 **PROTOTYPE DEVELOPMENT PRIORITIES** (Target: February 2026)
 
-The core game is **feature-complete and playable**. The following enhancements would improve player experience and production quality:
+The core game is **feature-complete and playable**. The focus now is on **refining the core gameplay loop** for a polished prototype. Audio, content expansion, and meta features can wait until after the prototype is validated.
 
-### **Priority 1: Audio System** 🔊
-**Impact:** High | **Effort:** Medium
+### **Priority 1: Move Detection Refinement** 🎨
+**Impact:** Critical | **Effort:** Medium | **Target:** December 2025
 
-- [ ] **Sound Effects**
-  - Drawing strokes (brush sounds)
-  - Move recognition success/failure
-  - Attack impact sounds (fireball woosh, water splash, vine whip)
-  - Type advantage indicators ("super effective" chime)
-  - Plant selection and UI interactions
+**Current System:**
+- Moves detected by shape only (circles, lines, curves)
+- Color is ignored during move detection
+- 27 moves with shape-based patterns
 
-- [ ] **Music System**
-  - Main menu theme
-  - World map exploration music
-  - Battle music (adaptive based on HP levels)
-  - Victory/defeat stingers
-  - Upgrade/tame celebration themes
+**Required Enhancements:**
 
-- [ ] **Implementation Notes**
-  - Use Unity AudioSource and AudioMixer
-  - Integrate with existing `MoveExecutor.cs:99-112` (effectiveness feedback)
-  - Add audio events to `DrawingBattleSceneManager.cs` state transitions
+- [ ] **Color-Based Move Detection**
+  - **Problem:** Players can't express creativity with colors during battle
+  - **Solution:** Integrate color analysis into move recognition
+  - Example: Red fireball vs orange fireball (intensity variation)
+  - Example: Light blue vs dark blue water splash (different variants)
+  - **Implementation:**
+    - Extend `MovesetDetector.cs` to analyze drawing colors
+    - Add color scoring to move confidence calculation
+    - Update `MoveData.cs` to include expected color ranges per move
 
----
+- [ ] **Refined Move Patterns**
+  - **Problem:** Some moves are too similar (hard to distinguish)
+  - **Solution:** Make each move more distinct in pattern + color
+  - Add color requirements to move validation
+  - Tighten pattern matching for clearer feedback
+  - **Files to update:**
+    - `MovesetDetector.cs:126-407` - Pattern scoring functions
+    - `MoveRecognitionSystem.cs` - Quality calculation with color
 
-### **Priority 2: Particle Effects & VFX** ✨
-**Impact:** High | **Effort:** Medium-High
-
-- [ ] **Move Visual Effects**
-  - Currently: Color flashes only (defined in `MoveData.cs:40-56`)
-  - **Needed:** Actual particle systems per effect type:
-    - **Flames**: Fire particles, ember trails, heat distortion
-    - **Water**: Splash particles, droplets, ripple effects
-    - **Grass**: Leaf particles, vine animations, pollen effects
-    - **Lightning**: Electric arcs, spark bursts
-    - **Crystals**: Shard explosions, glitter
-
-- [ ] **Environmental Effects**
-  - Battle background atmosphere (floating particles)
-  - Type-based battlefield tints (red for fire, blue for water)
-  - HP critical state effects (plant wilting animations)
-
-- [ ] **UI Effects**
-  - Damage number pop-ups (with scaling based on effectiveness)
-  - Stat upgrade glow effects (Wild Growth scene)
-  - Plant taming capture animation
-
-- [ ] **Implementation Notes**
-  - Create prefabs for each `VisualEffect` enum type
-  - Integrate with `MoveExecutor.cs:144-162` (animation execution)
-  - Add to `DrawingBattleSceneManager.cs:1195-1224` (move animation system)
+- [ ] **Visual Feedback During Drawing**
+  - Show color indicator while drawing moves
+  - Real-time preview of detected color/pattern match
+  - "Too red - try lighter" or "Good color match!" feedback
 
 ---
 
-### **Priority 3: Enhanced Enemy AI** 🤖
-**Impact:** Medium | **Effort:** Low-Medium
+### **Priority 2: Plant Recognition Enhancement (ML Model)** 🌺
+**Impact:** Critical | **Effort:** High | **Target:** January 2026
+
+**Current System:**
+- Rule-based pattern matching (simple thresholds)
+- Limited to 9 plant types with rigid requirements
+- Binary validation (pass/fail)
+
+**Required Transformation:**
+
+- [ ] **Machine Learning Model Integration**
+  - **Problem:** Current system is too rigid, rejects valid creative drawings
+  - **Solution:** Train ML model to recognize plants from full-color drawings
+  - **Goals:**
+    - Accept wider variety of drawing styles
+    - Encourage better/more artistic drawings
+    - Use entire color palette (not just red/green/blue)
+  - **Implementation Steps:**
+    1. **Data Collection Phase:**
+       - Create data collection mode in DrawingScene
+       - Collect 50-100 drawings per plant type from playtesters
+       - Label drawings with plant type + quality rating
+    2. **Model Training:**
+       - Research Unity Barracuda for on-device ML inference
+       - Alternative: Train model externally, import to Unity
+       - Model inputs: Drawing image (texture) + stroke features
+       - Model outputs: Plant type probabilities + confidence
+    3. **Integration:**
+       - Replace rule-based `PlantRecognitionSystem.cs` pattern matching
+       - Keep color analysis as fallback/validation
+       - Gradual rollout: ML + rules hybrid system first
+
+- [ ] **Full Color Palette Support**
+  - **Current:** Only red/green/blue primary colors
+  - **Target:** Support entire color spectrum
+  - Purple flowers, orange tulips, pink roses, yellow sunflowers
+  - Gradient coloring, shading, artistic expression
+  - **Implementation:**
+    - Remove color restrictions from drawing canvas
+    - Train ML model on diverse colored plant drawings
+    - Update validation to accept varied color schemes
+
+- [ ] **Drawing Quality Encouragement**
+  - **Problem:** System accepts minimal effort drawings
+  - **Solution:** Reward detailed, artistic drawings with better stats
+  - Bonus stats for high-detail drawings
+  - Visual feedback during drawing ("Looking good!", "Add more detail?")
+  - Optional: Show "inspiration gallery" of well-drawn plants
+
+---
+
+### **Priority 3: Battle Scene Animation Refinement** 🎬
+**Impact:** High | **Effort:** Medium | **Target:** January 2026
+
+**Current System:**
+- Color flashes for move effects
+- Screen shake for impact
+- Basic sprite animations
+
+**Required Enhancements:**
+
+- [ ] **Better Move Animations**
+  - **Problem:** Moves lack visual impact and clarity
+  - **Solution:** Improve animation system to show what's happening
+  - Projectile trajectories (fireballs arc, water splashes)
+  - Impact animations (hit effects at target)
+  - Plant reaction animations (taking damage, blocking)
+  - **Implementation:**
+    - Enhance `MoveExecutor.cs:144-162` animation system
+    - Add animation curves for projectile motion
+    - Create impact prefabs (simple shapes/sprites, not particles yet)
+
+- [ ] **Battle Flow Clarity**
+  - Clear turn indicators (whose turn it is)
+  - Damage number display (floating text showing damage dealt)
+  - Status indicators (HP changes, type advantage feedback)
+  - Smooth transitions between turns
+
+- [ ] **Plant Battle Sprites**
+  - Idle animation (subtle movement)
+  - Attack animation (lunge forward)
+  - Hit animation (recoil backward)
+  - Victory/defeat poses
+
+**Note:** Full particle effects are post-prototype. Focus on clear, functional animations.
+
+---
+
+### **Priority 4: Combat Balancing & Polish** ⚖️
+**Impact:** Critical | **Effort:** Medium | **Target:** January-February 2026
+
+**Current System:**
+- Fixed damage values per move
+- Simple type advantage (1.5x/0.5x)
+- Random AI enemies
+
+**Required Balancing:**
+
+- [ ] **Damage Value Adjustment**
+  - **Problem:** Combat may be too easy or too hard
+  - **Solution:** Playtest and tune all 27 move damage values
+  - **Process:**
+    1. Playtest battles with current values
+    2. Track: Average battle length, close matches vs blowouts
+    3. Adjust move powers to make battles ~5-8 turns
+    4. Ensure comeback potential (behind player can win)
+  - **Target Balance:**
+    - Low-power moves: 15-20 damage
+    - Medium moves: 22-26 damage
+    - High-power moves: 28-32 damage
+    - Healing: 20-25 HP restored
+  - **Files:** `MoveData.cs:107-362` - Power values
+
+- [ ] **Enemy Design & Balancing**
+  - **Problem:** Need variety in enemy difficulty
+  - **Solution:** Create distinct enemy archetypes
+  - **Enemy Types:**
+    - **Easy (1-2 stars):** Low HP, weak attacks, predictable
+    - **Medium (3 stars):** Balanced stats, uses type advantage
+    - **Hard (4-5 stars):** High HP, strong attacks, blocks
+  - **Implementation:**
+    - Update `EncounterData.cs` with proper stat scaling
+    - Create 3-5 distinct enemy plants per element
+    - Test difficulty curve progression
+
+- [ ] **Player Plant Stat Balancing**
+  - Review base stats for all 9 plant types
+  - Ensure each plant has viable strategy
+  - Balance drawing difficulty vs power (harder to draw = stronger?)
+  - Test Wild Growth upgrade balance (+50% may be too much?)
+
+- [ ] **Type Advantage Refinement**
+  - Current: 1.5x super effective, 0.5x not effective
+  - Test if these multipliers feel impactful
+  - Consider: 2.0x/0.5x for clearer advantage?
+  - Ensure type matchup matters but isn't auto-win
+
+---
+
+### **Priority 5: Enemy AI Enhancement** 🤖
+**Impact:** High | **Effort:** Low-Medium | **Target:** February 2026
 
 **Current AI** (`DrawingBattleSceneManager.cs:484-502`):
 - Picks random offensive move
 - No strategy or adaptation
+- Perfect execution (1.0 quality always)
 
-**Proposed Enhancements:**
+**Required Improvements:**
 
-- [ ] **Basic Strategy**
-  - Check type matchup and prioritize super-effective moves
-  - Use Block when HP is critical (<30%)
-  - Avoid using moves the player has blocked before
+- [ ] **Difficulty-Based AI Strategy**
+  - **Easy (1-2 stars):**
+    - Keep random selection
+    - Lower quality execution (0.5-0.7)
+    - Never blocks
+  - **Medium (3 stars):**
+    - Check type matchup, prefer super-effective
+    - Medium quality (0.7-0.9)
+    - Block if HP < 40%
+  - **Hard (4-5 stars):**
+    - Full type advantage awareness
+    - High quality (0.9-1.0)
+    - Block if HP < 50% or predicting big attack
+    - Counter-strategy (react to player patterns)
 
-- [ ] **Difficulty Scaling**
-  - Easy (1-2 stars): Random moves (current behavior)
-  - Medium (3 stars): Type-aware selection
-  - Hard (4-5 stars): Full strategy with blocking and counters
-
-- [ ] **Move Quality Variation**
-  - Currently: Always 1.0 quality (perfect execution)
-  - **Proposed:** Scale by difficulty (0.6-1.0 range)
-
-- [ ] **Implementation Location**
-  - Enhance `DrawingBattleSceneManager.cs:ExecuteEnemyTurn()`
-  - Add `EnemyAIController.cs` class for strategy logic
-  - Reference `EncounterData.cs` difficulty for scaling
-
----
-
-### **Priority 4: Advanced Plant Recognition** 🌺
-**Impact:** Medium | **Effort:** High
-
-**Current System** (`PlantRecognitionSystem.cs:506-654`):
-- Rule-based pattern matching
-- 9 fixed plant types
-
-**Future Enhancements:**
-
-- [ ] **Machine Learning Integration**
-  - Train model on player drawings
-  - Adaptive recognition (learns player's drawing style)
-  - Reduce false negatives for valid drawings
-
-- [ ] **More Plant Varieties**
-  - Add 3-6 more plants per type
-  - Hybrid types (future: Fire/Grass dual-type plants)
-  - Legendary/rare plants with unique stat distributions
-
-- [ ] **Stroke Pressure & Speed Analysis**
-  - Use drawing velocity for intensity detection
-  - Pressure-sensitive input on supported tablets
-  - Impacts move quality scoring
-
-- [ ] **Implementation Notes**
-  - Research Unity Barracuda for ML inference
-  - Extend `PlantRecognitionSystem.cs:233-488` feature extraction
-  - Add training data collection mode
+- [ ] **Challenge Without Frustration**
+  - AI should feel fair, not cheap
+  - Provide tells/patterns players can learn
+  - Hard enemies should be beatable with skill
+  - **Implementation:** `DrawingBattleSceneManager.cs:ExecuteEnemyTurn()`
 
 ---
 
-### **Priority 5: Content Expansion** 📚
-**Impact:** High (longevity) | **Effort:** Medium-High
+### **Post-Prototype Features** 🔮
+*(Deprioritized until after February prototype validation)*
 
-- [ ] **More Moves**
-  - Currently: 3 moves per plant (27 total)
-  - **Goal:** 5-7 moves per plant type
-  - Add variety: Multi-target, status effects (poison, burn, freeze)
+These features are important for the final game but not critical for prototype:
 
-- [ ] **Status Effects System**
-  - Burning: Damage over time (2-3 turns)
-  - Poisoned: Increasing damage each turn
-  - Frozen: Skip next turn
-  - Requires: Turn tracking, status UI, cure moves
+**Polish & Feel:**
+- Audio system (sound effects, music)
+- Particle effects & advanced VFX
+- Tutorial system
+- Accessibility features
 
-- [ ] **Advanced Moves**
-  - Charge moves (draw over 2 turns for massive damage)
-  - Combo moves (specific sequence of drawings)
-  - Ultimate moves (unlocked after Wild Growth upgrades)
+**Content Expansion:**
+- More moves per plant (currently 3, eventually 5-7)
+- Status effects (poison, burn, freeze)
+- Multiple world map regions
+- Boss battles
 
-- [ ] **World Map Expansion**
-  - Multiple regions with themed enemies
-  - Boss battles (require specific strategy)
-  - Optional side encounters
+**Meta Features:**
+- Achievement system
+- Daily challenges
+- Player stats tracking
+- Garden/collection view
 
-- [ ] **Implementation Files**
-  - Extend `MoveData.cs` with status effect properties
-  - Add `StatusEffectManager.cs` for DOT tracking
-  - Expand `MovesetDetector.cs:126-407` with new patterns
-
----
-
-### **Priority 6: Player Progression & Meta** 🎯
-**Impact:** High (retention) | **Effort:** High
-
-- [ ] **Unlockable Content**
-  - Achievement system (draw 100 plants, win 50 battles, etc.)
-  - Unlock new plant types through achievements
-  - Color palette unlocks (purple, orange for new types)
-
-- [ ] **Persistent Player Stats**
-  - Total battles won/lost
-  - Favorite plant type analytics
-  - Drawing quality improvement tracking
-
-- [ ] **Daily Challenges**
-  - "Defeat a Fire plant using only Grass moves"
-  - "Win a battle with quality >0.8 on all moves"
-  - Rewards: Special plant variants, stat boosts
-
-- [ ] **Garden/Collection View**
-  - Gallery of all collected plants
-  - View stats and battle history per plant
-  - Rename plants, assign favorites
+**Technical:**
+- Platform optimization (mobile)
+- Performance profiling
+- Unit testing
+- Code refactoring
 
 ---
 
-### **Priority 7: User Experience Improvements** 💡
-**Impact:** Medium | **Effort:** Low-Medium
+## 📈 **Development Timeline to Prototype**
 
-- [ ] **Tutorial System**
-  - First-time player onboarding
-  - Guided first drawing (highlight areas to draw)
-  - Battle mechanics explanation (type advantage tutorial)
+### **Phase 1: Move & Plant Refinement** (December 2025)
+**Focus:** Core recognition systems
+1. Implement color-based move detection
+2. Begin ML model research and data collection
+3. Refine move patterns to be more distinct
+4. Initial playtesting and feedback collection
 
-- [ ] **Drawing Hints**
-  - Show ghost outline for plant shapes (optional)
-  - Real-time feedback during drawing (color indicator)
-  - Undo last stroke button
-
-- [ ] **Accessibility**
-  - Colorblind mode (patterns + color labels)
-  - Adjustable drawing sensitivity
-  - Text size options
-
-- [ ] **Quality of Life**
-  - Fast battle mode (skip animations)
-  - Plant quick-select favorites
-  - Battle auto-save (resume interrupted battles)
-  - Settings menu (volume, graphics quality)
+**Deliverable:** Moves feel more expressive with color integration
 
 ---
 
-### **Priority 8: Platform Optimization** 📱
-**Impact:** High (mobile) | **Effort:** Medium
+### **Phase 2: ML Integration & Balancing** (January 2026)
+**Focus:** Plant recognition ML + combat balance
+1. Train and integrate ML plant recognition model
+2. Enable full color palette for plant drawing
+3. Playtest and balance all move damage values
+4. Design and implement enemy difficulty tiers
+5. Enhance battle animations (projectiles, impacts)
 
-- [ ] **Mobile Performance**
-  - Optimize stroke rendering (currently creates many LineRenderers)
-  - Reduce memory usage for plant sprite storage
-  - Battery optimization (reduce CPU usage during idle)
-
-- [ ] **Touch Controls**
-  - Already implemented, but test on various screen sizes
-  - Add pinch-to-zoom for world map
-  - Haptic feedback on move recognition
-
-- [ ] **Platform-Specific Builds**
-  - Test on tablets (iPad, Android tablets)
-  - Stylus support optimization
-  - Cloud save sync across devices
+**Deliverable:** Plants can be drawn artistically, combat feels balanced
 
 ---
 
-### **Technical Debt & Code Quality** 🔧
-**Impact:** Medium (maintainability) | **Effort:** Low-Medium
+### **Phase 3: Polish & AI Enhancement** (February 2026)
+**Focus:** Battle polish + enemy intelligence
+1. Implement difficulty-based AI strategies
+2. Refine battle scene animations and clarity
+3. Balance Wild Growth and progression systems
+4. Final playtesting and iteration
+5. Bug fixes and optimization
 
-- [ ] **Refactoring Opportunities**
-  - Extract damage calculation to `DamageCalculator.cs` (currently inline in `DrawingBattleSceneManager.cs:867-890`)
-  - Separate UI logic from game logic in scene managers
-  - Create `TurnManager.cs` for turn state handling
-
-- [ ] **Performance Profiling**
-  - Profile `MovesetDetector.cs:53-121` (can be expensive with many strokes)
-  - Optimize `PlantRecognitionSystem.cs:233-488` feature extraction
-  - Cache frequently calculated values
-
-- [ ] **Testing**
-  - Unit tests for damage calculations
-  - Unit tests for type advantage system
-  - Integration tests for full battle flow
-
-- [ ] **Documentation**
-  - XML documentation comments for public APIs
-  - Architecture decision records (ADRs)
-  - Plant/move design guidelines for content expansion
+**Deliverable:** Complete playable prototype ready for validation
 
 ---
 
-## 📈 **Recommended Development Roadmap**
+### **Prototype Validation Goals** (February 2026)
 
-**Phase 2 - Polish & Feel (2-3 weeks)**
-1. Audio System (Priority 1)
-2. Particle Effects (Priority 2)
-3. UX Improvements (Priority 7)
+The prototype should demonstrate:
+- ✅ **Drawing is fun and expressive** (color palette, artistic freedom)
+- ✅ **Recognition feels fair** (ML model accepts creative drawings)
+- ✅ **Combat is engaging** (balanced, clear animations, strategic)
+- ✅ **Difficulty curve works** (easy to learn, challenging to master)
+- ✅ **Core loop is satisfying** (draw → battle → progress)
 
-**Phase 3 - Depth & Strategy (3-4 weeks)**
-4. Enhanced AI (Priority 3)
-5. Content Expansion (Priority 5)
-6. Status Effects System
-
-**Phase 4 - Longevity & Retention (4-6 weeks)**
-7. Player Progression (Priority 6)
-8. Achievement System
-9. Daily Challenges
-
-**Phase 5 - Scale & Release (2-3 weeks)**
-10. Platform Optimization (Priority 8)
-11. Tutorial System
-12. Final testing & bug fixes
-
-**Total estimated development time: 11-16 weeks to full release**
+**Post-prototype decision:** Proceed to full production if validation succeeds
 
 ---
 
