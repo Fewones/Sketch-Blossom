@@ -501,10 +501,12 @@ namespace SketchBlossom.Battle
                 selectedMove = enemyMoves[0]; // Fallback to first move
             }
 
-            UpdateActionText($"{enemyPlantName} used {selectedMove.moveName}!");
+            // Show enemy move name with unique color
+            string colorHex = ColorUtility.ToHtmlStringRGB(selectedMove.primaryColor);
+            UpdateActionText($"{enemyPlantName} used <color=#{colorHex}>{selectedMove.moveName}</color>!");
 
             // Execute enemy move
-            ExecuteEnemyMove(selectedMove);
+            yield return StartCoroutine(ExecuteEnemyMove(selectedMove));
 
             yield return new WaitForSeconds(actionTextDelay);
 
@@ -639,7 +641,9 @@ namespace SketchBlossom.Battle
                 yield break;
             }
 
-            UpdateActionText($"You used {moveData.moveName}! (Quality: {result.qualityRating})");
+            // Show move name with unique color using rich text
+            string colorHex = ColorUtility.ToHtmlStringRGB(moveData.primaryColor);
+            UpdateActionText($"You used <color=#{colorHex}>{moveData.moveName}</color>! (Quality: {result.qualityRating})");
             yield return new WaitForSeconds(0.5f);
 
             // Ensure both units are visible before attack animation
@@ -670,14 +674,18 @@ namespace SketchBlossom.Battle
             }
 
             // ENHANCED VISUAL EFFECTS (Screen shake, unique colors, gradient flash)
-            if (moveExecutor != null && !moveData.isDefensiveMove && !moveData.isHealingMove)
+            if (!moveData.isDefensiveMove && !moveData.isHealingMove)
             {
-                // Note: MoveExecutor will handle screen shake and color effects
-                // We just need to trigger the visual feedback
-                Debug.Log("[BATTLE] Playing enhanced move visual effects");
+                Debug.Log($"[BATTLE] Playing enhanced move visual effects - Colors: {moveData.primaryColor} -> {moveData.secondaryColor}");
+
+                // Play the gradient color flash on the enemy
+                if (enemyUnit != null)
+                {
+                    yield return StartCoroutine(enemyUnit.FlashWithGradient(moveData.primaryColor, moveData.secondaryColor));
+                }
 
                 // Play the screen shake based on move power
-                if (moveExecutor.mainCamera != null && moveData.screenShakeAmount > 0)
+                if (moveExecutor != null && moveExecutor.mainCamera != null && moveData.screenShakeAmount > 0)
                 {
                     StartCoroutine(PlayScreenShake(moveData.screenShakeAmount * moveExecutor.screenShakeMultiplier, 0.2f));
                 }
@@ -692,12 +700,24 @@ namespace SketchBlossom.Battle
             {
                 playerIsBlocking = true;
                 UpdateActionText("You're defending!");
+
+                // Show defensive color flash on player
+                if (playerUnit != null)
+                {
+                    yield return StartCoroutine(playerUnit.FlashWithGradient(moveData.primaryColor, moveData.secondaryColor));
+                }
             }
             else if (moveData.isHealingMove)
             {
                 int healAmount = Mathf.RoundToInt(moveData.basePower * result.damageMultiplier);
                 playerHPBar.ModifyHP(healAmount);
                 UpdateActionText($"Restored {healAmount} HP!");
+
+                // Show healing color flash on player
+                if (playerUnit != null)
+                {
+                    yield return StartCoroutine(playerUnit.FlashWithGradient(moveData.primaryColor, moveData.secondaryColor));
+                }
             }
             else
             {
@@ -760,23 +780,50 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Execute enemy's move
+        /// Execute enemy's move with visual effects
         /// </summary>
-        private void ExecuteEnemyMove(MoveData moveData)
+        private IEnumerator ExecuteEnemyMove(MoveData moveData)
         {
             if (moveData.isDefensiveMove)
             {
                 enemyIsBlocking = true;
                 UpdateActionText($"{enemyPlantName} is defending!");
+
+                // Show defensive color flash on enemy
+                if (enemyUnit != null)
+                {
+                    yield return StartCoroutine(enemyUnit.FlashWithGradient(moveData.primaryColor, moveData.secondaryColor));
+                }
             }
             else if (moveData.isHealingMove)
             {
                 int healAmount = moveData.basePower;
                 enemyHPBar.ModifyHP(healAmount);
                 UpdateActionText($"{enemyPlantName} restored {healAmount} HP!");
+
+                // Show healing color flash on enemy
+                if (enemyUnit != null)
+                {
+                    yield return StartCoroutine(enemyUnit.FlashWithGradient(moveData.primaryColor, moveData.secondaryColor));
+                }
             }
             else
             {
+                // ENHANCED VISUAL EFFECTS for enemy attack
+                Debug.Log($"[BATTLE] Enemy playing enhanced visual effects - Colors: {moveData.primaryColor} -> {moveData.secondaryColor}");
+
+                // Play the gradient color flash on the player
+                if (playerUnit != null)
+                {
+                    yield return StartCoroutine(playerUnit.FlashWithGradient(moveData.primaryColor, moveData.secondaryColor));
+                }
+
+                // Screen shake for enemy attacks
+                if (moveExecutor != null && moveExecutor.mainCamera != null && moveData.screenShakeAmount > 0)
+                {
+                    StartCoroutine(PlayScreenShake(moveData.screenShakeAmount * moveExecutor.screenShakeMultiplier * 0.7f, 0.2f)); // Slightly less shake for enemy
+                }
+
                 // Calculate damage (enemy always has 1.0 quality)
                 int damage = CalculateDamage(
                     moveData.basePower,
@@ -1416,6 +1463,39 @@ namespace SketchBlossom.Battle
             public bool IsDead()
             {
                 return isDead;
+            }
+
+            /// <summary>
+            /// Flash the unit with gradient colors (primary to secondary)
+            /// Used for enhanced move visual effects
+            /// </summary>
+            public IEnumerator FlashWithGradient(Color primaryColor, Color secondaryColor)
+            {
+                if (unitImage == null || isDead)
+                {
+                    yield break;
+                }
+
+                Color originalColor = unitImage.color;
+
+                // Flash primary color
+                unitImage.color = primaryColor;
+                yield return new WaitForSeconds(0.08f);
+
+                // Transition to secondary color
+                unitImage.color = secondaryColor;
+                yield return new WaitForSeconds(0.08f);
+
+                // Return to original color
+                unitImage.color = originalColor;
+            }
+
+            /// <summary>
+            /// Get the UI Image component for direct access if needed
+            /// </summary>
+            public Image GetImage()
+            {
+                return unitImage;
             }
         }
     }
