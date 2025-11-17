@@ -1038,7 +1038,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1005583507}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999814
+  m_Size: 0.9999842
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1376,6 +1376,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6291883429005273685, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
   m_PrefabInstance: {fileID: 758754925}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &758754927 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7168692102386830417, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
+  m_PrefabInstance: {fileID: 758754925}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3c37c09a9ea17a4297dafd5edfcdf3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.UI.ConfirmationDialog
 --- !u!1 &789765612
 GameObject:
   m_ObjectHideFlags: 0
@@ -2506,7 +2517,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00006123424}
+  m_AnchoredPosition: {x: 0, y: 0.0002426183}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1692816545
@@ -3206,6 +3217,10 @@ PrefabInstance:
       propertyPath: settingsPanel
       value: 
       objectReference: {fileID: 1819184462}
+    - target: {fileID: 5574493850589978094, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
+      propertyPath: confirmationDialog
+      value: 
+      objectReference: {fileID: 758754927}
     - target: {fileID: 6855444310909746527, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_Name
       value: PauseMenu

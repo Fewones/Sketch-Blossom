@@ -28,6 +28,12 @@ namespace SketchBlossom.UI
 
         private void Start()
         {
+            // Rogue-like behavior: Reset inventory when returning to main menu
+            // This ensures each run starts fresh
+            Debug.Log($"[MainMenu] Start called - Inventory has {(PlayerInventory.Instance != null ? PlayerInventory.Instance.GetPlantCount() : 0)} plants before reset");
+            ResetGameProgress();
+            Debug.Log($"[MainMenu] After reset - Inventory has {(PlayerInventory.Instance != null ? PlayerInventory.Instance.GetPlantCount() : 0)} plants");
+
             SetupButtons();
             UpdateUI();
         }

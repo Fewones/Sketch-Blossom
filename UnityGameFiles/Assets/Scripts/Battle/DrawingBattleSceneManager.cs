@@ -889,7 +889,7 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Handle defeat
+        /// Handle defeat - implements rogue-like permanent death
         /// </summary>
         private IEnumerator HandleDefeat()
         {
@@ -914,7 +914,40 @@ namespace SketchBlossom.Battle
 
             yield return new WaitForSeconds(3f);
 
-            // Return to world map instead of main menu
+            // ROGUE-LIKE MECHANIC: Remove dead plant from inventory (permanent death)
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory != null)
+            {
+                PlantInventoryEntry deadPlant = inventory.GetSelectedPlant();
+                if (deadPlant != null)
+                {
+                    Debug.Log($"[Rogue-like] Plant {deadPlant.plantName} has died permanently!");
+                    inventory.RemovePlant(deadPlant.plantId);
+
+                    // Check if player has any plants left
+                    if (inventory.GetPlantCount() == 0)
+                    {
+                        // GAME OVER - No plants remaining
+                        Debug.Log("[Rogue-like] GAME OVER - All plants dead! Returning to main menu.");
+                        UpdateTurnIndicator("GAME OVER");
+                        UpdateActionText("All your plants have perished...");
+                        yield return new WaitForSeconds(2f);
+                        SceneManager.LoadScene("MainMenuScene");
+                        yield break;
+                    }
+                    else
+                    {
+                        // Player has plants remaining - let them choose another
+                        Debug.Log($"[Rogue-like] Player has {inventory.GetPlantCount()} plants remaining. Going to selection screen.");
+                        UpdateActionText("Choose your next plant...");
+                        yield return new WaitForSeconds(1.5f);
+                        SceneManager.LoadScene("PlantSelectionScene");
+                        yield break;
+                    }
+                }
+            }
+
+            // Fallback if inventory not found
             SceneManager.LoadScene("WorldMapScene");
         }
 
