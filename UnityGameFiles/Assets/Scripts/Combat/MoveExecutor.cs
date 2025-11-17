@@ -4,6 +4,7 @@ using TMPro;
 
 /// <summary>
 /// Executes detected battle moves with animations and effects
+/// Enhanced with unique move colors, screen shake, and visual effects
 /// </summary>
 public class MoveExecutor : MonoBehaviour
 {
@@ -11,10 +12,14 @@ public class MoveExecutor : MonoBehaviour
     public TextMeshProUGUI moveNameText;
     public TextMeshProUGUI effectivenessText;
 
-    [Header("Attack Colors")]
+    [Header("Attack Colors - Fallback (used if move colors not available)")]
     public Color fireColor = new Color(1f, 0.3f, 0f);
     public Color grassColor = new Color(0.2f, 0.8f, 0.2f);
     public Color waterColor = new Color(0.2f, 0.5f, 1f);
+
+    [Header("Screen Shake Settings")]
+    public Camera mainCamera;
+    public float screenShakeMultiplier = 1.0f;  // Global screen shake intensity
 
     /// <summary>
     /// Execute a detected move from attacker to target
@@ -29,15 +34,18 @@ public class MoveExecutor : MonoBehaviour
     {
         Debug.Log($"=== EXECUTING MOVE: {move.moveName} (Quality: {qualityMultiplier:F2}x) ===");
 
-        // Show move name
+        // Show move name with unique move color
         if (moveNameText != null)
         {
             moveNameText.gameObject.SetActive(true);
             moveNameText.text = move.moveName.ToUpper();
-            moveNameText.color = GetElementColor(move.element);
+            // Use move's unique primary color
+            moveNameText.color = move.primaryColor;
+
+            Debug.Log($"Move color: {move.primaryColor}, Effect: {move.visualEffect}");
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.5f * move.animationIntensity);
 
         // Execute move based on type
         if (move.isDefensiveMove)
@@ -205,17 +213,18 @@ public class MoveExecutor : MonoBehaviour
     }
 
     /// <summary>
-    /// Play animation for a specific move type
+    /// Play animation for a specific move type with enhanced colors and effects
     /// </summary>
     private IEnumerator PlayMoveAnimation(MoveData move, BattleUnit attacker, BattleUnit target)
     {
         // Basic attack animation (move toward target)
         Vector3 originalPos = attacker.transform.position;
-        Vector3 targetPos = originalPos + (attacker.isPlayerUnit ? Vector3.right : Vector3.left) * 1.5f;
+        float moveDistance = 1.5f * move.animationIntensity;
+        Vector3 targetPos = originalPos + (attacker.isPlayerUnit ? Vector3.right : Vector3.left) * moveDistance;
 
-        // Move forward
+        // Move forward (speed based on animation intensity)
         float elapsed = 0f;
-        float moveDuration = 0.25f;
+        float moveDuration = 0.25f / Mathf.Clamp(move.animationIntensity, 0.5f, 2f);
         while (elapsed < moveDuration)
         {
             attacker.transform.position = Vector3.Lerp(originalPos, targetPos, elapsed / moveDuration);
@@ -223,8 +232,14 @@ public class MoveExecutor : MonoBehaviour
             yield return null;
         }
 
-        // Visual effect based on move type (simplified - could add particle systems)
-        yield return FlashEffect(target, GetElementColor(move.element));
+        // Screen shake based on move power
+        if (mainCamera != null && move.screenShakeAmount > 0)
+        {
+            StartCoroutine(ScreenShake(move.screenShakeAmount * screenShakeMultiplier, 0.2f));
+        }
+
+        // Enhanced visual effect using move's unique colors
+        yield return FlashEffectWithGradient(target, move.primaryColor, move.secondaryColor);
 
         // Move back
         elapsed = 0f;
@@ -273,6 +288,58 @@ public class MoveExecutor : MonoBehaviour
             yield return new WaitForSeconds(0.15f);
             sprite.color = originalColor;
         }
+    }
+
+    /// <summary>
+    /// Enhanced flash effect with gradient transition (primary to secondary color)
+    /// </summary>
+    private IEnumerator FlashEffectWithGradient(BattleUnit target, Color primaryColor, Color secondaryColor)
+    {
+        SpriteRenderer sprite = target.GetComponent<SpriteRenderer>();
+        if (sprite != null)
+        {
+            Color originalColor = sprite.color;
+
+            // Flash primary color
+            sprite.color = primaryColor;
+            yield return new WaitForSeconds(0.08f);
+
+            // Transition to secondary color
+            sprite.color = secondaryColor;
+            yield return new WaitForSeconds(0.08f);
+
+            // Return to original
+            sprite.color = originalColor;
+        }
+    }
+
+    /// <summary>
+    /// Screen shake effect for powerful attacks
+    /// </summary>
+    private IEnumerator ScreenShake(float intensity, float duration)
+    {
+        if (mainCamera == null)
+        {
+            Debug.LogWarning("[MoveExecutor] Cannot shake screen - mainCamera not assigned!");
+            yield break;
+        }
+
+        Vector3 originalPosition = mainCamera.transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float x = Random.Range(-1f, 1f) * intensity;
+            float y = Random.Range(-1f, 1f) * intensity;
+
+            mainCamera.transform.position = originalPosition + new Vector3(x, y, 0);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // Return to original position
+        mainCamera.transform.position = originalPosition;
     }
 
     /// <summary>
