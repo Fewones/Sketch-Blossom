@@ -711,7 +711,5 @@ Potential improvements to the system:
 
 ---
 
-**Last Updated:** 2025
-**Version:** 1.0 - Initial Enhanced Move System
-
-For integration instructions, see [INTEGRATION_TODO.md](INTEGRATION_TODO.md)
+**Last Updated:** 14/11/2025
+**Version:** 1.0 - Initial Move System
