@@ -33,6 +33,7 @@ namespace SketchBlossom.Battle
 
         [Header("Attack Animations")]
         [SerializeField] private AttackAnimationManager attackAnimationManager;
+        [SerializeField] private MoveExecutor moveExecutor;
         [SerializeField] private DrawnMoveStorage drawnMoveStorage;
         [SerializeField] private DrawingCaptureHandler moveDrawingCapture;
 
@@ -668,6 +669,20 @@ namespace SketchBlossom.Battle
                 }
             }
 
+            // ENHANCED VISUAL EFFECTS (Screen shake, unique colors, gradient flash)
+            if (moveExecutor != null && !moveData.isDefensiveMove && !moveData.isHealingMove)
+            {
+                // Note: MoveExecutor will handle screen shake and color effects
+                // We just need to trigger the visual feedback
+                Debug.Log("[BATTLE] Playing enhanced move visual effects");
+
+                // Play the screen shake based on move power
+                if (moveExecutor.mainCamera != null && moveData.screenShakeAmount > 0)
+                {
+                    StartCoroutine(PlayScreenShake(moveData.screenShakeAmount * moveExecutor.screenShakeMultiplier, 0.2f));
+                }
+            }
+
             // Ensure both units are still visible after attack animation
             if (playerUnit != null) playerUnit.EnsureVisible();
             if (enemyUnit != null) enemyUnit.EnsureVisible();
@@ -1080,6 +1095,36 @@ namespace SketchBlossom.Battle
         {
             if (enemyTurnPanel != null)
                 enemyTurnPanel.SetActive(show);
+        }
+
+        /// <summary>
+        /// Screen shake effect for powerful attacks
+        /// Called when moveExecutor is available and move has screen shake
+        /// </summary>
+        private IEnumerator PlayScreenShake(float intensity, float duration)
+        {
+            if (moveExecutor == null || moveExecutor.mainCamera == null)
+            {
+                yield break;
+            }
+
+            Camera cam = moveExecutor.mainCamera;
+            Vector3 originalPosition = cam.transform.position;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float x = Random.Range(-1f, 1f) * intensity;
+                float y = Random.Range(-1f, 1f) * intensity;
+
+                cam.transform.position = originalPosition + new Vector3(x, y, 0);
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // Return to original position
+            cam.transform.position = originalPosition;
         }
 
         /// <summary>
