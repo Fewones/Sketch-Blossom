@@ -129,19 +129,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2990333193065840759, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2990333193065840759, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2990333193065840759, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2990333193065840759, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -15
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3026415191662234658, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_Name
@@ -149,23 +149,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3026415191662234658, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5590299704115605488, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5590299704115605488, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5590299704115605488, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 50
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5590299704115605488, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -15
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6291883429005273685, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_Pivot.x
@@ -229,11 +229,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6291883429005273685, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 325.48926
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6291883429005273685, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 100.36267
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6291883429005273685, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -257,6 +257,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6291883429005273685, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
   m_PrefabInstance: {fileID: 163151086}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &163151088 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7168692102386830417, guid: 435473b618683d548bf45dbf29a084b7, type: 3}
+  m_PrefabInstance: {fileID: 163151086}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3c37c09a9ea17a4297dafd5edfcdf3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.UI.ConfirmationDialog
 --- !u!1 &254184584
 GameObject:
   m_ObjectHideFlags: 0
@@ -584,11 +595,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 530886555539787865, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 325.48926
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 530886555539787865, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 100.36267
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 530886555539787865, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -628,7 +639,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1872279711397887626, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1992889735315137342, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_AnchorMax.y
@@ -828,6 +839,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 707243361}
   m_CullTransparentMesh: 1
+--- !u!114 &953255874 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3037178221461449888, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
+  m_PrefabInstance: {fileID: 317421471}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e7c5912ba4334643af30c5fa97a3725, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.UI.SettingsPanel
 --- !u!1 &1019342487
 GameObject:
   m_ObjectHideFlags: 0
@@ -1013,15 +1035,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.7019608}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.8235294}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: -8425141836431729757, guid: 91c5f19fc8f6941e0bc83a3d93a578bf, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1338,11 +1360,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4345590836575699623, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 325.48926
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4345590836575699623, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 100.36267
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4345590836575699623, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1356,13 +1378,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5574493850589978094, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
+      propertyPath: settingsPanel
+      value: 
+      objectReference: {fileID: 953255874}
+    - target: {fileID: 5574493850589978094, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
+      propertyPath: confirmationDialog
+      value: 
+      objectReference: {fileID: 163151088}
     - target: {fileID: 6855444310909746527, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_Name
       value: PauseMenu
       objectReference: {fileID: 0}
     - target: {fileID: 6855444310909746527, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
