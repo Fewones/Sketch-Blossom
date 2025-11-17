@@ -440,7 +440,7 @@ UnityGameFiles/
 
 The core game is **feature-complete and playable**. The focus now is on **refining the core gameplay loop** for a polished prototype. Audio, content expansion, and meta features can wait until after the prototype is validated.
 
-### **Priority 1: Move Detection Refinement** 🎨
+### **Priority 1: Move Detection Refinement**
 **Impact:** Critical | **Effort:** Medium | **Target:** December 2025
 
 **Current System:**
@@ -466,7 +466,7 @@ The core game is **feature-complete and playable**. The focus now is on **refini
   - Add color requirements to move validation
   - Tighten pattern matching for clearer feedback
   - **Files to update:**
-    - `MovesetDetector.cs:126-407` - Pattern scoring functions
+    - `MovesetDetector.cs` - Pattern scoring functions
     - `MoveRecognitionSystem.cs` - Quality calculation with color
 
 - [ ] **Visual Feedback During Drawing**
@@ -527,7 +527,7 @@ The core game is **feature-complete and playable**. The focus now is on **refini
 
 ---
 
-### **Priority 3: Battle Scene Animation Refinement** 🎬
+### **Priority 3: Battle Scene Animation Refinement**
 **Impact:** High | **Effort:** Medium | **Target:** January 2026
 
 **Current System:**
