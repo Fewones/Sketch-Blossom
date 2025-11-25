@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using SketchBlossom.Model;
 
 /// <summary>
 /// Complete plant recognition system
@@ -77,12 +78,16 @@ public class PlantRecognitionSystem : MonoBehaviour
         }
     }
 
+    private ModelManager MM = new ModelManager();
+
     // Plant database with fixed stats
     private static Dictionary<PlantType, PlantData> plantDatabase;
+    private static Dictionary<string, PlantType> stringToPlant;
 
     private void Awake()
     {
         InitializePlantDatabase();
+        InitializeStringToPlant();
     }
 
     private void InitializePlantDatabase()
@@ -142,10 +147,32 @@ public class PlantRecognitionSystem : MonoBehaviour
         };
     }
 
+    private void InitializeStringToPlant()
+    {
+        stringToPlant = new Dictionary<string, PlantType>
+            {
+                // FIRE PLANTS (Red) - High attack, medium HP, low defense
+                { "sunflower", PlantType.Sunflower},
+                { "fire rose", PlantType.FireRose},
+                { "flame tulip", PlantType.FlameTulip},
+
+                // GRASS PLANTS (Green) - Balanced stats
+                { "cactus", PlantType.Cactus},
+                { "vine flower", PlantType.VineFlower},
+                { "grass sprout", PlantType.GrassSprout},
+
+                // WATER PLANTS (Blue) - High HP, low attack, high defense
+                { "water lily", PlantType.WaterLily},
+                { "coral bloom", PlantType.CoralBloom},
+                { "bubble flower", PlantType.BubbleFlower}
+        };
+    }
+   
+
     /// <summary>
     /// Analyze drawn strokes and recognize the plant
     /// </summary>
-    public RecognitionResult AnalyzeDrawing(List<LineRenderer> strokes, Color dominantColor)
+    public RecognitionResult AnalyzeDrawing(string label, float score, List<LineRenderer> strokes, Color dominantColor)
     {
         if (strokes == null || strokes.Count == 0)
         {

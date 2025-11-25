@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using SketchBlossom.Battle;
 using SketchBlossom.Progression;
+using SketchBlossom.Model;
 
 namespace SketchBlossom.Drawing
 {
@@ -29,7 +30,16 @@ namespace SketchBlossom.Drawing
         [SerializeField] private string battleSceneName = "DrawingBattleScene";
         [SerializeField] private bool enableBattleTransition = true;
 
+        [System.Serializable]
+        public class PredictionResponse {
+            public string label;
+            public float score;
+        }
+
         private PlantRecognitionSystem.RecognitionResult lastResult;
+
+        private PythonServerManager pythonserver;
+        private ModelManager MM = new ModelManager();
 
         #region Unity Lifecycle
 
@@ -41,6 +51,8 @@ namespace SketchBlossom.Drawing
 
         private void Start()
         {
+            pythonserver = new PythonServerManager();
+            pythonserver.Start();
             InitializeSystems();
             SetupEventListeners();
             ShowInstructions();
@@ -340,8 +352,15 @@ namespace SketchBlossom.Drawing
             return true;
         }
 
-        private void AnalyzeDrawing()
+        private async void AnalyzeDrawing()
         {
+            Texture2D drawingTexture = captureHandler.CaptureDrawing(
+                drawingCanvas.allStrokes,
+                drawingCanvas.mainCamera,
+                drawingCanvas.drawingArea
+            );
+
+
             if (recognitionSystem == null)
             {
                 Debug.LogError("PlantRecognitionSystem is null!");
@@ -349,15 +368,22 @@ namespace SketchBlossom.Drawing
             }
 
             Debug.Log("========== ANALYZING DRAWING ==========");
-
+            
             // Get drawing data
             List<LineRenderer> strokes = drawingCanvas.allStrokes;
             Color dominantColor = drawingCanvas.GetDominantColor();
 
             Debug.Log($"Strokes: {strokes.Count}, Dominant Color: {dominantColor}");
 
+            string json = await MM.SendImage(drawingTexture);
+            PredictionResponse best = JsonUtility.FromJson<PredictionResponse>(json);
+            string label = best.label;
+            Debug.Log(label);
+            float score = best.score;
+            Debug.Log(score);
+
             // Analyze with recognition system
-            lastResult = recognitionSystem.AnalyzeDrawing(strokes, dominantColor);
+            lastResult = recognitionSystem.AnalyzeDrawing(label, score, strokes, dominantColor);
 
             if (lastResult != null)
             {
@@ -386,6 +412,7 @@ namespace SketchBlossom.Drawing
             {
                 Debug.LogError("Analysis failed - no result returned!");
             }
+        
         }
 
         private void ShowResults()
@@ -501,6 +528,7 @@ namespace SketchBlossom.Drawing
 
         private void OnDestroy()
         {
+            pythonserver.OnApplicationQuit();
             // Unsubscribe from events
             if (uiController != null)
             {
