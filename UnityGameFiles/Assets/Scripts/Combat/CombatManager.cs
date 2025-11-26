@@ -308,9 +308,8 @@ public class CombatManager : MonoBehaviour
 
     private void OnNextEncounter()
     {
-        // For now, just reload the drawing scene
-        // Later you can add: upgrade choice, new enemy, etc.
-        SceneManager.LoadScene("DrawingScene");
+        // After a victory, go to the Post-Battle screen (Tame / Wild Growth)
+        SceneManager.LoadScene("PostBattleScene");
     }
 
     /// <summary>

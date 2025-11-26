@@ -31,7 +31,7 @@ public class DrawingManager : MonoBehaviour
 
         if (drawingCanvas == null)
         {
-            drawingCanvas = FindObjectOfType<DrawingCanvas>();
+            drawingCanvas = FindFirstObjectByType<DrawingCanvas>();
         }
 
         // Hook into the existing finish button

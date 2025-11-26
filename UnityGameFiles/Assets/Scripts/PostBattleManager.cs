@@ -80,9 +80,8 @@ public class PostBattleManager : MonoBehaviour
             descriptionText.text = "🌿 WILD GROWTH: Choose a card and add thorns/leaves/flowers. " +
                                    "Stats will evolve from your additions.";
 
-        // For now: reuse the same Drawing Scene.
-        // Later you can insert a Deck picker before loading.
-        LoadDrawingScene();
+        // Load WildGrowthScene instead of DrawingScene
+        SceneManager.LoadScene("WildGrowthScene");
     }
 
     // If you ever want Finish to skip drawing and continue, keep this:
