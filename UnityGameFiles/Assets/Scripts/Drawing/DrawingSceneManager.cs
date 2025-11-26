@@ -378,9 +378,8 @@ namespace SketchBlossom.Drawing
             string json = await MM.SendImage(drawingTexture);
             PredictionResponse best = JsonUtility.FromJson<PredictionResponse>(json);
             string label = best.label;
-            Debug.Log(label);
             float score = best.score;
-            Debug.Log(score);
+            Debug.Log(json);
 
             // Analyze with recognition system
             lastResult = recognitionSystem.AnalyzeDrawing(label, score, strokes, dominantColor);
@@ -417,11 +416,6 @@ namespace SketchBlossom.Drawing
 
         private void ShowResults()
         {
-            if (lastResult == null)
-            {
-                Debug.LogError("No analysis result to show!");
-                return;
-            }
 
             // IMPORTANT: Keep strokes visible in the background behind results panel
             // Strokes should remain visible until user clicks "Redraw"

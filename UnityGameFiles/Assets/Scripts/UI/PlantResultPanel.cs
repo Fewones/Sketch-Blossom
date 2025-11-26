@@ -88,12 +88,6 @@ public class PlantResultPanel : MonoBehaviour
     {
         Debug.Log("========== PLANT RESULT PANEL: SHOW RESULTS ==========");
 
-        if (result == null)
-        {
-            Debug.LogError("PlantResultPanel: Cannot show null result");
-            return;
-        }
-
         if (panelOverlay == null)
         {
             Debug.LogError("PlantResultPanel: panelOverlay is NULL! Cannot show results.");

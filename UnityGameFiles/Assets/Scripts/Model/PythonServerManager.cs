@@ -15,7 +15,7 @@ public class PythonServerManager
         pythonProcess.StartInfo.FileName = pythonExe;
         pythonProcess.StartInfo.Arguments = scriptPath;
         pythonProcess.StartInfo.UseShellExecute = true;
-        pythonProcess.StartInfo.CreateNoWindow = true;
+        pythonProcess.StartInfo.CreateNoWindow = false;
         pythonProcess.Start();
 
         UnityEngine.Debug.Log("Python server started.");
