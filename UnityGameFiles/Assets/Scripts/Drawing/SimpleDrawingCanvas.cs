@@ -313,4 +313,111 @@ public class SimpleDrawingCanvas : MonoBehaviour
             mainCamera = Camera.main;
         }
     }
+
+        /// <summary>
+    /// Returns summary statistics about the current drawing (finished strokes + in-progress stroke).
+    /// </summary>
+    public DrawingStats GetDrawingStats()
+    {
+        DrawingStats stats = new DrawingStats();
+
+        // 1) Stroke count (all finished strokes + current stroke if drawing)
+        int strokeCount = allStrokes.Count;
+        if (isDrawing && currentPoints != null && currentPoints.Count > 0)
+        {
+            strokeCount += 1;
+        }
+        stats.strokeCount = strokeCount;
+
+        // 2) Total length + bounding box
+        bool hasAnyPoint = false;
+        Vector2 minPoint = Vector2.zero;
+        Vector2 maxPoint = Vector2.zero;
+        float totalLength = 0f;
+
+        // Helper to update bbox
+        void UpdateBounds(Vector3 worldPos)
+        {
+            Vector2 p = new Vector2(worldPos.x, worldPos.y);
+            if (!hasAnyPoint)
+            {
+                hasAnyPoint = true;
+                minPoint = p;
+                maxPoint = p;
+            }
+            else
+            {
+                minPoint = Vector2.Min(minPoint, p);
+                maxPoint = Vector2.Max(maxPoint, p);
+            }
+        }
+
+        // Finished strokes
+        foreach (var stroke in allStrokes)
+        {
+            if (stroke == null) continue;
+            int count = stroke.positionCount;
+            if (count == 0) continue;
+
+            Vector3[] positions = new Vector3[count];
+            stroke.GetPositions(positions);
+
+            for (int i = 0; i < count; i++)
+            {
+                UpdateBounds(positions[i]);
+                if (i > 0)
+                {
+                    totalLength += Vector3.Distance(positions[i - 1], positions[i]);
+                }
+            }
+        }
+
+        // Current in-progress stroke
+        if (isDrawing && currentPoints != null && currentPoints.Count > 0)
+        {
+            for (int i = 0; i < currentPoints.Count; i++)
+            {
+                UpdateBounds(currentPoints[i]);
+                if (i > 0)
+                {
+                    totalLength += Vector3.Distance(currentPoints[i - 1], currentPoints[i]);
+                }
+            }
+        }
+
+        stats.totalLength = totalLength;
+
+        if (hasAnyPoint)
+        {
+            Vector2 size = maxPoint - minPoint;
+            stats.boundingBoxArea = Mathf.Abs(size.x * size.y);
+        }
+        else
+        {
+            stats.boundingBoxArea = 0f;
+        }
+
+        // 3) Canvas area (approx, from RectTransform)
+        float canvasArea = 0f;
+        if (drawingArea != null)
+        {
+            var rect = drawingArea.rect;
+            canvasArea = Mathf.Abs(rect.width * rect.height);
+        }
+        stats.canvasArea = canvasArea;
+
+        return stats;
+    }
+
+    /// <summary>
+    /// Clears the canvas and resets all strokes, used by WildGrowthSceneManager.
+    /// </summary>
+    public void ClearCanvas()
+    {
+        // Reuse your existing logic
+        ClearAll();
+    }
+
+
 }
+
