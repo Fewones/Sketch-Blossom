@@ -136,27 +136,37 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (stats.strokeCount == 0)
             return minMultiplier;
 
-        // Example quality function — tweak thresholds for your game feel
+    // Stroke score: reward 4–12 strokes most
+        float strokeScore;
+        if (stats.strokeCount <= 2)
+            strokeScore = 0f;
+        else if (stats.strokeCount >= 12)
+            strokeScore = 1f;
+        else
+            strokeScore = Mathf.InverseLerp(2, 12, stats.strokeCount);
 
-        // Stroke count: 1–15 → 0–1
-        float strokeScore = Mathf.InverseLerp(1, 15, stats.strokeCount);
+    // Length score: assume 200–1000 units is "good"
+        float lengthScore = Mathf.InverseLerp(200f, 1000f, stats.totalLength);
 
-        // Total stroke length: 50–600 → 0–1
-        float lengthScore = Mathf.InverseLerp(50f, 600f, stats.totalLength);
-
-        // Canvas coverage
+    // Coverage: 5–40% of canvas is good
         float coverageScore = 0f;
         if (stats.canvasArea > 0f)
         {
-            float rawCoverage = stats.boundingBoxArea / stats.canvasArea;
-            coverageScore = Mathf.Clamp01(rawCoverage * 1.5f);
+            float coverage = stats.boundingBoxArea / stats.canvasArea; // 0–1
+            coverageScore = Mathf.InverseLerp(0.05f, 0.4f, coverage);
         }
 
-        float quality = (strokeScore + lengthScore + coverageScore) / 3f;
+    // Weighted average (tweak weights if you like)
+        float quality =
+            0.4f * strokeScore +
+            0.3f * lengthScore +
+            0.3f * coverageScore;
+
         quality = Mathf.Clamp01(quality);
 
         return Mathf.Lerp(minMultiplier, maxMultiplier, quality);
     }
+
 
     private void UpdatePreviewTexts()
     {
@@ -183,19 +193,24 @@ public class WildGrowthSceneManager : MonoBehaviour
 
         float percent = (currentMultiplier - 1f) * 100f;
 
-        if (hasAnyDrawing)
+        if (!hasAnyDrawing)
         {
-            qualityText.text = $"Quality: {percent:0}% (x{currentMultiplier:0.00})";
+            qualityText.text = "Draw to help your plant grow stronger!";
+        }
+        else if (confirmButton != null && !confirmButton.interactable)
+        {
+            qualityText.text = "Keep drawing… (need a bit more detail)";
         }
         else
         {
-            qualityText.text = $"Draw something to power up! (Base x{minMultiplier:0.00})";
+            qualityText.text = $"Quality: {percent:0}% (x{currentMultiplier:0.00})";
         }
 
         hpPreviewText.text      = $"HP:  {baseHP} → {newHP} (+{percent:0}%)";
         attackPreviewText.text  = $"ATK: {baseAttack} → {newAttack} (+{percent:0}%)";
         defensePreviewText.text = $"DEF: {baseDefense} → {newDefense} (+{percent:0}%)";
     }
+
 
     private void OnClearClicked()
     {
