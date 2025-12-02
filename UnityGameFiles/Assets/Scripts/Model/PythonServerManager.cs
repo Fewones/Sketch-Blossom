@@ -8,11 +8,18 @@ public class PythonServerManager
 
     public void Start()
     {
-        string pythonExe = Path.Combine(Application.dataPath, "Python/win/python-3.13.9-embed-amd64/python.exe");
+        string pythonPath = "";
+        #if UNITY_STANDALONE_WIN
+            pythonPath = Path.Combine(Application.dataPath, "Python/win/python-3.13.9-embed-amd64/python.exe");
+        #elif UNITY_STANDALONE_LINUX
+            pythonPath = Path.Combine(Application.dataPath, "/Python/linux/bin/python3");
+        #elif UNITY_STANDALONE_OSX
+            pythonPath = Path.Combine(Application.dataPath, "/Python/mac/bin/python3");
+        #endif
         string scriptPath = Path.Combine(Application.dataPath, "Python/shared/TinyCLIP.py");
 
         pythonProcess = new Process();
-        pythonProcess.StartInfo.FileName = pythonExe;
+        pythonProcess.StartInfo.FileName = pythonPath;
         pythonProcess.StartInfo.Arguments = scriptPath;
         pythonProcess.StartInfo.UseShellExecute = true;
         pythonProcess.StartInfo.CreateNoWindow = false;
