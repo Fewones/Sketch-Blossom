@@ -75,7 +75,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (drawingArea == null)
         {
             Debug.LogWarning("DrawingArea is null! Cannot restrict drawing bounds.");
-            return true; // If no area defined, allow anywhere
+            return true; // allow anywhere if not set
         }
         if (mainCamera == null)
         {
@@ -83,18 +83,15 @@ public class SimpleDrawingCanvas : MonoBehaviour
             return false;
         }
 
-        // Get world corners of the drawing area
         Vector3[] corners = new Vector3[4];
         drawingArea.GetWorldCorners(corners);
 
-        // Convert to screen space
         Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
         Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
 
         bool isInside = screenPos.x >= min.x && screenPos.x <= max.x &&
                         screenPos.y >= min.y && screenPos.y <= max.y;
 
-        // Debug log on first check
         if (!hasLoggedBounds)
         {
             Debug.Log($"Drawing area bounds - Min: {min}, Max: {max}, Size: {max - min}");
@@ -103,6 +100,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
         return isInside;
     }
+
 
     private bool hasLoggedBounds = false;
 
@@ -195,8 +193,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     Vector3 ScreenToWorld(Vector2 screenPos)
     {
+        // z-distance should match camera → drawing plane distance; 10f worked for you before
         return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
     }
+
+
 
     /// <summary>
     /// Force end any in-progress stroke (called before analysis)

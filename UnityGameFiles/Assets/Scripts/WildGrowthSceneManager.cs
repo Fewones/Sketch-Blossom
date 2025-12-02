@@ -1,3 +1,4 @@
+using System; // for Convert.ToBase64String
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -11,6 +12,7 @@ using SketchBlossom.Progression; // for PlayerInventory & PlantInventoryEntry
 /// - Drawing quality determines a multiplier (1.3x–1.8x)
 /// - Shows stat preview
 /// - Applies upgrade to the selected PlantInventoryEntry
+/// - Captures the upgraded drawing and stores it in inventory / DrawnUnitData
 /// - Transitions back to WorldMapScene
 /// </summary>
 public class WildGrowthSceneManager : MonoBehaviour
@@ -31,6 +33,10 @@ public class WildGrowthSceneManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI attackPreviewText;
     [SerializeField] private TextMeshProUGUI defensePreviewText;
 
+    [Header("Capture Settings")]
+    [Tooltip("RectTransform that defines the drawing area we capture (usually the DrawingArea under WG_DrawingPanel).")]
+    [SerializeField] private RectTransform drawingCaptureArea;
+
     [Header("Transition Settings")]
     [SerializeField] private bool useAutoTransition = false; // usually false now
     [SerializeField] private float autoTransitionDelay = 3f;
@@ -44,6 +50,7 @@ public class WildGrowthSceneManager : MonoBehaviour
     private PlantInventoryEntry selectedPlant;
     private float currentMultiplier;
     private bool hasAnyDrawing = false;
+    private bool isConfirming = false;
 
     private void Start()
     {
@@ -117,7 +124,7 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (drawingCanvas == null || selectedPlant == null)
             return;
 
-        // This assumes your SimpleDrawingCanvas has a GetDrawingStats() returning DrawingStats
+        // SimpleDrawingCanvas -> DrawingStats
         DrawingStats stats = drawingCanvas.GetDrawingStats();
 
         hasAnyDrawing = stats.strokeCount > 0;
@@ -136,7 +143,7 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (stats.strokeCount == 0)
             return minMultiplier;
 
-    // Stroke score: reward 4–12 strokes most
+        // Stroke score: reward 4–12 strokes most
         float strokeScore;
         if (stats.strokeCount <= 2)
             strokeScore = 0f;
@@ -145,10 +152,10 @@ public class WildGrowthSceneManager : MonoBehaviour
         else
             strokeScore = Mathf.InverseLerp(2, 12, stats.strokeCount);
 
-    // Length score: assume 200–1000 units is "good"
+        // Length score: assume 200–1000 units is "good"
         float lengthScore = Mathf.InverseLerp(200f, 1000f, stats.totalLength);
 
-    // Coverage: 5–40% of canvas is good
+        // Coverage: 5–40% of canvas is good
         float coverageScore = 0f;
         if (stats.canvasArea > 0f)
         {
@@ -156,7 +163,7 @@ public class WildGrowthSceneManager : MonoBehaviour
             coverageScore = Mathf.InverseLerp(0.05f, 0.4f, coverage);
         }
 
-    // Weighted average (tweak weights if you like)
+        // Weighted average (tweak weights if you like)
         float quality =
             0.4f * strokeScore +
             0.3f * lengthScore +
@@ -166,7 +173,6 @@ public class WildGrowthSceneManager : MonoBehaviour
 
         return Mathf.Lerp(minMultiplier, maxMultiplier, quality);
     }
-
 
     private void UpdatePreviewTexts()
     {
@@ -211,12 +217,10 @@ public class WildGrowthSceneManager : MonoBehaviour
         defensePreviewText.text = $"DEF: {baseDefense} → {newDefense} (+{percent:0}%)";
     }
 
-
     private void OnClearClicked()
     {
         if (drawingCanvas != null)
         {
-            // Adjust name if your method is different (e.g. ClearDrawing)
             drawingCanvas.ClearCanvas();
         }
 
@@ -233,16 +237,92 @@ public class WildGrowthSceneManager : MonoBehaviour
 
     private void OnConfirmClicked()
     {
+        if (isConfirming)
+            return;
+
         if (selectedPlant == null)
         {
             Debug.LogWarning("WildGrowthSceneManager: Cannot confirm upgrade, no plant selected.");
             return;
         }
 
-        ApplyDrawingBasedWildGrowth();
-        TransitionToWorldMap();
+        StartCoroutine(ConfirmAndCaptureRoutine());
     }
 
+    /// <summary>
+    /// Confirms the upgrade: finalizes strokes, captures the drawing,
+    /// applies stat changes + new texture, saves, then transitions to world map.
+    /// </summary>
+    private IEnumerator ConfirmAndCaptureRoutine()
+    {
+        isConfirming = true;
+
+        // Make sure any in-progress stroke is finished
+        if (drawingCanvas != null)
+        {
+            drawingCanvas.ForceEndStroke();
+        }
+
+        // Wait for end of frame so drawing is fully rendered
+        yield return new WaitForEndOfFrame();
+
+        // Capture the drawing area to a texture
+        Texture2D captured = CaptureDrawingToTexture();
+
+        // Apply stat upgrade
+        ApplyDrawingBasedWildGrowth();
+
+        // Apply new art to DrawnUnitData + inventory
+        ApplyNewDrawingTexture(captured);
+
+        // Transition back to world map
+        TransitionToWorldMap();
+
+        isConfirming = false;
+    }
+
+    /// <summary>
+    /// Captures the drawing area (DrawingArea RectTransform) to a Texture2D.
+    /// </summary>
+    private Texture2D CaptureDrawingToTexture()
+    {
+        if (drawingCaptureArea == null || drawingCanvas == null || drawingCanvas.mainCamera == null)
+        {
+            Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing camera or capture area.");
+            return null;
+        }
+
+        Camera cam = drawingCanvas.mainCamera;
+
+        // Get world corners of the drawing area
+        Vector3[] corners = new Vector3[4];
+        drawingCaptureArea.GetWorldCorners(corners);
+
+        // Convert to screen space
+        Vector2 min = RectTransformUtility.WorldToScreenPoint(cam, corners[0]); // bottom-left
+        Vector2 max = RectTransformUtility.WorldToScreenPoint(cam, corners[2]); // top-right
+
+        int width  = Mathf.RoundToInt(max.x - min.x);
+        int height = Mathf.RoundToInt(max.y - min.y);
+
+        if (width <= 0 || height <= 0)
+        {
+            Debug.LogWarning($"WildGrowthSceneManager: Capture size invalid: {width}x{height}");
+            return null;
+        }
+
+        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Rect rect = new Rect(min.x, min.y, width, height);
+        tex.ReadPixels(rect, 0, 0);
+        tex.Apply();
+
+        Debug.Log($"WildGrowthSceneManager: Captured drawing texture {width}x{height}");
+        return tex;
+    }
+
+    /// <summary>
+    /// Applies the multiplier-based stat upgrade to the selected plant and saves the inventory.
+    /// </summary>
     private void ApplyDrawingBasedWildGrowth()
     {
         // Multiply stats
@@ -250,9 +330,9 @@ public class WildGrowthSceneManager : MonoBehaviour
         int newAttack    = Mathf.RoundToInt(selectedPlant.attack    * currentMultiplier);
         int newDefense   = Mathf.RoundToInt(selectedPlant.defense   * currentMultiplier);
 
-        selectedPlant.maxHealth    = newMaxHealth;
-        selectedPlant.attack       = newAttack;
-        selectedPlant.defense      = newDefense;
+        selectedPlant.maxHealth     = newMaxHealth;
+        selectedPlant.attack        = newAttack;
+        selectedPlant.defense       = newDefense;
         selectedPlant.currentHealth = newMaxHealth; // heal to full
 
         // Progression bits similar to ApplyWildGrowth()
@@ -271,6 +351,40 @@ public class WildGrowthSceneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Writes the captured texture into DrawnUnitData and the inventory entry (base64).
+    /// </summary>
+    private void ApplyNewDrawingTexture(Texture2D tex)
+    {
+        if (tex == null || selectedPlant == null)
+            return;
+
+        // 1) Update DrawnUnitData for current run
+        if (DrawnUnitData.Instance != null)
+        {
+            DrawnUnitData.Instance.drawingTexture = tex;
+        }
+
+        // 2) Update inventory entry (sprite for cards / selector)
+        try
+        {
+            byte[] png = tex.EncodeToPNG();
+            string base64 = Convert.ToBase64String(png);
+            selectedPlant.drawingTextureBase64 = base64;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"WildGrowthSceneManager: Failed to encode drawing texture: {e.Message}");
+        }
+
+        // 3) Save inventory again (to store updated drawingTextureBase64)
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.SaveInventory();
+            Debug.Log($"WildGrowthSceneManager: Saved upgraded drawing for plant {selectedPlant.plantName}.");
+        }
+    }
+
     private IEnumerator AutoTransitionToWorldMap()
     {
         yield return new WaitForSeconds(autoTransitionDelay);
@@ -281,7 +395,7 @@ public class WildGrowthSceneManager : MonoBehaviour
     {
         Debug.Log("WildGrowthScene: Transitioning to WorldMapScene...");
 
-        // Keep your existing encounter clear logic
+        // Clear encounter data since we're returning from a completed battle
         if (EnemyEncounterData.Instance != null)
         {
             EnemyEncounterData.Instance.ClearEncounterData();

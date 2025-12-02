@@ -157,18 +157,22 @@ public class PostBattleManager : MonoBehaviour
             return;
         }
 
-        // Get the currently selected plant
-        PlantInventoryEntry selectedPlant = inventory.GetSelectedPlant();
-        if (selectedPlant != null)
+        // Try to re-select the plant that was actually used in battle
+        if (DrawnUnitData.Instance != null &&
+            !string.IsNullOrEmpty(DrawnUnitData.Instance.inventoryPlantId))
         {
-            // Apply Wild Growth upgrade
-            inventory.ApplyWildGrowth(selectedPlant.plantId);
-            Debug.Log($"Applied Wild Growth to {selectedPlant.plantName}!");
+            inventory.SelectPlant(DrawnUnitData.Instance.inventoryPlantId);
+            Debug.Log($"Re-selected plant with ID {DrawnUnitData.Instance.inventoryPlantId} for Wild Growth based on DrawnUnitData.");
         }
         else
         {
-            Debug.LogWarning("No plant selected for Wild Growth!");
+            // Fallback: we just keep the current selection, but warn in the log
+            Debug.LogWarning("DrawnUnitData has no inventoryPlantId set. Wild Growth will use the currently selected plant in inventory.");
         }
+
+        // IMPORTANT: do NOT apply WildGrowth here anymore.
+        // The drawing-based upgrade is handled inside WildGrowthSceneManager
+        // after the player finishes their Wild Growth drawing.
 
         // Store the choice
         PlayerPrefs.SetString("GrowthMode", "WILD");
@@ -178,6 +182,7 @@ public class PostBattleManager : MonoBehaviour
         Debug.Log("Loading WildGrowthScene...");
         SceneManager.LoadScene("WildGrowthScene");
     }
+
 
     public void OnTameSelected()
     {
