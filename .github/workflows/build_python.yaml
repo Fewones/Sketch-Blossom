@@ -1,0 +1,31 @@
+name: Build Python
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-py:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Create portable python
+        run: |
+          python -m venv portable
+          # Dependencies installieren
+          portable/bin/pip install -r requirements.txt
+
+      - name: Copy to Unity folder
+        run: |
+          mkdir -p UnityGameFiles/Assets/Python/${{ matrix.os }}
+          cp -r portable/* UnityGameFiles/Assets/Python/${{ matrix.os }}/ || xcopy portable UnityGameFiles/Assets/StreamingAssets\\python\\${{ matrix.os }}\\ /E /I
