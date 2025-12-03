@@ -23,7 +23,7 @@ jobs:
         run: |
           python -m venv portable
           # Dependencies installieren
-          portable/bin/pip install -r requirements.txt
+          portable/bin/pip install -r requirements.txt || portable\Scripts\pip install -r requirements.txt
 
       - name: Copy to Unity folder
         run: |
