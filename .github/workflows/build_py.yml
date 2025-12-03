@@ -35,7 +35,7 @@ jobs:
 
       - name: Copy for Windows
         if: runner.os == 'Windows'
-        run: xcopy portable UnityGameFiles/Assets/StreamingAssets\\python\\${{ matrix.os }}\\ /E /I
+        run: xcopy portable UnityGameFiles\Assets\Python\${{ matrix.os }}\ /E /I
       - name: Copy for Unix
         if: runner.os != 'Windows'
         run: cp -r portable/* UnityGameFiles/Assets/Python/${{ matrix.os }}/
