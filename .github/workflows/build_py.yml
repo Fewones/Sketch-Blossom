@@ -7,7 +7,7 @@ jobs:
   build-py:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, macos-latest]
       max-parallel: 1
     runs-on: ${{ matrix.os }}
 
