@@ -23,9 +23,17 @@ jobs:
         run: |
           python -m venv portable
           # Dependencies installieren
-          portable/bin/pip install -r requirements.txt || portable\Scripts\pip install -r requirements.txt
+          if ("${{ matrix.os }}" -eq "windows-latest") {
+            ./portable/Scripts/pip.exe install -r requirements.txt
+          } else {
+            ./portable/bin/pip install -r requirements.txt
+          }
 
       - name: Copy to Unity folder
         run: |
           mkdir -p UnityGameFiles/Assets/Python/${{ matrix.os }}
-          cp -r portable/* UnityGameFiles/Assets/Python/${{ matrix.os }}/ || xcopy portable UnityGameFiles/Assets/StreamingAssets\\python\\${{ matrix.os }}\\ /E /I
+          if ("${{ matrix.os }}" -eq "windows-latest") {
+            xcopy portable UnityGameFiles/Assets/StreamingAssets\\python\\${{ matrix.os }}\\ /E /I
+          } else {
+            cp -r portable/* UnityGameFiles/Assets/Python/${{ matrix.os }}/
+          }
