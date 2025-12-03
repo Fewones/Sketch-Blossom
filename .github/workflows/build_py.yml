@@ -20,20 +20,22 @@ jobs:
           python-version: "3.11"
 
       - name: Create portable python
-        run: |
-          python -m venv portable
-          # Dependencies installieren
-          if ("${{ matrix.os }}" -eq "windows-latest") {
-            ./portable/Scripts/pip.exe install -r requirements.txt
-          } else {
-            ./portable/bin/pip install -r requirements.txt
-          }
+        run: python -m venv portable
+          
+      # Dependencies installieren
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: portable/Scripts/pip.exe install -r requirements.txt
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: portable/bin/pip install -r requirements.txt
 
       - name: Copy to Unity folder
-        run: |
-          mkdir -p UnityGameFiles/Assets/Python/${{ matrix.os }}
-          if ("${{ matrix.os }}" -eq "windows-latest") {
-            xcopy portable UnityGameFiles/Assets/StreamingAssets\\python\\${{ matrix.os }}\\ /E /I
-          } else {
-            cp -r portable/* UnityGameFiles/Assets/Python/${{ matrix.os }}/
-          }
+        run: mkdir -p UnityGameFiles/Assets/Python/${{ matrix.os }}
+
+      - name: Copy for Windows
+        if: runner.os == 'Windows'
+        run: xcopy portable UnityGameFiles/Assets/StreamingAssets\\python\\${{ matrix.os }}\\ /E /I
+      - name: Copy for Unix
+        if: runner.os != 'Windows'
+        run: cp -r portable/* UnityGameFiles/Assets/Python/${{ matrix.os }}/
