@@ -43,7 +43,8 @@ jobs:
 
       - name: Zip portable Python (Windows)
         if: runner.os == 'Windows'
-        run: powershell Compress-Archive -Path portable\* -DestinationPath windows-latest.zip -Force
+        shell: pwsh
+        run: Compress-Archive -Path (Get-ChildItem -Path portable) -DestinationPath windows-latest.zip -Force
       - name: Zip portable Python (Unix)
         if: runner.os != 'Windows'
         run: |
