@@ -33,12 +33,12 @@ jobs:
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          portable/Scripts/pip.exe install torch==2.9.1 torchvision==0.24.1
+          portable/Scripts/pip.exe install torch torchvision
           portable/Scripts/pip.exe install -r requirements.txt
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: |
-          portable/bin/pip install torch==2.9.1+cpu torchvision==0.24.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
+          portable/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           portable/bin/pip install --no-cache-dir -r requirements.txt
 
       - name: Zip portable Python
