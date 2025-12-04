@@ -29,7 +29,7 @@ jobs:
         run: portable/Scripts/pip.exe install -r requirements.txt
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
-        run: portable/bin/pip install --no-cached-dir -r requirements.txt
+        run: portable/bin/pip install --no-cache-dir -r requirements.txt
 
       - name: Zip portable Python
         run: |
