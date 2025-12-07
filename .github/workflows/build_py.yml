@@ -39,7 +39,7 @@ jobs:
         run: |
             curl -L -o python.tgz https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tgz
             mkdir portable
-            tar -xf python.tgz -C portable --strip-components=1
+            tar -xf python.tgz -C portable
           
       # Dependencies installieren
       - name: Install dependencies (Windows)
