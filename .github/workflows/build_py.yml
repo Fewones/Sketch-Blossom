@@ -37,9 +37,9 @@ jobs:
       - name: Install portable python (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-            curl -L -o python.tar.xz https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tar.xz
+            curl -L -o python.tgz https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tgz
             mkdir portable
-            tar -xf python.tar.xz -C portable --strip-components=1
+            tar -xf python.tgz -C portable --strip-components=1
           
       # Dependencies installieren
       - name: Install dependencies (Windows)
