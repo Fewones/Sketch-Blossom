@@ -50,8 +50,8 @@ jobs:
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          portable\python.exe -m pip install --upgrade --target portable\Lib\site-packages torch torchvision
-          portable\python.exe -m pip install --target portable\Lib\site-packages -r requirements.txt
+          portable\pip.exe install --target portable\Lib\site-packages torch torchvision
+          portable\pip.exe install --target portable\Lib\site-packages -r requirements.txt
       - name: Install dependencies (Unix)
         if: matrix.os != 'windows-latest'
         run: |
