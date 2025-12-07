@@ -21,32 +21,44 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Create portable python
-        run: python -m venv portable
+      - name: Install portable python (Windows)
+        if: matrix.os == 'windows-latest'
+        run: | 
+          curl -L -o python.zip https://www.python.org/ftp/python/3.11.7/python-3.11.7-embed-amd64.zip
+          mkdir portable
+          powershell Expand-Archive -Path python.zip -DestinationPath portable
+      - name: Install portable python (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+            curl -L -o python.pkg https://www.python.org/ftp/python/3.11.7/python-3.11.7-macos11.pkg
+            mkdir portable
+            pkgutil --expand-full python.pkg pythonpkg
+            cp -R pythonpkg/Payload/Library/Frameworks/Python.framework/Versions/3.11/* portable/
+      - name: Install portable python (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+            curl -L -o python.tar.xz https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tar.xz
+            mkdir portable
+            tar -xf python.tar.xz -C portable --strip-components=1
           
       # Dependencies installieren
       - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
+        if: matrix.os == 'windows-latest'
         run: |
-          portable/Scripts/pip.exe install torch torchvision
-          portable/Scripts/pip.exe install -r requirements.txt
+          portable\python.exe -m pip install --target portable\Lib\site-packages torch torchvision
+          portable\python.exe -m pip install --target portable\Lib\site-packages -r requirements.txt
       - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
+        if: matrix.os != 'windows-latest'
         run: |
-          portable/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          portable/bin/pip install --no-cache-dir -r requirements.txt
+          portable/bin/python3 -m pip install --target portable/lib/python3.11/site-packages torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          portable/bin/python3 -m pip install --target portable/lib/python3.11/site-packages -r requirements.txt
 
       - name: Zip portable Python (Windows)
-        if: runner.os == 'Windows'
+        if: matrix.os == 'windows-latest'
         shell: pwsh
         run: Compress-Archive -Path (Get-ChildItem -Path portable) -DestinationPath windows-latest.zip -Force
       - name: Zip portable Python (Unix)
-        if: runner.os != 'Windows'
+        if: matrix.os != 'windows-latest'
         run: |
             zipName=${{ matrix.os }}.zip
             zip -r $zipName portable
