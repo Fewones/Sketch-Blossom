@@ -34,6 +34,17 @@ jobs:
             mkdir portable
             pkgutil --expand-full python.pkg pythonpkg
             cp -R pythonpkg/Payload/Library/Frameworks/Python.framework/Versions/3.11/* portable/
+
+      - name: Install pip (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          curl -O https://bootstrap.pypa.io/get-pip.py
+          portable\python.exe get-pip.py
+      - name: Install pip (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          portable/bin/python3 -m ensurepip --upgrade
+          portable/bin/python3 -m pip install --upgrade pip
           
       # Dependencies installieren
       - name: Install dependencies (Windows)
