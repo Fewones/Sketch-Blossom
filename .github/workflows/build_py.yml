@@ -50,6 +50,7 @@ jobs:
       - name: Install dependencies (Unix)
         if: matrix.os != 'windows-latest'
         run: |
+          ls -l portable/bin/
           portable/bin/python3 -m pip install --target portable/lib/python3.11/site-packages torch torchvision --index-url https://download.pytorch.org/whl/cpu
           portable/bin/python3 -m pip install --target portable/lib/python3.11/site-packages -r requirements.txt
 
