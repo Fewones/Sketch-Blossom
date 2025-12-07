@@ -45,6 +45,10 @@ jobs:
         run: |
           portable/bin/python3 -m ensurepip --upgrade
           portable/bin/python3 -m pip install --upgrade pip
+
+      - name: Fix ._pth file for embeddable Python
+        if: runner.os == 'Windows'
+        run: (Get-Content portable\python311._pth) -replace '#import site', 'import site' | Set-Content portable\python311._pth
           
       # Dependencies installieren
       - name: Install dependencies (Windows)
