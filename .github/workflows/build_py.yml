@@ -12,7 +12,7 @@ jobs:
   build-py:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, macos-latest]
       max-parallel: 1
     runs-on: ${{ matrix.os }}
 
@@ -34,12 +34,6 @@ jobs:
             mkdir portable
             pkgutil --expand-full python.pkg pythonpkg
             cp -R pythonpkg/Payload/Library/Frameworks/Python.framework/Versions/3.11/* portable/
-      - name: Install portable python (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-            curl -L -o python.tgz https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tgz
-            mkdir portable
-            tar -xf python.tgz -C portable
           
       # Dependencies installieren
       - name: Install dependencies (Windows)
@@ -63,7 +57,6 @@ jobs:
         run: |
             zipName=${{ matrix.os }}.zip
             zip -r $zipName portable
-
 
       - name: Upload as Release Asset
         uses: softprops/action-gh-release@v2
