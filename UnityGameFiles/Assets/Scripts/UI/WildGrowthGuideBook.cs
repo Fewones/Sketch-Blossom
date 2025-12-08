@@ -6,7 +6,6 @@ using TMPro;
 /// <summary>
 /// Guide book for the Wild Growth scene.
 /// Shows 3 pages explaining basics, scoring and colors.
-/// Completely independent from PlantGuideBook.
 /// </summary>
 public class WildGrowthGuideBook : MonoBehaviour
 {
@@ -143,36 +142,68 @@ public class WildGrowthGuideBook : MonoBehaviour
     }
 
     /// <summary>
-    /// Fills the guide with the Wild Growth specific pages.
-    /// </summary>
-    private void PopulateDefaultPages()
+/// Fills the guide with the Wild Growth specific pages.
+/// Text is kept in sync with WildGrowthSceneManager:
+/// - One stroke only
+/// - Geometric quality (length + coverage) controls base multiplier
+/// - Color biases which stat grows more (HP / ATK / DEF)
+/// </summary>
+private void PopulateDefaultPages()
     {
         pages = new List<GuidePage>
         {
             new GuidePage(
                 "Wild Growth – Basics",
-                "Wild Growth\n" +
-                "You are evolving your existing plant.\n" +
-                "Draw new leaves, thorns, petals or armor on top of it.\n" +
-                "A better drawing → a stronger upgrade to HP, ATK and DEF."
+                "What is Wild Growth?\n\n" +
+                "• You evolve the plant that just fought in battle.\n" +
+                "• You see its current art, then draw exactly ONE new stroke on top.\n" +
+                "• That stroke is merged into the plant and saved as the new card art.\n" +
+                "• The drawing also increases the plant's HP, ATK and DEF permanently.\n\n" +
+                "The better the stroke (size and reach), the stronger the upgrade."
             ),
 
             new GuidePage(
-                "What influences the score",
-                "Scoring\n" +
-                "• More strokes (up to a limit)\n" +
-                "• Longer lines (not just dots)\n" +
-                "• Drawing that covers more of the box\n" +
-                "All of these increase the Wild Growth multiplier."
+                "How your stroke is scored",
+                "Geometric scoring (no AI, no CLIP yet):\n\n" +
+                "<b>1. Length</b>\n" +
+                "A longer stroke is worth more than just a tiny dot.\n" +
+                "• Very short → almost no bonus\n" +
+                "• Medium/long → good quality\n" +
+                "• Extremely long → capped at a maximum value\n\n" +
+                "<b>2. Coverage</b>\n" +
+                "We look at how much of the Wild Growth box your stroke spans.\n" +
+                "• Tiny scribble in one corner → low score\n" +
+                "• Stroke that covers a visible chunk of the box → higher score\n" +
+                "• Very huge strokes are capped at a maximum benefit\n\n" +
+                "These two (length + coverage) are combined into one base multiplier\n" +
+                "between 1.3x (minimum) and 1.8x (maximum)."
             ),
 
             new GuidePage(
-                "Colors",
-                "Colors\n" +
-                "• Red = fiery / aggressive look\n" +
-                "• Green = natural / defensive look\n" +
-                "• Blue = watery / flexible look\n" +
-                "Right now, colors are cosmetic – the shape & size of your drawing control the score."
+                "Colors and stat focus",
+                "Color changes which stat grows the most:\n\n" +
+                "<b>Red stroke</b>\n" +
+                "• Focuses on <b>Attack</b>\n" +
+                "• ATK gets a bit more growth than HP and DEF\n\n" +
+                "<b>Green stroke</b>\n" +
+                "• Focuses on <b>HP</b>\n" +
+                "• HP gets a bit more growth than ATK and DEF\n\n" +
+                "<b>Blue stroke</b>\n" +
+                "• Focuses on <b>Defense</b>\n" +
+                "• DEF gets a bit more growth than HP and ATK\n\n" +
+                "The base power of the upgrade still comes from the stroke's length\n" +
+                "and coverage. Color only decides which stat gets the biggest share."
+            ),
+
+            new GuidePage(
+                "Tips for good Wild Growth",
+                "Some practical tips:\n\n" +
+                "• Draw across the plant, not just in an empty corner.\n" +
+                "• Try to use a single clear gesture instead of many tiny wiggles.\n" +
+                "• If you want a tanky plant, draw in <b>green</b>.\n" +
+                "• If you want a glass cannon, draw in <b>red</b>.\n" +
+                "• If you want a sturdy defender, draw in <b>blue</b>.\n\n" +
+                "Remember: You only get ONE stroke per Wild Growth, so make it count."
             )
         };
     }

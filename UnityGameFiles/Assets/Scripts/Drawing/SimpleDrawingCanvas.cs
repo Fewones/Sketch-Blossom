@@ -30,6 +30,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
 
+    // NEW: used to enforce "only one completed stroke" (for Wild Growth)
+    private bool strokeFinished = false;
+
+    private bool hasLoggedBounds = false;
+
     void Update()
     {
         HandleDrawingInput();
@@ -101,9 +106,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
         return isInside;
     }
 
-
-    private bool hasLoggedBounds = false;
-
     void StartStroke(Vector2 screenPos)
     {
         if (allStrokes.Count >= maxStrokes)
@@ -169,6 +171,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (currentPoints.Count >= 1)
         {
             allStrokes.Add(currentStroke);
+            strokeFinished = true; // NEW: mark stroke as done
             Debug.Log($"Finished stroke #{allStrokes.Count} with {currentPoints.Count} points");
         }
         else
@@ -196,8 +199,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
         // z-distance should match camera → drawing plane distance; 10f worked for you before
         return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
     }
-
-
 
     /// <summary>
     /// Force end any in-progress stroke (called before analysis)
@@ -233,6 +234,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         currentPoints.Clear();
+        strokeFinished = false; // NEW: allow drawing again
         Debug.Log("Cleared all strokes");
     }
 
@@ -243,14 +245,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (allStrokes.Count == 0) return Color.white;
 
-        // Count color usage by stroke count
         Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
 
         foreach (var stroke in allStrokes)
         {
             Color strokeColor = stroke.startColor;
-
-            // Round to nearest primary color
             Color rounded = RoundToNearestPrimaryColor(strokeColor);
 
             if (!colorCounts.ContainsKey(rounded))
@@ -259,7 +258,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
             colorCounts[rounded]++;
         }
 
-        // Find most used color
         Color dominantColor = Color.white;
         int maxCount = 0;
 
@@ -278,7 +276,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     Color RoundToNearestPrimaryColor(Color color)
     {
-        // Find which primary color component is strongest
         if (color.r > color.g && color.r > color.b)
             return Color.red;
         else if (color.g > color.r && color.g > color.b)
@@ -290,9 +287,18 @@ public class SimpleDrawingCanvas : MonoBehaviour
     }
 
     /// <summary>
-    /// Get stroke count
+    /// Get stroke count (finished strokes only)
     /// </summary>
     public int GetStrokeCount()
+    {
+        return allStrokes.Count;
+    }
+
+    /// <summary>
+    /// Optional helper if you need finished strokes count explicitly.
+    /// Currently identical to GetStrokeCount().
+    /// </summary>
+    public int GetFinishedStrokeCount()
     {
         return allStrokes.Count;
     }
@@ -308,21 +314,19 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     void OnValidate()
     {
-        // Auto-find camera if not assigned
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
         }
     }
 
-        /// <summary>
+    /// <summary>
     /// Returns summary statistics about the current drawing (finished strokes + in-progress stroke).
     /// </summary>
     public DrawingStats GetDrawingStats()
     {
         DrawingStats stats = new DrawingStats();
 
-        // 1) Stroke count (all finished strokes + current stroke if drawing)
         int strokeCount = allStrokes.Count;
         if (isDrawing && currentPoints != null && currentPoints.Count > 0)
         {
@@ -330,13 +334,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
         stats.strokeCount = strokeCount;
 
-        // 2) Total length + bounding box
         bool hasAnyPoint = false;
         Vector2 minPoint = Vector2.zero;
         Vector2 maxPoint = Vector2.zero;
         float totalLength = 0f;
 
-        // Helper to update bbox
         void UpdateBounds(Vector3 worldPos)
         {
             Vector2 p = new Vector2(worldPos.x, worldPos.y);
@@ -353,7 +355,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
             }
         }
 
-        // Finished strokes
         foreach (var stroke in allStrokes)
         {
             if (stroke == null) continue;
@@ -373,7 +374,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
             }
         }
 
-        // Current in-progress stroke
         if (isDrawing && currentPoints != null && currentPoints.Count > 0)
         {
             for (int i = 0; i < currentPoints.Count; i++)
@@ -398,7 +398,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
             stats.boundingBoxArea = 0f;
         }
 
-        // 3) Canvas area (approx, from RectTransform)
         float canvasArea = 0f;
         if (drawingArea != null)
         {
@@ -415,10 +414,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
     /// </summary>
     public void ClearCanvas()
     {
-        // Reuse your existing logic
         ClearAll();
     }
-
-
 }
-
