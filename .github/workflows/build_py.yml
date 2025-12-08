@@ -31,8 +31,6 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
             curl -L -o python.pkg https://www.python.org/ftp/python/3.11.7/python-3.11.7-macos11.pkg
-            mkdir portable
-            mkdir pre
             pkgutil --expand-full python.pkg pre
             pkgutil --expand-full pre/Python_Framework.pkg pythonpkg
             ls -l pythonpkg/
