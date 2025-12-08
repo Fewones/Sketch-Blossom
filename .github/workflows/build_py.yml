@@ -12,7 +12,7 @@ jobs:
   build-py:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest]
       max-parallel: 1
     runs-on: ${{ matrix.os }}
 
@@ -77,7 +77,7 @@ jobs:
       - name: Upload as Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: sketchblossom-python
+          tag_name: sketchblossom-python-win
           files: ${{ matrix.os }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
