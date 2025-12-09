@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using SketchBlossom.Battle;
 using SketchBlossom.Progression;
 using SketchBlossom.Model;
@@ -201,7 +202,7 @@ namespace SketchBlossom.Drawing
 
         #region Event Handlers
 
-        private void HandleFinishDrawing()
+        private async void HandleFinishDrawing()
         {
             Debug.Log("DrawingSceneManager: Finish button pressed");
 
@@ -214,7 +215,9 @@ namespace SketchBlossom.Drawing
             drawingCanvas.ForceEndStroke();
 
             // Analyze the drawing
-            AnalyzeDrawing();
+
+        
+            await AnalyzeDrawing(); 
 
             // Show results
             ShowResults();
@@ -366,7 +369,7 @@ namespace SketchBlossom.Drawing
             return true;
         }
 
-        private async void AnalyzeDrawing()
+        private async Task AnalyzeDrawing()
         {
             Texture2D drawingTexture = captureHandler.CaptureDrawing(
                 drawingCanvas.allStrokes,
