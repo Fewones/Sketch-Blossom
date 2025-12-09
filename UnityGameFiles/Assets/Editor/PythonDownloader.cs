@@ -9,12 +9,26 @@ using System;
 [InitializeOnLoad]
 public class PythonDownloader
 {
-    
+    private static bool downloadComplete = false;
     static string pythonFolder = "Assets/Python/";
 
     static PythonDownloader() {
             EditorApplication.update += CheckAndDownloadPython;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
+
+    static void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingEditMode)
+        {
+            if (!downloadComplete)
+            {
+                // Stop Playmode
+                Debug.LogWarning("Download läuft noch! Playmode gestoppt.");
+                EditorApplication.isPlaying = false;
+            }
+        }
+    }
 
     static async void CheckAndDownloadPython() {
         EditorApplication.update -= CheckAndDownloadPython;
@@ -45,6 +59,7 @@ public class PythonDownloader
             File.Delete(bad_dll);
             Debug.Log("Datei gelöscht: " + bad_dll);
         }
+        downloadComplete = true;
     }
 
     static async Task DownloadAndExtractPython(string platform, string targetPath) {
@@ -57,13 +72,8 @@ public class PythonDownloader
 
         string url = baseUrl + zipName;
         string tempZip = Path.Combine(Path.GetTempPath(), zipName);
-        Debug.Log(url);
 
-        //using var handler = new System.Net.Http.HttpClientHandler {AllowAutoRedirect = true};
-        using (var http = new System.Net.Http.HttpClient()) {    //handler) {
-            //http.DefaultRequestHeaders.UserAgent.ParseAdd("UnityPythonDownloader/1.0");
-            //http.DefaultRequestHeaders.Accept.ParseAdd("application/octet-stream");
-
+        using (var http = new System.Net.Http.HttpClient()) {    
             try {
                 var response = await http.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
                 Debug.Log("Status Code: " + response.StatusCode);
