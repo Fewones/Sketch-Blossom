@@ -3,18 +3,20 @@ using UnityEditor;
 using System.IO;
 using System.Net;
 using System.IO.Compression;
+using System.Threading.Tasks;
+using System;
 
 [InitializeOnLoad]
 public class PythonDownloader
 {
-    static string baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python/";
-    static string pythonFolder = "../Python/";
+    
+    static string pythonFolder = "Assets/Python/";
 
     static PythonDownloader() {
             EditorApplication.update += CheckAndDownloadPython;
         }
 
-    static void CheckAndDownloadPython() {
+    static async void CheckAndDownloadPython() {
         EditorApplication.update -= CheckAndDownloadPython;
 
         string platformFolder = "";
@@ -28,21 +30,42 @@ public class PythonDownloader
         #endif
 
         string fullPath = Path.Combine(pythonFolder, platformFolder);
+        fullPath = Path.GetFullPath(fullPath);
 
         if (!Directory.Exists(fullPath) || Directory.GetFiles(fullPath).Length == 0)
         {
             Debug.Log("Python not found, downloading...");
-            DownloadAndExtractPython(platformFolder, fullPath);
+            await DownloadAndExtractPython(platformFolder, fullPath);
         }
     }
 
-    static void DownloadAndExtractPython(string platform, string targetPath) {
+    static async Task DownloadAndExtractPython(string platform, string targetPath) {
         string zipName = platform + ".zip";
+
+        string baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python/";
+        #if UNITY_EDITOR_WIN
+        baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python-win/";
+        #endif
+
         string url = baseUrl + zipName;
         string tempZip = Path.Combine(Path.GetTempPath(), zipName);
+        Debug.Log(url);
 
-        using (var client = new WebClient()) {
-            client.DownloadFile(url, tempZip);
+        //using var handler = new System.Net.Http.HttpClientHandler {AllowAutoRedirect = true};
+        using (var http = new System.Net.Http.HttpClient()) {    //handler) {
+            //http.DefaultRequestHeaders.UserAgent.ParseAdd("UnityPythonDownloader/1.0");
+            //http.DefaultRequestHeaders.Accept.ParseAdd("application/octet-stream");
+
+            try {
+                var response = await http.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                Debug.Log("Status Code: " + response.StatusCode);
+                Debug.Log("Redirect Location: " + response.Headers.Location);
+                var bytes = await http.GetByteArrayAsync(url);
+                File.WriteAllBytes(tempZip, bytes);
+            }
+            catch (Exception ex) {
+                Debug.LogError(ex);
+                }
         }
 
         if (Directory.Exists(targetPath))
@@ -50,6 +73,14 @@ public class PythonDownloader
 
         ZipFile.ExtractToDirectory(tempZip, targetPath);
         File.Delete(tempZip);
+
+        string bad_dll = Path.Combine(targetPath, "Lib/site-packages/torchvision/python311.dll");
+
+        if (File.Exists(Path.Combine(bad_dll)))
+        {
+            File.Delete(bad_dll);
+            Debug.Log("Datei gelöscht: " + bad_dll);
+        }
 
         Debug.Log("Python downloaded and extracted to: " + targetPath);
     }
