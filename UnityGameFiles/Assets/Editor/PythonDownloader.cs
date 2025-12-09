@@ -37,6 +37,14 @@ public class PythonDownloader
             Debug.Log("Python not found, downloading...");
             await DownloadAndExtractPython(platformFolder, fullPath);
         }
+
+        string bad_dll = Path.Combine(fullPath, "Lib/site-packages/torchvision/python311.dll");
+
+        if (File.Exists(Path.Combine(bad_dll)))
+        {
+            File.Delete(bad_dll);
+            Debug.Log("Datei gelöscht: " + bad_dll);
+        }
     }
 
     static async Task DownloadAndExtractPython(string platform, string targetPath) {
@@ -73,14 +81,6 @@ public class PythonDownloader
 
         ZipFile.ExtractToDirectory(tempZip, targetPath);
         File.Delete(tempZip);
-
-        string bad_dll = Path.Combine(targetPath, "Lib/site-packages/torchvision/python311.dll");
-
-        if (File.Exists(Path.Combine(bad_dll)))
-        {
-            File.Delete(bad_dll);
-            Debug.Log("Datei gelöscht: " + bad_dll);
-        }
 
         Debug.Log("Python downloaded and extracted to: " + targetPath);
     }
