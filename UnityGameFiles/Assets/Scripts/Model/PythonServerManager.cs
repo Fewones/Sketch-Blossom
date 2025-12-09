@@ -10,13 +10,19 @@ public class PythonServerManager
     {
         string pythonPath = "";
         #if UNITY_STANDALONE_WIN
-            pythonPath = Path.Combine(Application.dataPath, "Python/win/python-3.13.9-embed-amd64/python.exe");
+            pythonPath = "Python/windows-latest/python.exe";
         #elif UNITY_STANDALONE_LINUX
-            pythonPath = Path.Combine(Application.dataPath, "/Python/linux/bin/python3");
+            pythonPath = "Python/ubuntu-latest/bin/python3";
         #elif UNITY_STANDALONE_OSX
-            pythonPath = Path.Combine(Application.dataPath, "/Python/mac/bin/python3");
+            pythonPath = "Python/macos-latest/bin/python3";
         #endif
+        pythonPath = Path.Combine(Application.dataPath, pythonPath);
+        UnityEngine.Debug.Log(pythonPath);
+        pythonPath = Path.GetFullPath(pythonPath);
+
         string scriptPath = Path.Combine(Application.dataPath, "Python/shared/TinyCLIP.py");
+
+        UnityEngine.Debug.Log(pythonPath);
 
         pythonProcess = new Process();
         pythonProcess.StartInfo.FileName = pythonPath;
