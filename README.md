@@ -13,7 +13,7 @@ Theme: Draw to Fight
 - Marwa - ..
 
 ## How to use the TinyCLIP Model
-The TinyCLIP Model is the model we use for zero-shot-image-classification. That means that you can draw anything and it will be classified to a label (e.g. plant types). This model uses a python script to run so the user has to download python and some packages for the game to work. All installation steps are planned to be automated.
+The TinyCLIP Model is the model we use for zero-shot-image-classification. That means that you can draw anything and it will be classified to a label (e.g. plant types). This model uses a python script to run so the user has to download python and some packages for the game to work. All installation steps are planned to be automated. You currently also need to git checkout Issue34.
 ### windows
 1. From https://github.com/Fewones/Sketch-Blossom/releases/tag/sketchblossom-python-win download windows-latest.zip and extract it to `Sketch-Blossom\UnityGameFiles\Assets\Python`.
 2. Open the project in Unity. Due to the packages, this might take a while for the first time.
