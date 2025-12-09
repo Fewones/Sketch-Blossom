@@ -8,7 +8,7 @@ Theme: Draw to Fight
 
 ### Team Members
 - Michael Dieterle - Project Lead
-- Sanja Nikolic - ..
+- Sanja Nikolic - Gameplay Programmer 
 - Stefan - ..
 - Marwa - ..
 
