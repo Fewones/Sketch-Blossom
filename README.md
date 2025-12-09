@@ -12,6 +12,25 @@ Theme: Draw to Fight
 - Stefan - ..
 - Marwa - ..
 
+## How to use the TinyCLIP Model
+The TinyCLIP Model is the model we use for zero-shot-image-classification. That means that you can draw anything and it will be classified to a label (e.g. plant types). This model uses a python script to run so the user has to download python and some packages for the game to work. All installation steps are planned to be automated.
+### windows
+1. From https://github.com/Fewones/Sketch-Blossom/releases/tag/sketchblossom-python-win download windows-latest.zip and extract it to `Sketch-Blossom\UnityGameFiles\Assets\Python`.
+2. Open the project in Unity. Due to the packages, this might take a while for the first time.
+3. Run the project. You might see a terminal pop up, where you can see the python server requests. The transition to the drawing screen will only succeed if the server has fully started.
+4. Draw something and submit your drawing. In the terminal you can see each label with its score. The highest ranked label is returned.
+   
+### Unix (not tested)
+Note: The release assets in https://github.com/Fewones/Sketch-Blossom/releases/tag/sketchblossom-python might also work same as on Windows.
+1. If you haven't already, install python and run `pip install virtualenv`.
+2. In `Sketch-Blossom\UnityGameFiles\Assets\Python` create a virtualenv named macos-latest or ubuntu-latest (`virtualenv macos-latest` on macOS; `python3 -m venv ubuntu-latest` on Linux)
+3. Activate the virtualenv: `source macos-latest/bin/activate`;`source ubuntu-latest/bin/activate`;
+4. Run `pip install torch torchvision`
+5. Run `pip install -r ../../../requirements.txt`
+6. Open the project in Unity. Due to the packages, this might take a while for the first time.
+7. Run the project. You might see a terminal pop up, where you can see the python server requests. The transition to the drawing screen will only succeed if the server has fully started.
+8. Draw something and submit your drawing. In the terminal you can see each label with its score. The highest ranked label is returned.
+
 ## Core Gameplay Loop
 
 The game features **turn-based drawing combat** where what you draw directly determines what happens in battle. Drawing quality affects damage output, and plant choice matters due to type advantages and permadeath consequences.
