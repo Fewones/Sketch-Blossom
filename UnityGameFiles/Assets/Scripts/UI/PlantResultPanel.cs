@@ -249,10 +249,10 @@ public class PlantResultPanel : MonoBehaviour
         if (statsText != null && unitData != null)
         {
             statsText.text =
-                $"<b><size=20>Stats</size></b>\n\n" +
-                $"<size=18>❤️  HP:  {unitData.health,3}</size>\n" +
-                $"<size=18>⚔️  ATK: {unitData.attack,3}</size>\n" +
-                $"<size=18>🛡️  DEF: {unitData.defense,3}</size>";
+                $"<b><size=30>Stats</size></b>\n\n" +
+                $"<size=24>❤️  HP:  {unitData.health,3}</size>\n" +
+                $"<size=24>⚔️  ATK: {unitData.attack,3}</size>\n" +
+                $"<size=24>🛡️  DEF: {unitData.defense,3}</size>";
         }
 
         // Update color info - Minimized (element already shows this)
@@ -264,12 +264,12 @@ public class PlantResultPanel : MonoBehaviour
         // Update moves - Clean list format
         if (movesText != null)
         {
-            string movesStr = "<b><size=20>Moves</size></b>\n\n";
+            string movesStr = "<b><size=30>Moves</size></b>\n\n";
             foreach (var move in moves)
             {
                 string powerBars = GetPowerBars(move.basePower);
                 string powerText = move.basePower > 0 ? $" {powerBars}" : " 🛡️";
-                movesStr += $"<size=18>• {move.moveName}{powerText}</size>\n";
+                movesStr += $"<size=24>• {move.moveName}{powerText}</size>\n";
             }
             movesText.text = movesStr;
         }
@@ -368,7 +368,7 @@ public class PlantResultPanel : MonoBehaviour
     private string GetStars(float confidence)
     {
         int stars = Mathf.RoundToInt(confidence * 5);
-        string result = "";
+        string result = $"Confidence: {confidence * 100}% ";
         for (int i = 0; i < 5; i++)
         {
             result += i < stars ? "★" : "☆";
