@@ -8,6 +8,21 @@ namespace SketchBlossom.Model
    public class ModelManager : MonoBehaviour
 {
 
+    public async Task<bool> serverReady()
+    {
+        using (UnityWebRequest www = UnityWebRequest.Get("http://127.0.0.1:8000/health"))
+            {
+                var op = www.SendWebRequest();
+                while (!op.isDone){
+                    await Task.Yield();
+                }
+
+                if (www.result == UnityWebRequest.Result.Success){
+                    return true;
+                }
+            }
+        return false;
+    }
     public async Task<string> SendImage(Texture2D tex)
     {           
         Debug.Log("Connecting to Server");

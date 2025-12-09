@@ -175,11 +175,18 @@ namespace SketchBlossom.Drawing
             }
         }
 
-        public void StartDrawing()
+        public async void StartDrawing()
         {
             if (uiController != null)
             {
-                uiController.ShowDrawingPanel();
+                bool ready = false;
+                while(!ready) { 
+                   ready = await MM.serverReady();
+                   if(!ready)
+                        Debug.Log("Loading server...");
+                }
+                if (ready) 
+                    uiController.ShowDrawingPanel();
             }
         }
 

@@ -27,6 +27,11 @@ def get_image_embeddings(image):
 
 app = FastAPI()
 
+@app.get("/health")
+def health():
+    print("Ready abgefragt")
+    return {"status": "ok"}
+
 @app.post("/predict")
 async def predict(file: UploadFile):
     # Warte auf ein Image
