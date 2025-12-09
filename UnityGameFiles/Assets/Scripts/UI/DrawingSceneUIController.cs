@@ -20,7 +20,6 @@ namespace SketchBlossom.Drawing
         [Header("Instruction Elements")]
         [SerializeField] private TextMeshProUGUI instructionTitle;
         [SerializeField] private TextMeshProUGUI instructionText;
-        [SerializeField] private Button startDrawingButton;
 
         [Header("Drawing UI")]
         [SerializeField] private TextMeshProUGUI strokeCountText;
@@ -107,11 +106,6 @@ namespace SketchBlossom.Drawing
 
         private void SetupButtons()
         {
-            if (startDrawingButton != null)
-            {
-                startDrawingButton.onClick.AddListener(OnStartDrawingClicked);
-            }
-
             if (finishButton != null)
             {
                 finishButton.onClick.AddListener(OnFinishButtonClicked);
@@ -235,12 +229,6 @@ namespace SketchBlossom.Drawing
         #endregion
 
         #region Button Handlers
-
-        private void OnStartDrawingClicked()
-        {
-            Debug.Log("Start Drawing button clicked");
-            ShowDrawingPanel();
-        }
 
         private void OnFinishButtonClicked()
         {
@@ -366,9 +354,6 @@ namespace SketchBlossom.Drawing
         private void OnDestroy()
         {
             // Clean up button listeners
-            if (startDrawingButton != null)
-                startDrawingButton.onClick.RemoveListener(OnStartDrawingClicked);
-
             if (finishButton != null)
                 finishButton.onClick.RemoveListener(OnFinishButtonClicked);
 

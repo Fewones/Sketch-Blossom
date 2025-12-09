@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using SketchBlossom.Battle;
@@ -30,6 +31,8 @@ namespace SketchBlossom.Drawing
         [SerializeField] private string battleSceneName = "DrawingBattleScene";
         [SerializeField] private bool enableBattleTransition = true;
 
+        [SerializeField] private Button startDrawingButton;
+
         [System.Serializable]
         public class PredictionResponse {
             public string label;
@@ -53,6 +56,10 @@ namespace SketchBlossom.Drawing
         {
             pythonserver = new PythonServerManager();
             pythonserver.Start();
+            if (startDrawingButton != null)
+            {
+                startDrawingButton.onClick.AddListener(StartDrawing);
+            }
             InitializeSystems();
             SetupEventListeners();
             ShowInstructions();
@@ -529,6 +536,9 @@ namespace SketchBlossom.Drawing
 
         private void OnDestroy()
         {
+            if (startDrawingButton != null)
+                startDrawingButton.onClick.RemoveListener(StartDrawing);
+            
             pythonserver.OnApplicationQuit();
             // Unsubscribe from events
             if (uiController != null)
