@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 /// <summary>
@@ -77,7 +78,11 @@ public class DrawingCaptureHandler : MonoBehaviour
 
         // Configure camera
         captureCamera.orthographic = true;
-        captureCamera.backgroundColor = backgroundColor;
+        if (drawingArea == null){
+            captureCamera.backgroundColor = backgroundColor;
+        } else {
+            captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;  
+        }
         captureCamera.clearFlags = CameraClearFlags.SolidColor;
         captureCamera.cullingMask = -1; // Render everything (all layers)
         captureCamera.depth = sourceCamera.depth + 1; // Render after main camera

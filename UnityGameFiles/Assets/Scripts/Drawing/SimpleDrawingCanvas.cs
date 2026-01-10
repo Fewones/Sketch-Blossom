@@ -232,7 +232,13 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         currentPoints.Clear();
+        drawingArea.GetComponent<Image> ().color = new Color(1,1,1,1);
         Debug.Log("Cleared all strokes");
+    }
+
+    public void FillBackground()
+    {
+       drawingArea.GetComponent<Image> ().color = currentColor;
     }
 
     /// <summary>
