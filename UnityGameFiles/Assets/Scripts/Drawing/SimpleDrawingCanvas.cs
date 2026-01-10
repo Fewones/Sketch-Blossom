@@ -36,6 +36,8 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     private bool hasLoggedBounds = false;
 
+    public float currentz = 0;
+
     void Update()
     {
         if (visible){
@@ -142,7 +144,9 @@ public class SimpleDrawingCanvas : MonoBehaviour
         isDrawing = true;
 
         // Add first point immediately
-        Vector3 worldPos = ScreenToWorld(screenPos);
+        Vector3 worldPos = ScreenToWorld(screenPos, currentz);
+        Debug.Log(worldPos);
+        currentz += 0.01f;
         currentPoints.Add(worldPos);
         UpdateStrokeRenderer();
 
@@ -153,7 +157,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (!isDrawing || currentStroke == null) return;
 
-        Vector3 worldPos = ScreenToWorld(screenPos);
+        Vector3 worldPos = ScreenToWorld(screenPos, currentz);
 
         // Check distance from last point
         if (currentPoints.Count > 0)
@@ -199,10 +203,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
         currentStroke.SetPositions(currentPoints.ToArray());
     }
 
-    Vector3 ScreenToWorld(Vector2 screenPos)
+    Vector3 ScreenToWorld(Vector2 screenPos, float z)
     {
-        // z-distance should match camera → drawing plane distance; 10f worked for you before
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+
+        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f - z)); // subtract z so new lines appear over old lines
+
     }
 
     /// <summary>
