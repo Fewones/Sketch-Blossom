@@ -29,12 +29,14 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private LineRenderer currentStroke;
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
+
     public bool visible = true;
 
     // NEW: used to enforce "only one completed stroke" (for Wild Growth)
     private bool strokeFinished = false;
 
     private bool hasLoggedBounds = false;
+
 
     public float currentz = 0;
 
