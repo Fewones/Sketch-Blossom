@@ -202,6 +202,7 @@ namespace SketchBlossom.Drawing
             }
 
             UpdateHint("Draw your plant! Choose a color and start drawing.");
+            drawingCanvas.visible = true;
         }
 
         public void HideDrawingPanel()
@@ -237,6 +238,7 @@ namespace SketchBlossom.Drawing
             {
                 drawingCanvas.strokeContainer.gameObject.SetActive(true);
             }
+            drawingCanvas.visible = false;
         }
 
         private void SetPanelActive(GameObject panel, bool active)
