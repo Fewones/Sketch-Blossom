@@ -38,5 +38,6 @@ public class PythonServerManager
     {
         if (!pythonProcess.HasExited)
             pythonProcess.Kill();
+        UnityEngine.Debug.Log("Python server deactivated.");
     }
 }
