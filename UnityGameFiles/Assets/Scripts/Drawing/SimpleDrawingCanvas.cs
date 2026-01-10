@@ -29,10 +29,13 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private LineRenderer currentStroke;
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
+    public bool visible = false;
 
     void Update()
     {
-        HandleDrawingInput();
+        if (visible){
+           HandleDrawingInput(); 
+        }  
     }
 
     void HandleDrawingInput()
