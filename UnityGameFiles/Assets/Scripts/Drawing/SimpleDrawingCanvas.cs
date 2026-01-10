@@ -240,7 +240,15 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
         currentPoints.Clear();
         strokeFinished = false; // NEW: allow drawing again
+
+        drawingArea.GetComponent<Image> ().color = new Color(1,1,1,1);
+
         Debug.Log("Cleared all strokes");
+    }
+
+    public void FillBackground()
+    {
+       drawingArea.GetComponent<Image> ().color = currentColor;
     }
 
     /// <summary>

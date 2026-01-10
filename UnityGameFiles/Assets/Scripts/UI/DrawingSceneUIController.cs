@@ -26,6 +26,7 @@ namespace SketchBlossom.Drawing
         [SerializeField] private TextMeshProUGUI hintText;
         [SerializeField] private Button finishButton;
         [SerializeField] private Button clearButton;
+        [SerializeField] private Button fillButton;
         [SerializeField] private Button guideBookButton;
 
         [Header("Error Display")]
@@ -45,6 +46,13 @@ namespace SketchBlossom.Drawing
         private int maxStrokes = 20;
 
         #region Unity Lifecycle
+
+
+
+
+
+
+
 
         private void Awake()
         {
@@ -117,6 +125,11 @@ namespace SketchBlossom.Drawing
                 clearButton.onClick.AddListener(OnClearButtonClicked);
             }
 
+            if (fillButton != null)
+            {
+                fillButton.onClick.AddListener(OnFillButtonClicked);
+            }
+
             if (guideBookButton != null)
             {
                 GuideBookManager guideBook = FindFirstObjectByType<GuideBookManager>();
@@ -166,6 +179,7 @@ namespace SketchBlossom.Drawing
             // Re-enable all drawing UI controls
             if (finishButton != null) finishButton.gameObject.SetActive(true);
             if (clearButton != null) clearButton.gameObject.SetActive(true);
+            if (fillButton != null) fillButton.gameObject.SetActive(true);
             if (guideBookButton != null) guideBookButton.gameObject.SetActive(true);
             if (strokeCountText != null) strokeCountText.gameObject.SetActive(true);
             if (hintText != null) hintText.gameObject.SetActive(true);
@@ -192,6 +206,7 @@ namespace SketchBlossom.Drawing
             // This allows the drawing strokes to remain visible
             if (finishButton != null) finishButton.gameObject.SetActive(false);
             if (clearButton != null) clearButton.gameObject.SetActive(false);
+            if (fillButton != null) fillButton.gameObject.SetActive(false);
             if (guideBookButton != null) guideBookButton.gameObject.SetActive(false);
             if (strokeCountText != null) strokeCountText.gameObject.SetActive(false);
             if (hintText != null) hintText.gameObject.SetActive(false);
@@ -247,6 +262,17 @@ namespace SketchBlossom.Drawing
             {
                 drawingCanvas.ClearAll();
                 UpdateHint("Canvas cleared! Start fresh.");
+            }
+        }
+
+        private void OnFillButtonClicked()
+        {
+            Debug.Log("Fill button clicked");
+
+            if (drawingCanvas != null)
+            {
+                drawingCanvas.FillBackground();
+                UpdateHint("Background color changed!");
             }
         }
 
@@ -362,6 +388,9 @@ namespace SketchBlossom.Drawing
 
             if (clearButton != null)
                 clearButton.onClick.RemoveListener(OnClearButtonClicked);
+
+            if (fillButton != null)
+                fillButton.onClick.RemoveListener(OnFillButtonClicked);
         }
 
         #endregion
