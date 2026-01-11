@@ -228,7 +228,7 @@ public class PlantRecognitionSystem : MonoBehaviour
             confidence += 0.2f;
         if (strokes >= 5)
             confidence += 0.15f;
-        if (accuracy > 0.2f)
+        if (accuracy > 0.27f)
             confidence += 0.15f;
 
         return Mathf.Clamp01(confidence);
