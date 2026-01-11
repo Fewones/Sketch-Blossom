@@ -105,35 +105,31 @@ public class PostBattleManager : MonoBehaviour
 
     private void LoadPlantImage()
     {
+        // Get the plant data from the battle
         if (DrawnUnitData.Instance != null && DrawnUnitData.Instance.drawingTexture != null)
         {
             Texture2D drawingTexture = DrawnUnitData.Instance.drawingTexture;
-            Debug.Log($"[PostBattle] DrawnUnitData texture: {drawingTexture.width}x{drawingTexture.height}");
 
+            // Convert texture to sprite
             Sprite plantSprite = Texture2DToSprite(drawingTexture);
 
             if (plantImage != null && plantSprite != null)
             {
                 plantImage.sprite = plantSprite;
-                Debug.Log("[PostBattle] Loaded plant image from DrawnUnitData");
                 plantImage.color = Color.white;
                 plantImage.preserveAspect = true;
-            }
-            else
-            {
-                Debug.LogWarning($"[PostBattle] plantImage null? {plantImage == null}, plantSprite null? {plantSprite == null}");
             }
         }
         else
         {
-            Debug.LogWarning("[PostBattle] No plant drawing data found. Using default placeholder.");
+            Debug.LogWarning("No plant drawing data found. Using default placeholder.");
             if (plantImage)
             {
-                plantImage.color = new Color(0.3f, 1f, 0.3f);
+                // Apply element color as fallback
+                plantImage.color = new Color(0.3f, 1f, 0.3f); // Green
             }
         }
     }
-
 
     private Sprite Texture2DToSprite(Texture2D texture)
     {
@@ -161,22 +157,18 @@ public class PostBattleManager : MonoBehaviour
             return;
         }
 
-        // Try to re-select the plant that was actually used in battle
-        if (DrawnUnitData.Instance != null &&
-            !string.IsNullOrEmpty(DrawnUnitData.Instance.inventoryPlantId))
+        // Get the currently selected plant
+        PlantInventoryEntry selectedPlant = inventory.GetSelectedPlant();
+        if (selectedPlant != null)
         {
-            inventory.SelectPlant(DrawnUnitData.Instance.inventoryPlantId);
-            Debug.Log($"Re-selected plant with ID {DrawnUnitData.Instance.inventoryPlantId} for Wild Growth based on DrawnUnitData.");
+            // Apply Wild Growth upgrade
+            inventory.ApplyWildGrowth(selectedPlant.plantId);
+            Debug.Log($"Applied Wild Growth to {selectedPlant.plantName}!");
         }
         else
         {
-            // Fallback: we just keep the current selection, but warn in the log
-            Debug.LogWarning("DrawnUnitData has no inventoryPlantId set. Wild Growth will use the currently selected plant in inventory.");
+            Debug.LogWarning("No plant selected for Wild Growth!");
         }
-
-        // IMPORTANT: do NOT apply WildGrowth here anymore.
-        // The drawing-based upgrade is handled inside WildGrowthSceneManager
-        // after the player finishes their Wild Growth drawing.
 
         // Store the choice
         PlayerPrefs.SetString("GrowthMode", "WILD");
@@ -186,7 +178,6 @@ public class PostBattleManager : MonoBehaviour
         Debug.Log("Loading WildGrowthScene...");
         SceneManager.LoadScene("WildGrowthScene");
     }
-
 
     public void OnTameSelected()
     {

@@ -301,12 +301,7 @@ namespace SketchBlossom.Progression
                 return;
             }
 
-            // Apply stats/visuals to battle unit
             selectedPlant.ApplyToDrawnUnitData(DrawnUnitData.Instance);
-
-            // 🔗 Remember which inventory entry this battle unit came from
-            DrawnUnitData.Instance.inventoryPlantId = selectedPlant.plantId;
-
             Debug.Log($"Loaded {selectedPlant.plantName} for battle (ATK:{selectedPlant.attack} HP:{selectedPlant.maxHealth} DEF:{selectedPlant.defense})");
         }
 

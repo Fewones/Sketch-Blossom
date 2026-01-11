@@ -28,10 +28,6 @@ public class DrawnUnitData : MonoBehaviour
     public Texture2D drawingTexture; // Store the drawing as a texture
     public Color unitColor = Color.green;
 
-    [Header("Inventory Link")]
-    [Tooltip("If this unit came from the player's inventory, this is the PlantInventoryEntry.plantId.")]
-    public string inventoryPlantId;
-
     private void Awake()
     {
         // Singleton pattern - only one instance persists
@@ -91,7 +87,6 @@ public class DrawnUnitData : MonoBehaviour
         element = PlantRecognitionSystem.ElementType.Grass;
         plantDisplayName = "Unknown";
         detectionConfidence = 0f;
-        inventoryPlantId = string.Empty;
     }
 
     /// <summary>
