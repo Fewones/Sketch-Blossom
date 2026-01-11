@@ -13,7 +13,17 @@ model = AutoModelForZeroShotImageClassification.from_pretrained("wkcn/TinyCLIP-V
 model.eval()
 
 
-labels = ["flame tulip", "fire rose", "sunflower", "cactus", "vine flower", "grass sprout", "water lily", "coral bloom", "bubble flower"]
+labelMap = {
+    "a red tulip emitting flames": "flame tulip", 
+    "a red rose on fire":"fire rose", 
+    "a shining sunflower": "sunflower", 
+    "a cactus with many spines": "cactus", 
+    "a long vine sprouting many flowers":"vine flower", 
+    "a small patch of grass":"grass sprout", 
+    "a blooming lilypad floating on water": "water lily", 
+    "underwater corals": "coral bloom", 
+    "a flower with water bubbles for petals": "bubble flower"
+}
 
 def get_text_embeddings(labels):
     inputs = processor(text=labels, return_tensors="pt", padding=True)
@@ -38,9 +48,9 @@ async def predict(file: UploadFile):
     image = Image.open(BytesIO(await file.read())).convert("RGB")
     # Ähnlichkeiten berechnen
     scores = {}
-    for label, emb in zip(labels, get_text_embeddings(labels)):
+    for label, emb in zip(labelMap.keys(), get_text_embeddings(list(labelMap.keys()))):
         score = torch.cosine_similarity(get_image_embeddings(image).unsqueeze(dim=0), emb.unsqueeze(dim=0))
-        scores[label] = float(score)
+        scores[labelMap[label]] = float(score)
 
     # Bestes Label bestimmen
     best_label = max(scores, key=scores.get)
