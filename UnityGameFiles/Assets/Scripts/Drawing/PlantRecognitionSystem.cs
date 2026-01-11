@@ -183,13 +183,13 @@ public class PlantRecognitionSystem : MonoBehaviour
         Debug.Log("=== PLANT RECOGNITION START ===");
 
         // Determine if plant is valid and plantType
-        bool isValidPlant = score > 0.15;
+        bool isValidPlant = score > 0.2;
         PlantType plantType = stringToPlant[label];
-        Debug.Log($"Step 3: Plant type detected = {label}");
+        Debug.Log($"Step 1: Plant type detected = {label}");
         
         // Calculate confidence
         float confidence = CalculateConfidence(strokes.Count, score);
-        Debug.Log($"Step 4: Confidence = {confidence:P0}");
+        Debug.Log($"Step 2: Confidence = {confidence:P0}");
         
         // Get plant data and create result
         PlantData data = plantDatabase[plantType];
