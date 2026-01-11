@@ -1635,6 +1635,7 @@ MonoBehaviour:
   captureHandler: {fileID: 0}
   battleSceneName: DrawingBattleScene
   enableBattleTransition: 1
+  startDrawingButton: {fileID: 1222118662}
 --- !u!4 &532746218
 Transform:
   m_ObjectHideFlags: 0

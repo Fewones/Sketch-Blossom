@@ -1,8 +1,11 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using SketchBlossom.Battle;
 using SketchBlossom.Progression;
+using SketchBlossom.Model;
 
 namespace SketchBlossom.Drawing
 {
@@ -29,7 +32,18 @@ namespace SketchBlossom.Drawing
         [SerializeField] private string battleSceneName = "DrawingBattleScene";
         [SerializeField] private bool enableBattleTransition = true;
 
+        [SerializeField] private Button startDrawingButton;
+
+        [System.Serializable]
+        public class PredictionResponse {
+            public string label;
+            public float score;
+        }
+
         private PlantRecognitionSystem.RecognitionResult lastResult;
+
+        private PythonServerManager pythonserver;
+        private ModelManager MM = new ModelManager();
 
         #region Unity Lifecycle
 
@@ -41,6 +55,12 @@ namespace SketchBlossom.Drawing
 
         private void Start()
         {
+            pythonserver = new PythonServerManager();
+            pythonserver.Start();
+            if (startDrawingButton != null)
+            {
+                startDrawingButton.onClick.AddListener(StartDrawing);
+            }
             InitializeSystems();
             SetupEventListeners();
             ShowInstructions();
@@ -163,11 +183,18 @@ namespace SketchBlossom.Drawing
             }
         }
 
-        public void StartDrawing()
+        public async void StartDrawing()
         {
             if (uiController != null)
             {
-                uiController.ShowDrawingPanel();
+                bool ready = false;
+                while(!ready) { 
+                   ready = await MM.serverReady();
+                   if(!ready)
+                        Debug.Log("Loading server...");
+                }
+                if (ready) 
+                    uiController.ShowDrawingPanel();
             }
         }
 
@@ -175,7 +202,7 @@ namespace SketchBlossom.Drawing
 
         #region Event Handlers
 
-        private void HandleFinishDrawing()
+        private async void HandleFinishDrawing()
         {
             Debug.Log("DrawingSceneManager: Finish button pressed");
 
@@ -188,7 +215,9 @@ namespace SketchBlossom.Drawing
             drawingCanvas.ForceEndStroke();
 
             // Analyze the drawing
-            AnalyzeDrawing();
+
+        
+            await AnalyzeDrawing(); 
 
             // Show results
             ShowResults();
@@ -340,8 +369,15 @@ namespace SketchBlossom.Drawing
             return true;
         }
 
-        private void AnalyzeDrawing()
+        private async Task AnalyzeDrawing()
         {
+            Texture2D drawingTexture = captureHandler.CaptureDrawing(
+                drawingCanvas.allStrokes,
+                drawingCanvas.mainCamera,
+                drawingCanvas.drawingArea
+            );
+
+
             if (recognitionSystem == null)
             {
                 Debug.LogError("PlantRecognitionSystem is null!");
@@ -349,15 +385,21 @@ namespace SketchBlossom.Drawing
             }
 
             Debug.Log("========== ANALYZING DRAWING ==========");
-
+            
             // Get drawing data
             List<LineRenderer> strokes = drawingCanvas.allStrokes;
             Color dominantColor = drawingCanvas.GetDominantColor();
 
             Debug.Log($"Strokes: {strokes.Count}, Dominant Color: {dominantColor}");
 
+            string json = await MM.SendImage(drawingTexture, "plant_labels");
+            PredictionResponse best = JsonUtility.FromJson<PredictionResponse>(json);
+            string label = best.label;
+            float score = best.score;
+            Debug.Log(json);
+
             // Analyze with recognition system
-            lastResult = recognitionSystem.AnalyzeDrawing(strokes, dominantColor);
+            lastResult = recognitionSystem.AnalyzeDrawing(label, score, strokes, dominantColor);
 
             if (lastResult != null)
             {
@@ -386,15 +428,11 @@ namespace SketchBlossom.Drawing
             {
                 Debug.LogError("Analysis failed - no result returned!");
             }
+        
         }
 
         private void ShowResults()
         {
-            if (lastResult == null)
-            {
-                Debug.LogError("No analysis result to show!");
-                return;
-            }
 
             // IMPORTANT: Keep strokes visible in the background behind results panel
             // Strokes should remain visible until user clicks "Redraw"
@@ -501,6 +539,10 @@ namespace SketchBlossom.Drawing
 
         private void OnDestroy()
         {
+            if (startDrawingButton != null)
+                startDrawingButton.onClick.RemoveListener(StartDrawing);
+            
+            pythonserver.OnApplicationQuit();
             // Unsubscribe from events
             if (uiController != null)
             {
