@@ -29,10 +29,15 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private LineRenderer currentStroke;
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
+    public bool visible = false;
+
+    public float currentz = 0;
 
     void Update()
     {
-        HandleDrawingInput();
+        if (visible){
+           HandleDrawingInput(); 
+        }  
     }
 
     void HandleDrawingInput()
@@ -139,7 +144,9 @@ public class SimpleDrawingCanvas : MonoBehaviour
         isDrawing = true;
 
         // Add first point immediately
-        Vector3 worldPos = ScreenToWorld(screenPos);
+        Vector3 worldPos = ScreenToWorld(screenPos, currentz);
+        Debug.Log(worldPos);
+        currentz += 0.01f;
         currentPoints.Add(worldPos);
         UpdateStrokeRenderer();
 
@@ -150,7 +157,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (!isDrawing || currentStroke == null) return;
 
-        Vector3 worldPos = ScreenToWorld(screenPos);
+        Vector3 worldPos = ScreenToWorld(screenPos, currentz);
 
         // Check distance from last point
         if (currentPoints.Count > 0)
@@ -193,9 +200,9 @@ public class SimpleDrawingCanvas : MonoBehaviour
         currentStroke.SetPositions(currentPoints.ToArray());
     }
 
-    Vector3 ScreenToWorld(Vector2 screenPos)
+    Vector3 ScreenToWorld(Vector2 screenPos, float z)
     {
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f - z));
     }
 
     /// <summary>
@@ -232,7 +239,13 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         currentPoints.Clear();
+        drawingArea.GetComponent<Image> ().color = new Color(1,1,1,1);
         Debug.Log("Cleared all strokes");
+    }
+
+    public void FillBackground()
+    {
+       drawingArea.GetComponent<Image> ().color = currentColor;
     }
 
     /// <summary>
