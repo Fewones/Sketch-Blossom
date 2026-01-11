@@ -74,6 +74,19 @@ public class WildGrowthSceneManager : MonoBehaviour
         // 1) Determine which plant we are modifying
         LoadSelectedPlantFromInventory();
 
+        Debug.Log($"[WG] DrawnUnitData exists? {DrawnUnitData.Instance != null}");
+        if (DrawnUnitData.Instance != null)
+        {
+            Debug.Log($"[WG] DUD inventoryPlantId = '{DrawnUnitData.Instance.inventoryPlantId}'");
+            Debug.Log($"[WG] DUD texture null? {DrawnUnitData.Instance.drawingTexture == null}");
+        }
+
+        Debug.Log($"[WG] selectedPlant null? {selectedPlant == null}");
+        if (selectedPlant != null)
+        {
+            Debug.Log($"[WG] selectedPlant id={selectedPlant.plantId}, base64Len={(selectedPlant.drawingTextureBase64?.Length ?? 0)}");
+        }
+
         // 2) Wire UI buttons and initial text
         SetupUI();
 
@@ -158,7 +171,7 @@ public class WildGrowthSceneManager : MonoBehaviour
     /// <summary>
     /// Sets up button callbacks and initial UI text.
     /// The actual logic lives in OnClearClicked / OnConfirmClicked etc.
-    /// </summary>
+    /// </summary> 
     private void SetupUI()
     {
         if (messageText != null)
@@ -210,6 +223,9 @@ public class WildGrowthSceneManager : MonoBehaviour
         }
     }
 
+
+    
+
     /// <summary>
     /// Main non-CLIP path:
     /// - Queries the SimpleDrawingCanvas for DrawingStats
@@ -226,10 +242,17 @@ public class WildGrowthSceneManager : MonoBehaviour
         hasAnyDrawing = stats.strokeCount > 0;
 
         // Confirm is only allowed once at least minRequiredStrokes are drawn.
-        // In Wild Growth we enforce maxStrokes = 1 in the canvas, so this ensures exactly one stroke.
         if (confirmButton != null)
         {
-            confirmButton.interactable = stats.strokeCount >= minRequiredStrokes;
+            bool shouldEnable = stats.strokeCount >= minRequiredStrokes;
+            confirmButton.interactable = shouldEnable;
+
+            
+            Debug.Log($"[WG] Set {confirmButton.name}.interactable={shouldEnable} (strokeCount={stats.strokeCount}, minRequired={minRequiredStrokes})");
+        }
+        else
+        {
+            Debug.LogWarning("[WG] confirmButton is NULL in UpdateQualityAndPreview");
         }
 
         // Compute geometric multiplier based on stroke length + coverage
@@ -238,6 +261,7 @@ public class WildGrowthSceneManager : MonoBehaviour
         // Now update the preview labels (HP / ATK / DEF)
         UpdatePreviewTexts();
     }
+
 
     /// <summary>
     /// CLIP mode placeholder:

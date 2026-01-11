@@ -105,31 +105,35 @@ public class PostBattleManager : MonoBehaviour
 
     private void LoadPlantImage()
     {
-        // Get the plant data from the battle
         if (DrawnUnitData.Instance != null && DrawnUnitData.Instance.drawingTexture != null)
         {
             Texture2D drawingTexture = DrawnUnitData.Instance.drawingTexture;
+            Debug.Log($"[PostBattle] DrawnUnitData texture: {drawingTexture.width}x{drawingTexture.height}");
 
-            // Convert texture to sprite
             Sprite plantSprite = Texture2DToSprite(drawingTexture);
 
             if (plantImage != null && plantSprite != null)
             {
                 plantImage.sprite = plantSprite;
+                Debug.Log("[PostBattle] Loaded plant image from DrawnUnitData");
                 plantImage.color = Color.white;
                 plantImage.preserveAspect = true;
+            }
+            else
+            {
+                Debug.LogWarning($"[PostBattle] plantImage null? {plantImage == null}, plantSprite null? {plantSprite == null}");
             }
         }
         else
         {
-            Debug.LogWarning("No plant drawing data found. Using default placeholder.");
+            Debug.LogWarning("[PostBattle] No plant drawing data found. Using default placeholder.");
             if (plantImage)
             {
-                // Apply element color as fallback
-                plantImage.color = new Color(0.3f, 1f, 0.3f); // Green
+                plantImage.color = new Color(0.3f, 1f, 0.3f);
             }
         }
     }
+
 
     private Sprite Texture2DToSprite(Texture2D texture)
     {
