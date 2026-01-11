@@ -2359,6 +2359,7 @@ MonoBehaviour:
   drawingPanel: {fileID: 1324501826}
   instructionTitle: {fileID: 281713994}
   instructionText: {fileID: 665204014}
+  startDrawingButton: {fileID: 1222118662}
   strokeCountText: {fileID: 332956671}
   hintText: {fileID: 0}
   finishButton: {fileID: 1636357515}
