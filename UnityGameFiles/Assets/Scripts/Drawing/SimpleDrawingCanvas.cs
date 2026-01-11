@@ -30,6 +30,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
 
+    // NEW: used to enforce "only one completed stroke" (for Wild Growth)
+    private bool strokeFinished = false;
+
+    private bool hasLoggedBounds = false;
+
     void Update()
     {
         HandleDrawingInput();
@@ -75,7 +80,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (drawingArea == null)
         {
             Debug.LogWarning("DrawingArea is null! Cannot restrict drawing bounds.");
-            return true; // If no area defined, allow anywhere
+            return true; // allow anywhere if not set
         }
         if (mainCamera == null)
         {
@@ -83,18 +88,15 @@ public class SimpleDrawingCanvas : MonoBehaviour
             return false;
         }
 
-        // Get world corners of the drawing area
         Vector3[] corners = new Vector3[4];
         drawingArea.GetWorldCorners(corners);
 
-        // Convert to screen space
         Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
         Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
 
         bool isInside = screenPos.x >= min.x && screenPos.x <= max.x &&
                         screenPos.y >= min.y && screenPos.y <= max.y;
 
-        // Debug log on first check
         if (!hasLoggedBounds)
         {
             Debug.Log($"Drawing area bounds - Min: {min}, Max: {max}, Size: {max - min}");
@@ -103,8 +105,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
         return isInside;
     }
-
-    private bool hasLoggedBounds = false;
 
     void StartStroke(Vector2 screenPos)
     {
@@ -171,6 +171,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (currentPoints.Count >= 1)
         {
             allStrokes.Add(currentStroke);
+            strokeFinished = true; // NEW: mark stroke as done
             Debug.Log($"Finished stroke #{allStrokes.Count} with {currentPoints.Count} points");
         }
         else
@@ -195,6 +196,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     Vector3 ScreenToWorld(Vector2 screenPos)
     {
+        // z-distance should match camera → drawing plane distance; 10f worked for you before
         return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
     }
 
@@ -232,6 +234,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         currentPoints.Clear();
+        strokeFinished = false; // NEW: allow drawing again
         Debug.Log("Cleared all strokes");
     }
 
@@ -242,14 +245,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (allStrokes.Count == 0) return Color.white;
 
-        // Count color usage by stroke count
         Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
 
         foreach (var stroke in allStrokes)
         {
             Color strokeColor = stroke.startColor;
-
-            // Round to nearest primary color
             Color rounded = RoundToNearestPrimaryColor(strokeColor);
 
             if (!colorCounts.ContainsKey(rounded))
@@ -258,7 +258,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
             colorCounts[rounded]++;
         }
 
-        // Find most used color
         Color dominantColor = Color.white;
         int maxCount = 0;
 
@@ -277,7 +276,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     Color RoundToNearestPrimaryColor(Color color)
     {
-        // Find which primary color component is strongest
         if (color.r > color.g && color.r > color.b)
             return Color.red;
         else if (color.g > color.r && color.g > color.b)
@@ -289,9 +287,18 @@ public class SimpleDrawingCanvas : MonoBehaviour
     }
 
     /// <summary>
-    /// Get stroke count
+    /// Get stroke count (finished strokes only)
     /// </summary>
     public int GetStrokeCount()
+    {
+        return allStrokes.Count;
+    }
+
+    /// <summary>
+    /// Optional helper if you need finished strokes count explicitly.
+    /// Currently identical to GetStrokeCount().
+    /// </summary>
+    public int GetFinishedStrokeCount()
     {
         return allStrokes.Count;
     }
@@ -307,10 +314,106 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     void OnValidate()
     {
-        // Auto-find camera if not assigned
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
         }
+    }
+
+    /// <summary>
+    /// Returns summary statistics about the current drawing (finished strokes + in-progress stroke).
+    /// </summary>
+    public DrawingStats GetDrawingStats()
+    {
+        DrawingStats stats = new DrawingStats();
+
+        int strokeCount = allStrokes.Count;
+        if (isDrawing && currentPoints != null && currentPoints.Count > 0)
+        {
+            strokeCount += 1;
+        }
+        stats.strokeCount = strokeCount;
+
+        bool hasAnyPoint = false;
+        Vector2 minPoint = Vector2.zero;
+        Vector2 maxPoint = Vector2.zero;
+        float totalLength = 0f;
+
+        void UpdateBounds(Vector3 worldPos)
+        {
+            Vector2 p = new Vector2(worldPos.x, worldPos.y);
+            if (!hasAnyPoint)
+            {
+                hasAnyPoint = true;
+                minPoint = p;
+                maxPoint = p;
+            }
+            else
+            {
+                minPoint = Vector2.Min(minPoint, p);
+                maxPoint = Vector2.Max(maxPoint, p);
+            }
+        }
+
+        foreach (var stroke in allStrokes)
+        {
+            if (stroke == null) continue;
+            int count = stroke.positionCount;
+            if (count == 0) continue;
+
+            Vector3[] positions = new Vector3[count];
+            stroke.GetPositions(positions);
+
+            for (int i = 0; i < count; i++)
+            {
+                UpdateBounds(positions[i]);
+                if (i > 0)
+                {
+                    totalLength += Vector3.Distance(positions[i - 1], positions[i]);
+                }
+            }
+        }
+
+        if (isDrawing && currentPoints != null && currentPoints.Count > 0)
+        {
+            for (int i = 0; i < currentPoints.Count; i++)
+            {
+                UpdateBounds(currentPoints[i]);
+                if (i > 0)
+                {
+                    totalLength += Vector3.Distance(currentPoints[i - 1], currentPoints[i]);
+                }
+            }
+        }
+
+        stats.totalLength = totalLength;
+
+        if (hasAnyPoint)
+        {
+            Vector2 size = maxPoint - minPoint;
+            stats.boundingBoxArea = Mathf.Abs(size.x * size.y);
+        }
+        else
+        {
+            stats.boundingBoxArea = 0f;
+        }
+
+        float canvasArea = 0f;
+        if (drawingArea != null)
+        {
+            var rect = drawingArea.rect;
+            canvasArea = Mathf.Abs(rect.width * rect.height);
+        }
+        stats.canvasArea = canvasArea;
+
+        return stats;
+    }
+
+    /// <summary>
+    /// Clears the canvas and resets all strokes, used by WildGrowthSceneManager.
+    /// </summary>
+    public void ClearCanvas()
+    {
+        ClearAll();
     }
 }
