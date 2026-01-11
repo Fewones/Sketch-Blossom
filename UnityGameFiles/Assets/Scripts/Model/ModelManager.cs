@@ -23,14 +23,14 @@ namespace SketchBlossom.Model
             }
         return false;
     }
-    public async Task<string> SendImage(Texture2D tex)
+    public async Task<string> SendImage(Texture2D tex, string item_key)
     {           
         Debug.Log("Connecting to Server");
         byte[] png = tex.EncodeToPNG();
         WWWForm form = new WWWForm();
         form.AddBinaryData("file", png, "image.png", "image/png");
 
-        using (UnityWebRequest www = UnityWebRequest.Post("http://127.0.0.1:8000/predict", form))
+        using (UnityWebRequest www = UnityWebRequest.Post($"http://127.0.0.1:8000/predict/{item_key}", form))
         {
 
             var op = www.SendWebRequest();

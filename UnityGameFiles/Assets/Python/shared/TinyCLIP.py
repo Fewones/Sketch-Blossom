@@ -7,23 +7,17 @@ from fastapi import FastAPI, UploadFile
 from PIL import Image
 from io import BytesIO
 import uvicorn
+import json
+import os
 
 processor = AutoProcessor.from_pretrained("wkcn/TinyCLIP-ViT-39M-16-Text-19M-YFCC15M")
 model = AutoModelForZeroShotImageClassification.from_pretrained("wkcn/TinyCLIP-ViT-39M-16-Text-19M-YFCC15M")
 model.eval()
 
 
-labelMap = {
-    "a red tulip emitting flames": "flame tulip", 
-    "a red rose on fire":"fire rose", 
-    "a shining sunflower": "sunflower", 
-    "a cactus with many spines": "cactus", 
-    "a long vine sprouting many flowers":"vine flower", 
-    "a small patch of grass":"grass sprout", 
-    "a blooming lilypad floating on water": "water lily", 
-    "underwater corals": "coral bloom", 
-    "a flower with water bubbles for petals": "bubble flower"
-}
+with open("Assets/Python/shared/labelMaps.json") as labelMapJson:
+    labelMaps = json.load(labelMapJson)
+
 
 def get_text_embeddings(labels):
     inputs = processor(text=labels, return_tensors="pt", padding=True)
@@ -42,8 +36,10 @@ def health():
     print("Ready abgefragt")
     return {"status": "ok"}
 
-@app.post("/predict")
-async def predict(file: UploadFile):
+@app.post("/predict/{item_id}")
+async def predict(file: UploadFile, item_id: str):
+    # Entpacke labelMaps für gewünschte labelMap
+    labelMap = labelMaps[item_id]
     # Warte auf ein Image
     image = Image.open(BytesIO(await file.read())).convert("RGB")
     # Ähnlichkeiten berechnen

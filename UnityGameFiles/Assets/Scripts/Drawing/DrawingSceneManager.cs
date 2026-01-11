@@ -392,7 +392,7 @@ namespace SketchBlossom.Drawing
 
             Debug.Log($"Strokes: {strokes.Count}, Dominant Color: {dominantColor}");
 
-            string json = await MM.SendImage(drawingTexture);
+            string json = await MM.SendImage(drawingTexture, "plant_labels");
             PredictionResponse best = JsonUtility.FromJson<PredictionResponse>(json);
             string label = best.label;
             float score = best.score;
