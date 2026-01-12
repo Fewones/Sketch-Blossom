@@ -78,6 +78,7 @@ namespace SketchBlossom.Drawing
             if (drawingCanvas != null)
             {
                 maxStrokes = drawingCanvas.maxStrokes;
+                drawingCanvas.visible = false;
             }
 
             // Auto-find panels if not assigned
