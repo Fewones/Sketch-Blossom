@@ -184,6 +184,8 @@ public class SimpleDrawingCanvas : MonoBehaviour
         isDrawing = false;
         currentStroke = null;
         currentPoints.Clear();
+        Debug.Log($"[TG] FinishStroke -> allStrokes.Count = {allStrokes.Count}");
+
     }
 
     void UpdateStrokeRenderer()
