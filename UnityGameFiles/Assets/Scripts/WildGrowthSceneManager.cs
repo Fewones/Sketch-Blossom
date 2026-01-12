@@ -246,9 +246,6 @@ public class WildGrowthSceneManager : MonoBehaviour
         {
             bool shouldEnable = stats.strokeCount >= minRequiredStrokes;
             confirmButton.interactable = shouldEnable;
-
-            
-            Debug.Log($"[WG] Set {confirmButton.name}.interactable={shouldEnable} (strokeCount={stats.strokeCount}, minRequired={minRequiredStrokes})");
         }
         else
         {
