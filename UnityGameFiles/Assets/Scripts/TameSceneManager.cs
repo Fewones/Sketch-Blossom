@@ -173,7 +173,7 @@ public class TameGrowthManager : MonoBehaviour
         List<LineRenderer> strokes = drawingCanvas.allStrokes;
         Color dominant = drawingCanvas.GetDominantColor();
 
-        var result = recognitionSystem.AnalyzeDrawing(strokes, dominant);
+        var result = recognitionSystem.AnalyzeDrawing("flame tulip", 0.3, strokes, dominant);
         if (result == null)
         {
             failureMessage = "Could not analyze drawing. Try again.";
