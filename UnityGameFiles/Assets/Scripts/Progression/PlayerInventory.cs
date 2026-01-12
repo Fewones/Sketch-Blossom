@@ -408,5 +408,10 @@ namespace SketchBlossom.Progression
         }
 
         #endregion
+
+        void OnApplicationQuit()
+        {
+            ClearInventory();
+        }
     }
 }
