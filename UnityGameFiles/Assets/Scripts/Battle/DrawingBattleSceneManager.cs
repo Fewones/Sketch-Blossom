@@ -48,6 +48,9 @@ namespace SketchBlossom.Battle
         [SerializeField] private float turnDelay = 1.5f;
         [SerializeField] private float actionTextDelay = 2f;
 
+        [Header("Turn Timer")]
+        [SerializeField] private BattleTimer battleTimer;
+
         // Battle state
         private enum BattleState
         {
@@ -81,6 +84,12 @@ namespace SketchBlossom.Battle
         // Combat state
         private bool playerIsBlocking = false;
         private bool enemyIsBlocking = false;
+
+        // Enemy difficulty (1-5 stars)
+        private int enemyDifficultyStars = 1;
+
+        // Flag: was auto-submit triggered by timer?
+        private bool isAutoSubmittingMove = false;
 
         private void Start()
         {
@@ -224,17 +233,19 @@ namespace SketchBlossom.Battle
                 enemyElement = EnemyEncounterData.Instance.encounterElement;
                 enemyPlantName = EnemyEncounterData.Instance.encounterDisplayName;
 
-                // Get base stats and potentially scale by difficulty
+                // Get base stats and scale by difficulty
                 var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
-                int difficulty = EnemyEncounterData.Instance.encounterDifficulty;
+
+                // Stars 1-5
+                enemyDifficultyStars = EnemyEncounterData.Instance.encounterDifficulty;
 
                 // Scale enemy stats based on difficulty (1-5)
-                float difficultyMultiplier = 1.0f + ((difficulty - 1) * 0.15f); // 1.0x to 1.6x
+                float difficultyMultiplier = 1.0f + ((enemyDifficultyStars - 1) * 0.15f); // 1.0x to 1.6x
                 enemyMaxHP = Mathf.RoundToInt(plantData.baseHP * difficultyMultiplier);
                 enemyAttack = Mathf.RoundToInt(plantData.baseAttack * difficultyMultiplier);
                 enemyDefense = Mathf.RoundToInt(plantData.baseDefense * difficultyMultiplier);
 
-                Debug.Log($"World Map Encounter! Enemy: {enemyPlantName} (Difficulty: {difficulty}★)");
+                Debug.Log($"World Map Encounter! Enemy: {enemyPlantName} (Difficulty: {enemyDifficultyStars} stars)");
                 Debug.Log($"Enemy stats: HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense}");
             }
             else
@@ -249,6 +260,8 @@ namespace SketchBlossom.Battle
                 enemyMaxHP = plantData.baseHP;
                 enemyAttack = plantData.baseAttack;
                 enemyDefense = plantData.baseDefense;
+
+                enemyDifficultyStars = 1; // default difficulty
 
                 Debug.Log($"Random enemy: {enemyPlantName} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
             }
@@ -427,15 +440,28 @@ namespace SketchBlossom.Battle
             drawingCanvas.EnableDrawing();
             drawingCanvas.ClearCanvas();
 
+            // Start turn timer
+            if (battleTimer != null)
+            {
+                bool isHardMode = enemyDifficultyStars >= 4;
+                battleTimer.StartPlayerTurnTimer(isHardMode);
+            }
+
             // Wait for player to finish drawing
             while (currentState == BattleState.PlayerDrawing)
             {
                 yield return null;
             }
 
+            // Stop timer when drawing phase is over (either finished or timed out)
+            if (battleTimer != null)
+            {
+                battleTimer.Stop();
+            }
+
             Debug.Log("[BATTLE] Player finished drawing, executing move");
 
-            // Execute move was already called by OnDrawingCompleted
+            // Execute move was already called by OnDrawingCompleted / OnFinishDrawingClicked
             while (currentState == BattleState.PlayerExecuting)
             {
                 yield return null;
@@ -465,6 +491,12 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator EnemyTurn()
         {
+            // Make sure timer is not running during enemy turn
+            if (battleTimer != null)
+            {
+                battleTimer.Stop();
+            }
+
             // Ensure both units are visible at the start of enemy's turn
             if (playerUnit != null) playerUnit.EnsureVisible();
             if (enemyUnit != null) enemyUnit.EnsureVisible();
@@ -539,8 +571,17 @@ namespace SketchBlossom.Battle
 
             if (lineRenderers.Count == 0)
             {
-                UpdateActionText("Draw something first!");
-                currentState = BattleState.PlayerDrawing;
+                if (isAutoSubmittingMove)
+                {
+                    UpdateActionText("Time's up! You hesitated and lose your turn.");
+                    drawingCanvas.ClearCanvas();
+                    currentState = BattleState.EnemyTurn;
+                }
+                else
+                {
+                    UpdateActionText("Draw something first!");
+                    currentState = BattleState.PlayerDrawing;
+                }
                 return;
             }
 
@@ -557,9 +598,18 @@ namespace SketchBlossom.Battle
             }
             else
             {
-                UpdateActionText("Move not recognized! Try again.");
-                drawingCanvas.ClearCanvas();
-                currentState = BattleState.PlayerDrawing;
+                if (isAutoSubmittingMove)
+                {
+                    UpdateActionText("Time's up! Your move failed and you lose your turn.");
+                    drawingCanvas.ClearCanvas();
+                    currentState = BattleState.EnemyTurn;
+                }
+                else
+                {
+                    UpdateActionText("Move not recognized! Try again.");
+                    drawingCanvas.ClearCanvas();
+                    currentState = BattleState.PlayerDrawing;
+                }
             }
         }
 
@@ -859,6 +909,43 @@ namespace SketchBlossom.Battle
 
             // Reset blocking state
             playerIsBlocking = false;
+        }
+
+        /// <summary>
+        /// Called by BattleTimer: standard battle, auto-submit current drawing.
+        /// </summary>
+        public void OnPlayerTurnTimedOut_AutoSubmit()
+        {
+            if (currentState != BattleState.PlayerDrawing)
+                return;
+
+            Debug.Log("[TIMER] Player timed out (auto submit).");
+
+            isAutoSubmittingMove = true;
+            OnFinishDrawingClicked(); // reuse existing logic
+            isAutoSubmittingMove = false;
+        }
+
+        /// <summary>
+        /// Called by BattleTimer: hard battles (>=4 stars) - entire turn is lost.
+        /// </summary>
+        public void OnPlayerTurnTimedOut_Hard()
+        {
+            if (currentState != BattleState.PlayerDrawing)
+                return;
+
+            Debug.Log("[TIMER] Player timed out (hard) - turn forfeited.");
+
+            if (battleTimer != null)
+            {
+                battleTimer.Stop();
+            }
+
+            drawingCanvas.ClearCanvas();
+            UpdateActionText("Time's up! You lose your turn.");
+            ShowPlayerTurnUI(false);
+
+            currentState = BattleState.EnemyTurn;
         }
 
         /// <summary>
