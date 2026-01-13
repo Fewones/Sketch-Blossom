@@ -23,7 +23,7 @@ public class TameGrowthManager : MonoBehaviour
     [SerializeField] private DrawingCaptureHandler captureHandler;
 
     [Header("Validation")]
-    [SerializeField] private float minConfidence = 0.30f;
+    [SerializeField] private float minConfidence = 0.7f;
 
     [Header("Scene Names")]
     [SerializeField] private string worldMapSceneName = "WorldMapScene";
