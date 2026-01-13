@@ -42,7 +42,7 @@ namespace SketchBlossom.Drawing
 
         private PlantRecognitionSystem.RecognitionResult lastResult;
 
-        private PythonServerManager pythonserver;
+        public PythonServerManager pythonserver;
         private ModelManager MM = new ModelManager();
 
         #region Unity Lifecycle
@@ -55,8 +55,6 @@ namespace SketchBlossom.Drawing
 
         private void Start()
         {
-            pythonserver = new PythonServerManager();
-            pythonserver.Start();
             if (startDrawingButton != null)
             {
                 startDrawingButton.onClick.AddListener(StartDrawing);
@@ -131,6 +129,19 @@ namespace SketchBlossom.Drawing
                     Debug.Log("DrawingSceneManager: Created DrawingCaptureHandler");
                 }
             }
+
+            // Auto-find or create pythonserver
+            if (pythonserver == null)
+            {
+                pythonserver = FindFirstObjectByType<PythonServerManager>();
+                if (pythonserver == null)
+                {
+                    GameObject serverObj = new GameObject("PythonServerManager");
+                    pythonserver = serverObj.AddComponent<PythonServerManager>();
+                    Debug.Log("DrawingSceneManager: Created PythonServerManager");
+                }
+            }
+            DontDestroyOnLoad(pythonserver);
         }
 
         private void InitializeUnitData()
@@ -542,7 +553,6 @@ namespace SketchBlossom.Drawing
             if (startDrawingButton != null)
                 startDrawingButton.onClick.RemoveListener(StartDrawing);
             
-            pythonserver.OnApplicationQuit();
             // Unsubscribe from events
             if (uiController != null)
             {

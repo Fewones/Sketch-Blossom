@@ -1,10 +1,13 @@
 using System; // for Convert.ToBase64String
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections;
 using SketchBlossom.Progression; // for PlayerInventory & PlantInventoryEntry
+using SketchBlossom.Model;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Manages the Wild Growth reward scene:
@@ -61,7 +64,15 @@ public class WildGrowthSceneManager : MonoBehaviour
 
     [Header("Future: CLIP / TinyCLIP Integration")]
     [Tooltip("If true, Confirm will later use TinyCLIP-based analysis instead of local geometric rules.")]
-    [SerializeField] private bool useClip = false;
+    [SerializeField] private bool useClip;
+
+    private DrawingCaptureHandler captureHandler;
+    private ModelManager MM = new ModelManager();
+
+    public class PredictionResponse {
+            public string label;
+            public float score;
+        }
 
     // Runtime state
     private PlantInventoryEntry selectedPlant; // The plant currently being upgraded (selected in PlayerInventory)
@@ -102,6 +113,18 @@ public class WildGrowthSceneManager : MonoBehaviour
         {
             StartCoroutine(AutoTransitionToWorldMap());
         }
+
+        // Auto-find or create capture handler
+        if (captureHandler == null)
+            {
+                captureHandler = FindFirstObjectByType<DrawingCaptureHandler>();
+                if (captureHandler == null)
+                {
+                    GameObject captureObj = new GameObject("DrawingCaptureHandler");
+                    captureHandler = captureObj.AddComponent<DrawingCaptureHandler>();
+                    Debug.Log("DrawingSceneManager: Created DrawingCaptureHandler");
+                }
+            }
     }
 
     /// <summary>
@@ -246,9 +269,6 @@ public class WildGrowthSceneManager : MonoBehaviour
         {
             bool shouldEnable = stats.strokeCount >= minRequiredStrokes;
             confirmButton.interactable = shouldEnable;
-
-            
-            Debug.Log($"[WG] Set {confirmButton.name}.interactable={shouldEnable} (strokeCount={stats.strokeCount}, minRequired={minRequiredStrokes})");
         }
         else
         {
@@ -522,7 +542,9 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (useClip)
         {
             // Placeholder: later, TinyCLIP-based analysis can be implemented here.
-            yield return StartCoroutine(ApplyClipBasedWildGrowth(captured));
+            var task = ApplyClipBasedWildGrowth();
+            while (!task.IsCompleted)
+                yield return null; // warten, bis async Task fertig ist
         }
         else
         {
@@ -616,11 +638,58 @@ public class WildGrowthSceneManager : MonoBehaviour
     /// Placeholder for future TinyCLIP integration.
     /// Currently just falls back to the same multiplier-based upgrade as the non-CLIP path.
     /// </summary>
-    private IEnumerator ApplyClipBasedWildGrowth(Texture2D tex)
+    private async Task ApplyClipBasedWildGrowth()
     {
-        Debug.LogWarning("TinyCLIP not integrated yet. Falling back to multiplier-based Wild Growth.");
-        ApplyDrawingBasedWildGrowth();
-        yield break;
+        if (selectedPlant == null)
+            return;
+        
+        string plant = selectedPlant.plantName;
+
+        Texture2D drawingTexture = captureHandler.CaptureDrawing(
+                drawingCanvas.allStrokes,
+                drawingCanvas.mainCamera,
+                drawingCanvas.drawingArea
+            );
+
+        Debug.Log("Saved new stroke as texture");
+        string json = await MM.SendImage(drawingTexture, $"{plant} upgrade_labels");
+        PredictionResponse best = JsonUtility.FromJson<PredictionResponse>(json);
+        string attribute = best.label; // Which attribute will be enhanced?
+        float score = best.score; // How much stronger will the attribute get?
+        Debug.Log($"Result: {json}");
+
+        int increase = Mathf.RoundToInt(3 * score * 10);
+
+        switch (attribute)
+        {
+            case "power": 
+                selectedPlant.attack += increase;
+                break;
+            case "defense": 
+                selectedPlant.defense += increase;
+                break;
+            case "health": 
+                selectedPlant.maxHealth += increase;
+                break;
+            default:
+                selectedPlant.maxHealth  += 1;
+                selectedPlant.attack     += 1;
+                selectedPlant.defense    += 1;
+                break;
+        }
+
+        selectedPlant.currentHealth = selectedPlant.maxHealth; // Heal to full after growth
+
+        selectedPlant.wildGrowthCount++;
+        selectedPlant.level++;
+
+        Debug.Log(
+            $"Wild Growth (drawing-based) applied to {selectedPlant.plantName}! " +
+            $"Now level {selectedPlant.level} with " +
+            $"HP:{selectedPlant.maxHealth}" +
+            $"ATK:{selectedPlant.attack}" +
+            $"DEF:{selectedPlant.defense}"
+        );
     }
 
     /// <summary>

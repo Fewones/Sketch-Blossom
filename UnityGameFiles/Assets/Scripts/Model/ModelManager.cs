@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SketchBlossom.Model
 {
-   public class ModelManager : MonoBehaviour
+   public class ModelManager
 {
 
     public async Task<bool> serverReady()

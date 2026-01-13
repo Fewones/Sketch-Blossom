@@ -1,0 +1,67 @@
+{
+    "plant_labels": {
+        "a red tulip emitting flames": "flame tulip", 
+        "a red rose on fire":"fire rose", 
+        "a shining sunflower": "sunflower", 
+        "a cactus with many spines": "cactus", 
+        "a long vine sprouting many flowers":"vine flower", 
+        "a small patch of grass":"grass sprout", 
+        "a blooming lilypad floating on water": "water lily", 
+        "underwater corals": "coral bloom", 
+        "a flower with water bubbles for petals": "bubble flower" 
+    },
+    "Flame Tulip upgrade_labels":{
+        "a weapon thematically matching flames": "power",
+        "protective gear in the shape of a tulip": "defense",
+        "an insect that could pollinate a tulip": "health",
+        "something blue": ""
+    },
+    "Fire Rose upgrade_labels":{
+        "a weapon thematically matching thorns": "power",
+        "protective gear that has the color of ash": "defense",
+        "a ball of fire": "health",
+        "something blue": ""
+    },
+    "Sunflower upgrade_labels":{
+        "a weapon that shoots beams": "power",
+        "a simply drawn sunflower": "defense",
+        "a light source": "health",
+        "a cloud": ""
+    },
+    "Cactus upgrade_labels":{
+        "a horizontal line": "power",
+        "a vertical line": "defense",
+        "a small cactus": "health",
+        "protective gear": ""
+    },
+    "Vine Flower upgrade_labels":{
+        "a vine": "power",
+        "a leaf": "defense",
+        "a flower": "health",
+        "something yellow": ""
+    },
+    "Grass Sprout upgrade_labels":{
+        "a green blade": "power",
+        "a grass sprout": "defense",
+        "something blue": "health",
+        "a spiral": ""
+    },
+    "Water Lily upgrade_labels":{
+        "a fish": "power",
+        "a frog": "defense",
+        "a butterfly": "health",
+        "a flower": ""
+    },
+    "Coral Bloom upgrade_labels":{
+        "a tall coral": "power",
+        "a wide coral": "defense",
+        "a round coral": "health",
+        "something green": ""
+    },
+    "Bubble Flower upgrade_labels":{
+        "a blue beam": "power",
+        "a leaf": "defense",
+        "a blueish bubble": "health",
+        "something red": ""
+    }
+}

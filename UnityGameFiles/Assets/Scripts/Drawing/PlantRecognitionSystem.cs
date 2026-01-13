@@ -78,8 +78,6 @@ public class PlantRecognitionSystem : MonoBehaviour
         }
     }
 
-    private ModelManager MM = new ModelManager();
-
     // Plant database with fixed stats
     private static Dictionary<PlantType, PlantData> plantDatabase;
     private static Dictionary<string, PlantType> stringToPlant;

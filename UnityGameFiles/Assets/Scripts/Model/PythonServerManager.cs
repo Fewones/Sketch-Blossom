@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 
-public class PythonServerManager
+public class PythonServerManager: MonoBehaviour
 {
     private Process pythonProcess;
 
@@ -34,10 +34,15 @@ public class PythonServerManager
         UnityEngine.Debug.Log("Python server started.");
     }
 
-    public void OnApplicationQuit()
+    public void Cleanup()
     {
         if (!pythonProcess.HasExited)
             pythonProcess.Kill();
-        UnityEngine.Debug.Log("Python server deactivated.");
+            UnityEngine.Debug.Log("Python server deactivated.");
+    }
+
+    public void OnDestroy()
+    {
+        Cleanup();
     }
 }

@@ -274,8 +274,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
                 dominantColor = pair.Key;
             }
         }
-
-        Debug.Log($"Dominant color: {dominantColor} (used in {maxCount}/{allStrokes.Count} strokes)");
         return dominantColor;
     }
 
