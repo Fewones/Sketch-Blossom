@@ -2,8 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using SketchBlossom.Progression;
+using SketchBlossom.Model;
 
 public class TameGrowthManager : MonoBehaviour
 {
@@ -23,7 +25,7 @@ public class TameGrowthManager : MonoBehaviour
     [SerializeField] private DrawingCaptureHandler captureHandler;
 
     [Header("Validation")]
-    [SerializeField] private float minConfidence = 0.30f;
+    [SerializeField] private float minConfidence = 0.7f;
 
     [Header("Scene Names")]
     [SerializeField] private string worldMapSceneName = "WorldMapScene";
@@ -36,14 +38,42 @@ public class TameGrowthManager : MonoBehaviour
     private bool isSubmitting = false;
     private bool tameCompleted = false; // CRITICAL: prevents double add / re-fire
 
+    // CLIP
+
+    private ModelManager MM = new ModelManager();
+
+    public class PredictionResponse {
+            public string label;
+            public float score;
+        }
+
+    private PlantRecognitionSystem.RecognitionResult recognitionResult;
+    private string failureMessage = "Something went wrong!";
+
     private void Awake()
     {
         if (recognitionSystem == null)
+        {
             recognitionSystem = FindFirstObjectByType<PlantRecognitionSystem>();
-
+                if (recognitionSystem == null)
+                {
+                    GameObject recognitionObj = new GameObject("PlantRecognitionSystem");
+                    recognitionSystem = recognitionObj.AddComponent<PlantRecognitionSystem>();
+                    Debug.Log("DrawingSceneManager: Created PlantRecognitionSystem");
+                }
+        }
+            
         if (captureHandler == null)
+        {
             captureHandler = FindFirstObjectByType<DrawingCaptureHandler>();
-
+            if (captureHandler == null)
+                {
+                    GameObject captureObj = new GameObject("DrawingCaptureHandler");
+                    captureHandler = captureObj.AddComponent<DrawingCaptureHandler>();
+                    Debug.Log("DrawingSceneManager: Created DrawingCaptureHandler");
+                }
+        }
+            
         if (drawingCanvas == null)
             drawingCanvas = FindFirstObjectByType<SimpleDrawingCanvas>();
     }
@@ -113,7 +143,7 @@ public class TameGrowthManager : MonoBehaviour
         SetFeedback("");
     }
 
-    private void OnSubmitClicked()
+    private async void OnSubmitClicked()
     {
         if (tameCompleted) return;     // already succeeded, do nothing
         if (isSubmitting) return;      // prevent double click
@@ -128,13 +158,6 @@ public class TameGrowthManager : MonoBehaviour
             return;
         }
 
-        if (recognitionSystem == null)
-        {
-            Debug.LogError("[TameGrowth] recognitionSystem not assigned/found.");
-            SetFeedback("Recognition system not found.");
-            isSubmitting = false;
-            return;
-        }
 
         drawingCanvas.ForceEndStroke();
 
@@ -146,9 +169,18 @@ public class TameGrowthManager : MonoBehaviour
         }
 
         // Step 4: VALIDATION ONLY
-        if (!ValidateDrawingAgainstEnemyType(out var recognitionResult, out string failMessage))
+        bool valid = await ValidateDrawingAgainstEnemyType();
+        if (!valid)
         {
-            SetFeedback(failMessage);
+            SetFeedback(failureMessage);
+            isSubmitting = false;
+            return;
+        }
+
+        if (recognitionSystem == null)
+        {
+            Debug.LogError("[TameGrowth] recognitionSystem not assigned/found.");
+            SetFeedback("Recognition system not found.");
             isSubmitting = false;
             return;
         }
@@ -163,17 +195,24 @@ public class TameGrowthManager : MonoBehaviour
     /// STEP 4: Validates the player's drawing against the required enemy plant type.
     /// This function does NOT modify inventory or transition scenes.
     /// </summary>
-    private bool ValidateDrawingAgainstEnemyType(
-        out PlantRecognitionSystem.RecognitionResult recognitionResult,
-        out string failureMessage)
+    private async Task<bool> ValidateDrawingAgainstEnemyType()
     {
-        recognitionResult = null;
-        failureMessage = "";
-
         List<LineRenderer> strokes = drawingCanvas.allStrokes;
         Color dominant = drawingCanvas.GetDominantColor();
 
-        var result = recognitionSystem.AnalyzeDrawing("flame tulip", 0.30f, strokes, dominant);
+        Texture2D drawingTexture = captureHandler.CaptureDrawing(
+                strokes,
+                drawingCanvas.mainCamera,
+                drawingCanvas.drawingArea
+            );
+
+        string json = await MM.SendImage(drawingTexture, "plant_labels");
+        PredictionResponse best = JsonUtility.FromJson<PredictionResponse>(json);
+        string label = best.label; // Which attribute will be enhanced?
+        float score = best.score; // How much stronger will the attribute get?
+        Debug.Log($"Result: {json}");
+
+        var result = recognitionSystem.AnalyzeDrawing(label, score, strokes, dominant);
         if (result == null)
         {
             failureMessage = "Could not analyze drawing. Try again.";

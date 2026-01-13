@@ -78,30 +78,6 @@ namespace SketchBlossom.Progression
             return newEntry;
         }
 
-        /// <summary>
-        /// Adds a plant from PlantData (used for taming enemy plants)
-        /// </summary>
-        public PlantInventoryEntry AddPlant(
-            PlantRecognitionSystem.PlantData plantData,
-            Color color,
-            Texture2D drawingTexture = null)
-        {
-            PlantInventoryEntry newEntry = new PlantInventoryEntry(
-                plantData,
-                color,
-                drawingTexture,
-                1f
-            );
-
-            plants.Add(newEntry);
-            Debug.Log($"Added {newEntry.plantName} to inventory. Total plants: {plants.Count}");
-
-            OnPlantAdded?.Invoke(newEntry);
-            SaveInventory();
-
-            return newEntry;
-        }
-
         #endregion
 
         #region Getting Plants

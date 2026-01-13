@@ -203,26 +203,6 @@ public class PostBattleManager : MonoBehaviour
         // Get the enemy plant data
         if (EnemyUnitData.Instance != null && EnemyUnitData.Instance.HasData())
         {
-            // Create plant data from enemy
-            PlantRecognitionSystem.PlantData enemyPlantData = new PlantRecognitionSystem.PlantData(
-                EnemyUnitData.Instance.plantType,
-                EnemyUnitData.Instance.element,
-                EnemyUnitData.Instance.plantDisplayName,
-                EnemyUnitData.Instance.health,
-                EnemyUnitData.Instance.attack,
-                EnemyUnitData.Instance.defense,
-                ""
-            );
-
-            // Add to inventory
-            PlantInventoryEntry tamedPlant = inventory.AddPlant(
-                enemyPlantData,
-                EnemyUnitData.Instance.unitColor,
-                null // Enemy doesn't have a drawing texture
-            );
-
-            Debug.Log($"Tamed {tamedPlant.plantName} and added to inventory!");
-
             // Clear enemy data
             EnemyUnitData.Instance.Clear();
         }
