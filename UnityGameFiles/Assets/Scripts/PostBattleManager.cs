@@ -204,7 +204,7 @@ public class PostBattleManager : MonoBehaviour
         if (EnemyUnitData.Instance != null && EnemyUnitData.Instance.HasData())
         {
             // Clear enemy data
-            EnemyUnitData.Instance.Clear();
+        //    EnemyUnitData.Instance.Clear();
         }
         else
         {
