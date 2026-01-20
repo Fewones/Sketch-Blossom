@@ -236,18 +236,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 100097470}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1055705581}
-  m_Father: {fileID: 1324501827}
+  m_Father: {fileID: 2054522862}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 716, y: 5.92}
-  m_SizeDelta: {x: 160, y: 124.16}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -80, y: 10}
+  m_SizeDelta: {x: 160, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &100097472
 MonoBehaviour:
@@ -2272,6 +2272,7 @@ MonoBehaviour:
   battleSceneName: DrawingBattleScene
   enableBattleTransition: 1
   startDrawingButton: {fileID: 1222118662}
+  pythonserver: {fileID: 0}
 --- !u!4 &532746218
 Transform:
   m_ObjectHideFlags: 0
@@ -2360,7 +2361,6 @@ MonoBehaviour:
   drawingPanel: {fileID: 1324501826}
   instructionTitle: {fileID: 281713994}
   instructionText: {fileID: 665204014}
-  startDrawingButton: {fileID: 1222118662}
   strokeCountText: {fileID: 332956671}
   hintText: {fileID: 0}
   finishButton: {fileID: 1636357515}
@@ -3500,18 +3500,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 813294175}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 658218203}
-  m_Father: {fileID: 1324501827}
+  m_Father: {fileID: 2054522862}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -758, y: -427.71}
-  m_SizeDelta: {x: 160, y: 116.58}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 80, y: 10}
+  m_SizeDelta: {x: 160, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &813294177
 MonoBehaviour:
@@ -5835,8 +5835,7 @@ RectTransform:
   - {fileID: 1046563377}
   - {fileID: 332956670}
   - {fileID: 1636357514}
-  - {fileID: 813294176}
-  - {fileID: 100097471}
+  - {fileID: 2054522862}
   m_Father: {fileID: 1879217796}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -8547,6 +8546,43 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1990978705}
   m_CullTransparentMesh: 1
+--- !u!1 &2054522861
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2054522862}
+  m_Layer: 0
+  m_Name: DrawingUtility
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2054522862
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2054522861}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 813294176}
+  - {fileID: 100097471}
+  m_Father: {fileID: 1324501827}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -729, y: -297.11}
+  m_SizeDelta: {x: 344.79, y: 165.79}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &2090953782
 PrefabInstance:
   m_ObjectHideFlags: 0

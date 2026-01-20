@@ -78,7 +78,7 @@ public class DrawingCaptureHandler : MonoBehaviour
 
         // Configure camera
         captureCamera.orthographic = true;
-        if (drawingArea == null){
+        if ((drawingArea == null) || (drawingArea.GetComponent<Image> () == null)){
             captureCamera.backgroundColor = backgroundColor;
         } else {
             captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;  
