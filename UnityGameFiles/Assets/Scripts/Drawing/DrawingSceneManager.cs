@@ -64,6 +64,24 @@ namespace SketchBlossom.Drawing
             ShowInstructions();
         }
 
+        private async void getCurrentResult(bool strokeFinished)
+        {
+            if (drawingCanvas == null)
+            {
+                return;
+            }
+            if (strokeFinished)
+            {
+                drawingCanvas.StrokeFinished = false;
+                await AnalyzeDrawing();
+                if (lastResult.isValidPlant)
+                {
+                  uiController.currentResult.text = lastResult.plantData.displayName;  
+                } else {uiController.currentResult.text = "Plant not recognized";}
+                
+            }
+        }
+
         #endregion
 
         #region Initialization
@@ -179,6 +197,7 @@ namespace SketchBlossom.Drawing
                 uiController.OnFinishDrawing += HandleFinishDrawing;
                 uiController.OnRedrawRequested += HandleRedraw;
                 uiController.OnContinueRequested += HandleContinue;
+                drawingCanvas.OnStrokeFinished += getCurrentResult;
             }
         }
 

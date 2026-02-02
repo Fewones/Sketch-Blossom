@@ -24,6 +24,8 @@ namespace SketchBlossom.Drawing
         [Header("Drawing UI")]
         [SerializeField] private TextMeshProUGUI strokeCountText;
         [SerializeField] private TextMeshProUGUI hintText;
+
+        [SerializeField] public TextMeshProUGUI currentResult;
         [SerializeField] private Button finishButton;
         [SerializeField] private Button clearButton;
         [SerializeField] private Button fillButton;

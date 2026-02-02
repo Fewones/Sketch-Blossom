@@ -35,6 +35,17 @@ public class SimpleDrawingCanvas : MonoBehaviour
     // NEW: used to enforce "only one completed stroke" (for Wild Growth)
     private bool strokeFinished = false;
 
+    public event System.Action<bool> OnStrokeFinished;
+    public bool StrokeFinished
+    {
+        get {return strokeFinished;}
+        set
+        {
+            strokeFinished = value;
+            OnStrokeFinished?.Invoke(strokeFinished);
+        }
+    }
+
     private bool hasLoggedBounds = false;
 
 
@@ -180,7 +191,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (currentPoints.Count >= 1)
         {
             allStrokes.Add(currentStroke);
-            strokeFinished = true; // NEW: mark stroke as done
+            StrokeFinished = true; // NEW: mark stroke as done
             Debug.Log($"Finished stroke #{allStrokes.Count} with {currentPoints.Count} points");
         }
         else
