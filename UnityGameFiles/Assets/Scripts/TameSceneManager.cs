@@ -15,6 +15,7 @@ public class TameGrowthManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI feedbackText;
 
     [SerializeField] private Button clearButton;
+    [SerializeField] private Button fillButton;
     [SerializeField] private Button submitButton;
 
     [Header("Drawing")]
@@ -103,6 +104,12 @@ public class TameGrowthManager : MonoBehaviour
             clearButton.onClick.AddListener(OnClearClicked);
         }
 
+        if (fillButton != null)
+            {
+                fillButton.onClick.RemoveAllListeners();
+                fillButton.onClick.AddListener(OnFillButtonClicked);
+            }
+
         if (submitButton != null)
         {
             submitButton.onClick.RemoveAllListeners();
@@ -141,6 +148,16 @@ public class TameGrowthManager : MonoBehaviour
     {
         drawingCanvas?.ClearCanvas();
         SetFeedback("");
+    }
+
+    private void OnFillButtonClicked()
+    {
+    Debug.Log("Fill button clicked");
+
+    if (drawingCanvas != null)
+    {
+        drawingCanvas.FillBackground();
+    }
     }
 
     private async void OnSubmitClicked()

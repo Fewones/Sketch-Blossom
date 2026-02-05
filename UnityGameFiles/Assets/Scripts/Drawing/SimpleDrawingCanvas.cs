@@ -29,12 +29,27 @@ public class SimpleDrawingCanvas : MonoBehaviour
     private LineRenderer currentStroke;
     private List<Vector3> currentPoints = new List<Vector3>();
     private bool isDrawing = false;
+
     public bool visible = true;
 
     // NEW: used to enforce "only one completed stroke" (for Wild Growth)
     private bool strokeFinished = false;
 
+    public event System.Action<bool> OnStrokeFinished;
+    public bool StrokeFinished
+    {
+        get {return strokeFinished;}
+        set
+        {
+            strokeFinished = value;
+            OnStrokeFinished?.Invoke(strokeFinished);
+        }
+    }
+
     private bool hasLoggedBounds = false;
+
+
+    public float currentz = 0;
 
     void Update()
     {
@@ -142,7 +157,9 @@ public class SimpleDrawingCanvas : MonoBehaviour
         isDrawing = true;
 
         // Add first point immediately
-        Vector3 worldPos = ScreenToWorld(screenPos);
+        Vector3 worldPos = ScreenToWorld(screenPos, currentz);
+        Debug.Log(worldPos);
+        currentz += 0.01f;
         currentPoints.Add(worldPos);
         UpdateStrokeRenderer();
 
@@ -153,7 +170,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (!isDrawing || currentStroke == null) return;
 
-        Vector3 worldPos = ScreenToWorld(screenPos);
+        Vector3 worldPos = ScreenToWorld(screenPos, currentz);
 
         // Check distance from last point
         if (currentPoints.Count > 0)
@@ -174,7 +191,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         if (currentPoints.Count >= 1)
         {
             allStrokes.Add(currentStroke);
-            strokeFinished = true; // NEW: mark stroke as done
+            StrokeFinished = true; // NEW: mark stroke as done
             Debug.Log($"Finished stroke #{allStrokes.Count} with {currentPoints.Count} points");
         }
         else
@@ -199,10 +216,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
         currentStroke.SetPositions(currentPoints.ToArray());
     }
 
-    Vector3 ScreenToWorld(Vector2 screenPos)
+    Vector3 ScreenToWorld(Vector2 screenPos, float z)
     {
-        // z-distance should match camera → drawing plane distance; 10f worked for you before
-        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f));
+
+        return mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 10f - z)); // subtract z so new lines appear over old lines
+
     }
 
     /// <summary>
@@ -240,7 +258,15 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
         currentPoints.Clear();
         strokeFinished = false; // NEW: allow drawing again
+
+        drawingArea.GetComponent<Image> ().color = new Color(1,1,1,1);
+
         Debug.Log("Cleared all strokes");
+    }
+
+    public void FillBackground()
+    {
+       drawingArea.GetComponent<Image> ().color = currentColor;
     }
 
     /// <summary>
