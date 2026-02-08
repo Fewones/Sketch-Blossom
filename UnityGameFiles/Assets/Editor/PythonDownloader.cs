@@ -86,9 +86,9 @@ public class PythonDownloader
         // Install/fix Python packages
         string requirementsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "requirements.txt"));
         // Use versioned marker so old markers from failed attempts don't block us
-        string depsMarker = Path.Combine(fullPath, ".deps_v4");
+        string depsMarker = Path.Combine(fullPath, ".deps_v5");
         // Clean up old markers
-        foreach (string old in new[] { ".deps_installed", ".deps_v3" })
+        foreach (string old in new[] { ".deps_installed", ".deps_v3", ".deps_v4" })
         {
             string oldPath = Path.Combine(fullPath, old);
             if (File.Exists(oldPath)) File.Delete(oldPath);
@@ -120,15 +120,27 @@ public class PythonDownloader
                 }
             }
 
+            // Upgrade pip first (old pip versions can't find newer packages)
+            Debug.Log("Upgrading pip...");
+            await RunPipInstall(pythonExe, "-m pip install --upgrade pip");
+
             // Install packages from requirements.txt
             // On fresh venvs (macOS/Linux) this installs everything;
             // on Windows zips this fixes stale/missing packages
-            string pipArgs = File.Exists(requirementsPath)
-                ? "-m pip install -r \"" + requirementsPath + "\""
-                : "-m pip install transformers==4.57.3 huggingface-hub==0.36.0";
-
             Debug.Log("Installing Python packages...");
-            int exitCode = await RunPipInstall(pythonExe, pipArgs);
+            int exitCode = -1;
+
+            if (File.Exists(requirementsPath))
+                exitCode = await RunPipInstall(pythonExe, "-m pip install -r \"" + requirementsPath + "\"");
+
+            // If requirements.txt failed (e.g. version pins incompatible with this
+            // Python version), fall back to installing core packages without pins
+            if (exitCode != 0)
+            {
+                Debug.LogWarning("requirements.txt install failed. Installing core packages without version pins...");
+                exitCode = await RunPipInstall(pythonExe,
+                    "-m pip install torch torchvision transformers huggingface-hub fastapi uvicorn pillow");
+            }
 
             if (exitCode == 0)
                 File.WriteAllText(depsMarker, DateTime.UtcNow.ToString());
