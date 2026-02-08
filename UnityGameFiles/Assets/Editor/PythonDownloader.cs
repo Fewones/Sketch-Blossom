@@ -62,7 +62,8 @@ public class PythonDownloader
         }
 
         // Sync packages with requirements.txt to fix version mismatches
-        string requirementsPath = Path.GetFullPath(Path.Combine("Assets", "..", "requirements.txt"));
+        // requirements.txt is in the repo root, one level above the Unity project folder
+        string requirementsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "requirements.txt"));
         string depsMarker = Path.Combine(fullPath, ".deps_installed");
 
         if (File.Exists(requirementsPath) && !File.Exists(depsMarker))
