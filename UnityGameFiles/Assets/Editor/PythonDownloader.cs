@@ -79,11 +79,31 @@ public class PythonDownloader
 
             if (File.Exists(pythonExe))
             {
-                Debug.Log("Updating Python packages from requirements.txt...");
+                // Delete stale package directories that lack RECORD files,
+                // which prevents pip from uninstalling them cleanly
+                string sitePackages = Path.Combine(fullPath, "Lib", "site-packages");
+                string[] staleDirs = { "transformers", "huggingface_hub" };
+                foreach (string pkg in staleDirs)
+                {
+                    string pkgDir = Path.Combine(sitePackages, pkg);
+                    if (Directory.Exists(pkgDir))
+                    {
+                        Directory.Delete(pkgDir, true);
+                        Debug.Log("Removed stale package: " + pkgDir);
+                    }
+                    // Also remove any .dist-info directories for this package
+                    foreach (string distInfo in Directory.GetDirectories(sitePackages, pkg + "*dist-info"))
+                    {
+                        Directory.Delete(distInfo, true);
+                        Debug.Log("Removed stale dist-info: " + distInfo);
+                    }
+                }
+
+                Debug.Log("Installing transformers and huggingface-hub...");
                 await Task.Run(() => {
                     var pip = new System.Diagnostics.Process();
                     pip.StartInfo.FileName = pythonExe;
-                    pip.StartInfo.Arguments = "-m pip install --force-reinstall --no-deps transformers huggingface-hub";
+                    pip.StartInfo.Arguments = "-m pip install --no-deps transformers huggingface-hub";
                     pip.StartInfo.UseShellExecute = false;
                     pip.StartInfo.RedirectStandardOutput = true;
                     pip.StartInfo.RedirectStandardError = true;
