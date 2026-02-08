@@ -186,7 +186,7 @@ public class PythonDownloader
         await Task.Run(() => {
             var venv = new System.Diagnostics.Process();
             venv.StartInfo.FileName = "python3";
-            venv.StartInfo.Arguments = "-m venv \"" + targetPath + "\"";
+            venv.StartInfo.Arguments = "-m venv --copies \"" + targetPath + "\"";
             venv.StartInfo.UseShellExecute = false;
             venv.StartInfo.RedirectStandardOutput = true;
             venv.StartInfo.RedirectStandardError = true;
