@@ -721,12 +721,12 @@ namespace SketchBlossom.Battle
             }
             else
             {
-                // Calculate damage
+                // Calculate damage using the move's element type for type advantage
                 int damage = CalculateDamage(
                     moveData.basePower,
                     playerAttack,
                     enemyDefense,
-                    GetElementType(playerElement),
+                    moveData.element,
                     GetElementType(enemyElement),
                     result.damageMultiplier,
                     enemyIsBlocking
@@ -824,12 +824,12 @@ namespace SketchBlossom.Battle
                     StartCoroutine(PlayScreenShake(moveData.screenShakeAmount * moveExecutor.screenShakeMultiplier * 0.7f, 0.2f)); // Slightly less shake for enemy
                 }
 
-                // Calculate damage (enemy always has 1.0 quality)
+                // Calculate damage using the move's element type (enemy always has 1.0 quality)
                 int damage = CalculateDamage(
                     moveData.basePower,
                     enemyAttack,
                     playerDefense,
-                    GetElementType(enemyElement),
+                    moveData.element,
                     GetElementType(playerElement),
                     1.0f,
                     playerIsBlocking
@@ -903,7 +903,7 @@ namespace SketchBlossom.Battle
                 case PlantRecognitionSystem.ElementType.Water:
                     return MoveData.ElementType.Water;
                 default:
-                    return MoveData.ElementType.Fire;
+                    return MoveData.ElementType.Normal;
             }
         }
 
@@ -1076,7 +1076,7 @@ namespace SketchBlossom.Battle
                 case PlantRecognitionSystem.ElementType.Grass:
                     return new Color(0.3f, 0.9f, 0.3f); // Green
                 default:
-                    return Color.gray;
+                    return new Color(0.7f, 0.7f, 0.7f); // Gray for Normal
             }
         }
 

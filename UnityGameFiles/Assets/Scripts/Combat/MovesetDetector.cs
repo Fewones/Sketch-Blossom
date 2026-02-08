@@ -130,6 +130,8 @@ public class MovesetDetector : MonoBehaviour
             // UNIVERSAL MOVES
             case MoveData.MoveType.Block:
                 return CalculateBlockScore(features);
+            case MoveData.MoveType.Tackle:
+                return CalculateTackleScore(features);
 
             // FIRE MOVES
             case MoveData.MoveType.Fireball:
@@ -184,6 +186,35 @@ public class MovesetDetector : MonoBehaviour
         // Block is still forgiving but won't dominate other moves
         // Reduced from 0.4f to 0.15f to act as a true fallback
         score = Mathf.Max(score, 0.15f);
+
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary>
+    /// Tackle: A straight line (simple, fast stroke)
+    /// Easy to draw - just a quick straight line in any direction
+    /// </summary>
+    private float CalculateTackleScore(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // Should be exactly 1 stroke (a single straight line)
+        if (f.strokeCount == 1) score += 0.4f;
+        else if (f.strokeCount == 2) score += 0.15f;
+
+        // Should NOT be circular (that's Block or Fireball/Bubble territory)
+        if (f.circularStrokes == 0) score += 0.2f;
+        else score *= 0.2f; // Heavy penalty for circular
+
+        // Should be elongated (a line, not a compact shape)
+        if (f.horizontalStrokes >= 1 || f.verticalStrokes >= 1) score += 0.3f;
+
+        // Should NOT be spiky (that's Burn/zigzag territory)
+        if (f.spikyStrokes == 0) score += 0.1f;
+        else score *= 0.5f;
+
+        // Should NOT be curved (that's VineWhip/WaterSplash territory)
+        if (f.curvedStrokes == 0) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
