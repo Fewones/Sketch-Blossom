@@ -88,7 +88,17 @@ public class PythonDownloader
                     pip.StartInfo.RedirectStandardOutput = true;
                     pip.StartInfo.RedirectStandardError = true;
                     pip.StartInfo.CreateNoWindow = true;
+                    pip.OutputDataReceived += (sender, args) => {
+                        if (!string.IsNullOrEmpty(args.Data))
+                            Debug.Log("[pip] " + args.Data);
+                    };
+                    pip.ErrorDataReceived += (sender, args) => {
+                        if (!string.IsNullOrEmpty(args.Data))
+                            Debug.LogWarning("[pip] " + args.Data);
+                    };
                     pip.Start();
+                    pip.BeginOutputReadLine();
+                    pip.BeginErrorReadLine();
                     pip.WaitForExit();
                     if (pip.ExitCode == 0)
                         Debug.Log("Python packages updated successfully.");
