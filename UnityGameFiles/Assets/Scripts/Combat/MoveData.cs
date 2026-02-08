@@ -124,7 +124,7 @@ public class MoveData
                         new Color(1f, 0.84f, 0f),      // Gold
                         new Color(1f, 0.65f, 0f),      // Orange
                         VisualEffect.Crystals,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.Burn, "Solar Flare", "Unleash intense burning rays",
@@ -145,7 +145,7 @@ public class MoveData
                         new Color(0.8f, 0.2f, 0.3f),   // Deep red
                         new Color(1f, 0.5f, 0.2f),     // Orange-red
                         VisualEffect.Petals,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.Fireball, "Fireball", "Launch a blazing sphere of fire",
@@ -166,7 +166,7 @@ public class MoveData
                         new Color(1f, 0.3f, 0.4f),     // Rose
                         new Color(1f, 0.6f, 0.2f),     // Coral
                         VisualEffect.Petals,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.FlameWave, "Flame Burst", "An explosive burst of searing flames",
@@ -191,7 +191,7 @@ public class MoveData
                         new Color(0.3f, 0.6f, 0.2f),   // Desert green
                         new Color(0.5f, 0.4f, 0.2f),   // Sandy brown
                         VisualEffect.Crystals,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.VineWhip, "Needle Shot", "Fire sharp cactus needles at enemies",
@@ -212,7 +212,7 @@ public class MoveData
                         new Color(0.2f, 0.7f, 0.3f),   // Vibrant green
                         new Color(0.4f, 0.5f, 0.2f),   // Olive
                         VisualEffect.Vines,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.RootAttack, "Vine Lash", "A powerful whipping vine strikes with force",
@@ -233,7 +233,7 @@ public class MoveData
                         new Color(0.4f, 0.9f, 0.4f),   // Light green
                         new Color(0.6f, 0.8f, 0.3f),   // Yellow-green
                         VisualEffect.Leaves,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.LeafStorm, "Razor Leaf", "Sharp grass blades slice through the air",
@@ -258,7 +258,7 @@ public class MoveData
                         new Color(0.4f, 0.7f, 0.9f),   // Sky blue
                         new Color(0.6f, 0.9f, 0.7f),   // Aqua
                         VisualEffect.Water,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.WaterSplash, "Tidal Wave", "A powerful wave crashes down on the enemy",
@@ -279,7 +279,7 @@ public class MoveData
                         new Color(0.9f, 0.5f, 0.6f),   // Coral pink
                         new Color(0.3f, 0.5f, 0.8f),   // Ocean blue
                         VisualEffect.Crystals,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.Bubble, "Coral Spike", "Sharp coral projectiles pierce enemies",
@@ -300,7 +300,7 @@ public class MoveData
                         new Color(0.6f, 0.8f, 1f),     // Light blue
                         new Color(0.9f, 0.95f, 1f),    // Almost white
                         VisualEffect.Bubbles,
-                        0.8f, 0.1f, "Draw 1-3 circular strokes",
+                        0.8f, 0.1f, "Draw a square shape",
                         false, true),
 
                     new MoveData(MoveType.HealingWave, "Bubble Barrage", "Countless bubbles bombard the target",
@@ -326,7 +326,7 @@ public class MoveData
             new Color(0.7f, 0.7f, 0.7f),   // Gray
             new Color(0.9f, 0.9f, 0.9f),   // Light gray
             VisualEffect.None,
-            0.8f, 0.2f, "Draw a straight line");
+            0.8f, 0.2f, "Draw a star shape");
     }
 
     /// <summary>

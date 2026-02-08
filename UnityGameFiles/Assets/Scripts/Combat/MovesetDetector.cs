@@ -165,65 +165,78 @@ public class MovesetDetector : MonoBehaviour
     // ===== UNIVERSAL MOVE DETECTION =====
 
     /// <summary>
-    /// Block: Very easy - any simple closed shape (circle, square, etc.)
-    /// This is the easiest move to recognize!
+    /// Block: Draw a SQUARE shape
+    /// A closed shape with ~4 corners, roughly 1:1 aspect ratio, no self-intersections
     /// </summary>
     private float CalculateBlockScore(DrawingFeatures f)
     {
         float score = 0f;
 
-        // Should be 1-3 strokes (simple shape)
-        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.3f;
-        else if (f.strokeCount <= 5) score += 0.15f;  // Still okay
+        // Must be a closed shape
+        if (f.isClosedShape) score += 0.35f;
+        else return 0.1f; // Not closed = very unlikely to be a square
 
-        // Prefer compact shapes
-        float avgSize = (f.width + f.height) / 2f;
-        if (avgSize < 4f) score += 0.2f;
+        // Should have ~3-6 sharp corners (hand-drawn squares are imperfect)
+        if (f.totalSharpTurns >= 3 && f.totalSharpTurns <= 8) score += 0.3f;
+        else if (f.totalSharpTurns >= 2 && f.totalSharpTurns <= 12) score += 0.1f;
 
-        // Bonus for circular strokes (easiest to draw)
-        if (f.circularStrokes >= 1) score += 0.3f;
+        // Aspect ratio should be roughly square (0.6 to 1.6)
+        if (f.aspectRatio >= 0.6f && f.aspectRatio <= 1.6f) score += 0.15f;
 
-        // Block is still forgiving but won't dominate other moves
-        // Reduced from 0.4f to 0.15f to act as a true fallback
-        score = Mathf.Max(score, 0.15f);
+        // Path length should be close to perimeter (not much longer)
+        // Square: pathLengthRatio ~1.0-1.3, Star: pathLengthRatio ~1.8+
+        if (f.pathLengthRatio < 1.5f) score += 0.15f;
+        else score -= 0.15f; // Too long = probably a star
+
+        // No/few self-intersections (squares don't cross themselves)
+        if (f.selfIntersections <= 2) score += 0.15f;
+        else score -= 0.2f; // Many crossings = probably a star
+
+        // Should be 1-4 strokes
+        if (f.strokeCount >= 1 && f.strokeCount <= 4) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
 
     /// <summary>
-    /// Tackle: A quick short horizontal dash (→)
-    /// Tackle is a fallback move - it only wins when the drawing doesn't
-    /// match the signature move's pattern. Draw a quick horizontal dash to use it.
+    /// Tackle: Draw a STAR shape (pentagram)
+    /// A closed shape with many sharp turns, self-intersecting lines
     /// </summary>
     private float CalculateTackleScore(DrawingFeatures f)
     {
-        float score = 0.35f; // Low base - always available as last resort
+        float score = 0f;
 
-        // Bonus for exactly 1 simple stroke
-        if (f.strokeCount == 1) score += 0.1f;
+        // Must be a closed shape
+        if (f.isClosedShape) score += 0.25f;
+        else return 0.1f; // Not closed = very unlikely to be a star
 
-        // Best case: single horizontal dash with no other features
-        if (f.strokeCount == 1 && f.horizontalStrokes >= 1 && f.verticalStrokes == 0
-            && f.curvedStrokes == 0 && f.spikyStrokes == 0 && f.circularStrokes == 0)
-        {
-            score += 0.15f;
-        }
+        // Stars have many sharp turns (5 outer points + 5 inner valleys = 8-15+ detected turns)
+        if (f.totalSharpTurns >= 8) score += 0.35f;
+        else if (f.totalSharpTurns >= 5) score += 0.15f;
+        else return Mathf.Clamp(score, 0.1f, 0.3f); // Too few turns = not a star
 
-        // Heavy penalties for any pattern that matches a signature move
-        if (f.verticalStrokes >= 1) score -= 0.2f;    // Likely RootAttack/WaterSplash
-        if (f.curvedStrokes >= 1) score -= 0.2f;       // Likely VineWhip/WaterSplash/FlameWave/HealingWave
-        if (f.spikyStrokes >= 1) score -= 0.2f;        // Likely Burn
-        if (f.circularStrokes >= 1) score -= 0.3f;     // Likely Block/Fireball/Bubble
-        if (f.strokeCount >= 3) score -= 0.15f;        // Likely LeafStorm
+        // Stars self-intersect (the lines cross over each other)
+        if (f.selfIntersections >= 3) score += 0.3f;
+        else if (f.selfIntersections >= 1) score += 0.15f;
 
-        // Cap tackle so signature moves always beat it when their pattern is present
-        return Mathf.Clamp(score, 0.15f, 0.55f);
+        // Path length should be significantly longer than perimeter
+        // Star: pathLengthRatio ~1.8+, Square: ~1.0-1.3
+        if (f.pathLengthRatio >= 1.5f) score += 0.15f;
+
+        // Should be drawn in 1-2 strokes (a single pentagram stroke, or 5 lines)
+        if (f.strokeCount <= 2) score += 0.1f;
+        else if (f.strokeCount <= 5) score += 0.05f;
+
+        // Aspect ratio should be roughly equal (star is roughly symmetrical)
+        if (f.aspectRatio >= 0.6f && f.aspectRatio <= 1.6f) score += 0.1f;
+
+        return Mathf.Clamp01(score);
     }
 
     // ===== FIRE MOVE DETECTION =====
 
     /// <summary>
-    /// Fireball: Single circular/oval shape
+    /// Fireball: Single circular/oval shape (smooth circle, NOT a square or star)
     /// </summary>
     private float CalculateFireballScore(DrawingFeatures f)
     {
@@ -232,13 +245,19 @@ public class MovesetDetector : MonoBehaviour
         // Should be 1-2 strokes (circle with optional tail)
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
 
-        // Strong bonus for circular shape
+        // Strong bonus for circular shape (smooth closed curve)
         if (f.circularStrokes >= 1) score += 0.6f;
         else if (f.strokeCount <= 2) score += 0.1f; // Partial credit for simple strokes
 
         // Should be compact (not too spread out)
         float size = Mathf.Max(f.width, f.height);
         if (size < 3f) score += 0.2f;
+
+        // Penalty for too many sharp turns (that's a star, not a circle)
+        if (f.totalSharpTurns >= 6) score *= 0.4f;
+
+        // Penalty for self-intersections (circles don't cross themselves, stars do)
+        if (f.selfIntersections >= 2) score *= 0.3f;
 
         return Mathf.Clamp01(score);
     }
@@ -270,7 +289,7 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Burn: Zigzag or angular pattern
+    /// Burn: Zigzag or angular pattern (open-ended, NOT closed shapes like star/square)
     /// </summary>
     private float CalculateBurnScore(DrawingFeatures f)
     {
@@ -288,6 +307,9 @@ public class MovesetDetector : MonoBehaviour
 
         // Bonus for multiple sharp strokes
         if (f.spikyStrokes >= 2) score += 0.2f;
+
+        // Penalty for closed shapes with self-intersections (that's a star, not a zigzag)
+        if (f.isClosedShape && f.selfIntersections >= 2) score *= 0.4f;
 
         return Mathf.Clamp01(score);
     }
@@ -394,7 +416,7 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Bubble: Small circular shapes
+    /// Bubble: Small circular shapes (smooth circles, NOT a star or square)
     /// </summary>
     private float CalculateBubbleScore(DrawingFeatures f)
     {
@@ -410,6 +432,12 @@ public class MovesetDetector : MonoBehaviour
         // Should be relatively small/compact
         float avgSize = (f.width + f.height) / 2f;
         if (avgSize < 4f) score += 0.2f;
+
+        // Penalty for too many sharp turns (that's a star, not bubbles)
+        if (f.totalSharpTurns >= 6) score *= 0.4f;
+
+        // Penalty for self-intersections (bubbles don't cross, stars do)
+        if (f.selfIntersections >= 2) score *= 0.3f;
 
         return Mathf.Clamp01(score);
     }
@@ -477,8 +505,26 @@ public class MovesetDetector : MonoBehaviour
         features.spikyStrokes = CountSpikyStrokes(strokes);
         features.curvedStrokes = CountCurvedStrokes(strokes);
 
+        // Shape-specific features for star/square detection
+        features.totalSharpTurns = CountTotalSharpTurns(strokes);
+        features.isClosedShape = CheckClosedShape(strokes);
+        features.selfIntersections = CountSelfIntersections(strokes);
+
+        // Path length ratio: total stroke length / bounding box perimeter
+        float totalLength = 0f;
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null) continue;
+            Vector3[] positions = new Vector3[stroke.positionCount];
+            stroke.GetPositions(positions);
+            totalLength += CalculateStrokeLength(positions);
+        }
+        float perimeter = 2f * (features.width + features.height);
+        features.pathLengthRatio = perimeter > 0.01f ? totalLength / perimeter : 0f;
+
         Debug.Log($"Features: W={features.width:F2}, H={features.height:F2}, Aspect={features.aspectRatio:F2}, Strokes={features.strokeCount}");
         Debug.Log($"Patterns: Circ={features.circularStrokes}, Vert={features.verticalStrokes}, Horiz={features.horizontalStrokes}, Spiky={features.spikyStrokes}, Curved={features.curvedStrokes}");
+        Debug.Log($"Shapes: SharpTurns={features.totalSharpTurns}, Closed={features.isClosedShape}, SelfX={features.selfIntersections}, PathRatio={features.pathLengthRatio:F2}");
 
         return features;
     }
@@ -609,6 +655,118 @@ public class MovesetDetector : MonoBehaviour
         return count;
     }
 
+    /// <summary>
+    /// Count total number of sharp direction changes (>60 degrees) across all strokes
+    /// Star: 8-12+ turns, Square: 3-5 turns
+    /// </summary>
+    private int CountTotalSharpTurns(List<LineRenderer> strokes)
+    {
+        int totalTurns = 0;
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null || stroke.positionCount < 4) continue;
+
+            Vector3[] positions = new Vector3[stroke.positionCount];
+            stroke.GetPositions(positions);
+
+            for (int i = 1; i < positions.Length - 1; i++)
+            {
+                Vector3 dir1 = (positions[i] - positions[i - 1]).normalized;
+                Vector3 dir2 = (positions[i + 1] - positions[i]).normalized;
+
+                // Skip near-zero length segments
+                if (dir1.sqrMagnitude < 0.001f || dir2.sqrMagnitude < 0.001f) continue;
+
+                float angle = Vector3.Angle(dir1, dir2);
+                if (angle > 60f)
+                {
+                    totalTurns++;
+                }
+            }
+        }
+        return totalTurns;
+    }
+
+    /// <summary>
+    /// Check if the main stroke forms a closed shape (start point near end point)
+    /// </summary>
+    private bool CheckClosedShape(List<LineRenderer> strokes)
+    {
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null || stroke.positionCount < 6) continue;
+
+            Vector3[] positions = new Vector3[stroke.positionCount];
+            stroke.GetPositions(positions);
+
+            float startEndDist = Vector3.Distance(positions[0], positions[positions.Length - 1]);
+            float totalLength = CalculateStrokeLength(positions);
+
+            // Closed if start and end are within 30% of total length
+            if (totalLength > 0.5f && startEndDist < totalLength * 0.3f)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Count the number of self-intersections in strokes
+    /// Stars have many (~5), squares have none
+    /// </summary>
+    private int CountSelfIntersections(List<LineRenderer> strokes)
+    {
+        int intersections = 0;
+        foreach (var stroke in strokes)
+        {
+            if (stroke == null || stroke.positionCount < 6) continue;
+
+            Vector3[] positions = new Vector3[stroke.positionCount];
+            stroke.GetPositions(positions);
+
+            // Check pairs of non-adjacent line segments for intersection
+            // Skip segments that are close together (adjacent/near-adjacent)
+            int segmentCount = positions.Length - 1;
+            for (int i = 0; i < segmentCount; i++)
+            {
+                for (int j = i + 3; j < segmentCount; j++) // Skip adjacent (+3 to avoid noise from close segments)
+                {
+                    if (SegmentsIntersect2D(
+                        positions[i], positions[i + 1],
+                        positions[j], positions[j + 1]))
+                    {
+                        intersections++;
+                    }
+                }
+            }
+        }
+        return intersections;
+    }
+
+    /// <summary>
+    /// Check if two 2D line segments intersect (ignoring Z)
+    /// </summary>
+    private bool SegmentsIntersect2D(Vector3 a1, Vector3 a2, Vector3 b1, Vector3 b2)
+    {
+        float d1 = Cross2D(b2 - b1, a1 - b1);
+        float d2 = Cross2D(b2 - b1, a2 - b1);
+        float d3 = Cross2D(a2 - a1, b1 - a1);
+        float d4 = Cross2D(a2 - a1, b2 - a1);
+
+        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+            ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private float Cross2D(Vector3 a, Vector3 b)
+    {
+        return a.x * b.y - a.y * b.x;
+    }
+
     private float CalculateStrokeLength(Vector3[] positions)
     {
         float length = 0f;
@@ -642,5 +800,11 @@ public class MovesetDetector : MonoBehaviour
         public int horizontalStrokes;
         public int spikyStrokes;
         public int curvedStrokes;
+
+        // Shape-specific features for Block (square) and Tackle (star) detection
+        public int totalSharpTurns;       // Total sharp direction changes across all strokes
+        public bool isClosedShape;        // Whether the main stroke starts and ends near the same point
+        public float pathLengthRatio;     // Total path length / bounding box perimeter (star >> square)
+        public int selfIntersections;     // Number of times strokes cross themselves (star has many)
     }
 }
