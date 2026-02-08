@@ -75,9 +75,50 @@ The game features **turn-based drawing combat** where what you draw directly det
 - **Enemy Turn**: AI opponent executes a random offensive move
 
 **27 Unique Moves** (3 per plant type):
-- **Fire Plants** (Sunflower, Fire Rose, Flame Tulip): Block, Fireball, Solar Flare / Inferno / Flame Burst
-- **Grass Plants** (Cactus, Vine Flower, Grass Sprout): Block, Vine Whip, Needle Storm / Root Bind / Leaf Shield
-- **Water Plants** (Water Lily, Coral Bloom, Bubble Flower): Block, Water Splash, Tidal Wave / Coral Strike / Bubble Blast
+
+Every plant has a **Block** move (defensive, 0 power) plus two unique attack or healing moves. Each move has a specific drawing pattern the player must draw to execute it.
+
+**Fire Plant Movesets:**
+
+| Plant | Move | Power | Type | Drawing Hint | Description |
+|-------|------|-------|------|--------------|-------------|
+| Sunflower | Block | 0 | Defensive | Draw 1-3 circular strokes | Create a protective golden shield |
+| Sunflower | Fireball | 20 | Attack | Draw a perfect circle | Launch a blazing sphere of solar fire |
+| Sunflower | Solar Flare | 28 | Attack | Draw sharp zigzag patterns | Unleash intense burning rays |
+| Fire Rose | Block | 0 | Defensive | Draw 1-3 circular strokes | Thorny petals form a defensive barrier |
+| Fire Rose | Ember Petals | 22 | Attack | Draw scattered jagged lines | Burning rose petals rain down on foes |
+| Fire Rose | Passion Burst | 26 | Attack | Draw a large circle with flair | Explosive fire erupts from blooming roses |
+| Flame Tulip | Block | 0 | Defensive | Draw 1-3 circular strokes | Tulip petals close into a protective shell |
+| Flame Tulip | Flame Strike | 24 | Attack | Draw a clean circle | A precise beam of concentrated fire |
+| Flame Tulip | Inferno Wave | 30 | Attack | Draw aggressive zigzags | A devastating wave of scorching heat |
+
+**Grass Plant Movesets:**
+
+| Plant | Move | Power | Type | Drawing Hint | Description |
+|-------|------|-------|------|--------------|-------------|
+| Cactus | Block | 0 | Defensive | Draw 1-3 circular strokes | Harden into a spiny defensive posture |
+| Cactus | Needle Shot | 20 | Attack | Draw a single curved line | Fire sharp cactus needles at enemies |
+| Cactus | Spine Storm | 26 | Attack | Draw 5+ scattered strokes | A relentless barrage of sharp spines |
+| Vine Flower | Block | 0 | Defensive | Draw 1-3 circular strokes | Vines coil into a protective shield |
+| Vine Flower | Vine Lash | 22 | Attack | Draw a long curved line | A powerful whipping vine strikes with force |
+| Vine Flower | Strangling Roots | 26 | Attack | Draw vertical downward strokes | Massive roots bind and crush the enemy |
+| Grass Sprout | Block | 0 | Defensive | Draw 1-3 circular strokes | Young sprouts form a protective wall |
+| Grass Sprout | Razor Leaf | 20 | Attack | Draw 5+ quick strokes | Sharp grass blades slice through the air |
+| Grass Sprout | Growth Surge | 24 | Attack | Draw tall vertical lines | Rapid growing roots assault the target |
+
+**Water Plant Movesets:**
+
+| Plant | Move | Power | Type | Drawing Hint | Description |
+|-------|------|-------|------|--------------|-------------|
+| Water Lily | Block | 0 | Defensive | Draw 1-3 circular strokes | Float on a cushion of protective water |
+| Water Lily | Lily Splash | 20 | Attack | Draw smooth wavy curves | Gentle waves wash over the enemy |
+| Water Lily | Tranquil Petals | 25 | Healing | Draw gentle horizontal waves | Soothing lily petals restore health |
+| Coral Bloom | Block | 0 | Defensive | Draw 1-3 circular strokes | Coral hardens into a defensive formation |
+| Coral Bloom | Coral Spike | 22 | Attack | Draw curved flowing lines | Sharp coral projectiles pierce enemies |
+| Coral Bloom | Tidal Burst | 26 | Attack | Draw multiple circles | Explosive pressurized water bubbles |
+| Bubble Flower | Block | 0 | Defensive | Draw 1-3 circular strokes | Surround yourself with protective bubbles |
+| Bubble Flower | Bubble Barrage | 24 | Attack | Draw many small circles | Countless bubbles bombard the target |
+| Bubble Flower | Bubble Remedy | 22 | Healing | Draw smooth flowing waves | Healing bubbles restore vitality |
 
 **Drawing Quality Matters:**
 - System scores how well your drawing matches the intended move (0.0 - 1.0)
