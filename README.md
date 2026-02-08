@@ -132,6 +132,7 @@ The game features **turn-based drawing combat** where what you draw directly det
 - **Grass > Water**: 1.5x damage (super effective)
 - Reverse matchups: 0.5x damage (not very effective)
 - Same type: 1.0x (neutral)
+- **Normal**: 1.0x damage to any type (no advantage or disadvantage)
 
 **Damage Formula:**
 ```
@@ -145,7 +146,7 @@ if blocking: damage x 0.5
 - Enemy HP reaches 0 -> Battle won
 - **Post-Battle Choice**:
   - **Wild Growth**: Upgrade current plant permanently (+50% to all stats)
-  - **Tame**: Add defeated enemy to your plant inventory
+  - **Tame**: Add defeated enemy to your plant inventory — the tamed plant is re-analyzed by CLIP AI to determine its type
 
 **Defeat Path (Roguelike Permadeath):**
 - Your plant's HP reaches 0 -> **Plant dies permanently** and is removed from inventory
@@ -172,6 +173,7 @@ if blocking: damage x 0.5
 
 **Type System:**
 - Water > Fire > Grass > Water (rock-paper-scissors with 1.5x/0.5x multipliers)
+- Normal attacks deal 1.0x damage to any type — consistent but no advantage
 - 9 unique plant types (3 per element) with distinct stats
 - 27 unique moves (3 per plant type)
 
@@ -198,6 +200,7 @@ if blocking: damage x 0.5
 13. TinyCLIP Python server auto-setup (Windows)
 
 **Still To Do:**
+- [ ] **Switch plants in battle** — Allow players to swap to a different plant from their inventory mid-battle
 - [ ] **Add more plants** — Expand beyond the current 9 plant types with new designs and stat profiles
 - [ ] **Smarter enemy AI** — Current AI picks random moves with perfect execution. Needs strategic behavior: type awareness, defensive blocking, adaptation to player patterns
 - [ ] **More enemies** — Increase the number and variety of enemy encounters on the world map
@@ -338,6 +341,7 @@ if blocking: damage x 0.5
 |                                                   |
 |  Option 2: TAME                                   |
 |    -> Add defeated enemy to your inventory        |
+|    -> CLIP AI re-analyzes the tamed plant         |
 |    -> Grows your plant collection                 |
 +-----------------------+---------------------------+
                         |
