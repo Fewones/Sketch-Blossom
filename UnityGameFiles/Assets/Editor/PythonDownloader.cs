@@ -62,6 +62,9 @@ public class PythonDownloader
         if (!File.Exists(pythonExe))
         {
             Debug.Log("Download failed or incomplete. Creating Python venv from system python3...");
+            // Remove any partial download to avoid duplicate native libraries
+            if (Directory.Exists(fullPath))
+                Directory.Delete(fullPath, true);
             await CreateVenv(fullPath);
             pythonExe = GetPythonExePath(fullPath);
         }
@@ -86,9 +89,9 @@ public class PythonDownloader
         // Install/fix Python packages
         string requirementsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "requirements.txt"));
         // Use versioned marker so old markers from failed attempts don't block us
-        string depsMarker = Path.Combine(fullPath, ".deps_v5");
+        string depsMarker = Path.Combine(fullPath, ".deps_v6");
         // Clean up old markers
-        foreach (string old in new[] { ".deps_installed", ".deps_v3", ".deps_v4" })
+        foreach (string old in new[] { ".deps_installed", ".deps_v3", ".deps_v4", ".deps_v5" })
         {
             string oldPath = Path.Combine(fullPath, old);
             if (File.Exists(oldPath)) File.Delete(oldPath);
