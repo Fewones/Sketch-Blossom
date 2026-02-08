@@ -83,7 +83,7 @@ public class PythonDownloader
                 await Task.Run(() => {
                     var pip = new System.Diagnostics.Process();
                     pip.StartInfo.FileName = pythonExe;
-                    pip.StartInfo.Arguments = "-m pip install -r \"" + requirementsPath + "\"";
+                    pip.StartInfo.Arguments = "-m pip install --force-reinstall --no-deps transformers huggingface-hub";
                     pip.StartInfo.UseShellExecute = false;
                     pip.StartInfo.RedirectStandardOutput = true;
                     pip.StartInfo.RedirectStandardError = true;
