@@ -5,7 +5,7 @@ using System.Net;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using System;
-using System.Diagnostics;
+
 
 [InitializeOnLoad]
 public class PythonDownloader
@@ -80,7 +80,7 @@ public class PythonDownloader
             {
                 Debug.Log("Updating Python packages from requirements.txt...");
                 await Task.Run(() => {
-                    var pip = new Process();
+                    var pip = new System.Diagnostics.Process();
                     pip.StartInfo.FileName = pythonExe;
                     pip.StartInfo.Arguments = "-m pip install -r \"" + requirementsPath + "\"";
                     pip.StartInfo.UseShellExecute = false;
