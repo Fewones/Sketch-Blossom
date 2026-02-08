@@ -191,32 +191,33 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Tackle: A straight line (simple, fast stroke)
-    /// Easy to draw - just a quick straight line in any direction
+    /// Tackle: A quick short horizontal dash (→)
+    /// Tackle is a fallback move - it only wins when the drawing doesn't
+    /// match the signature move's pattern. Draw a quick horizontal dash to use it.
     /// </summary>
     private float CalculateTackleScore(DrawingFeatures f)
     {
-        float score = 0f;
+        float score = 0.35f; // Low base - always available as last resort
 
-        // Should be exactly 1 stroke (a single straight line)
-        if (f.strokeCount == 1) score += 0.4f;
-        else if (f.strokeCount == 2) score += 0.15f;
+        // Bonus for exactly 1 simple stroke
+        if (f.strokeCount == 1) score += 0.1f;
 
-        // Should NOT be circular (that's Block or Fireball/Bubble territory)
-        if (f.circularStrokes == 0) score += 0.2f;
-        else score *= 0.2f; // Heavy penalty for circular
+        // Best case: single horizontal dash with no other features
+        if (f.strokeCount == 1 && f.horizontalStrokes >= 1 && f.verticalStrokes == 0
+            && f.curvedStrokes == 0 && f.spikyStrokes == 0 && f.circularStrokes == 0)
+        {
+            score += 0.15f;
+        }
 
-        // Should be elongated (a line, not a compact shape)
-        if (f.horizontalStrokes >= 1 || f.verticalStrokes >= 1) score += 0.3f;
+        // Heavy penalties for any pattern that matches a signature move
+        if (f.verticalStrokes >= 1) score -= 0.2f;    // Likely RootAttack/WaterSplash
+        if (f.curvedStrokes >= 1) score -= 0.2f;       // Likely VineWhip/WaterSplash/FlameWave/HealingWave
+        if (f.spikyStrokes >= 1) score -= 0.2f;        // Likely Burn
+        if (f.circularStrokes >= 1) score -= 0.3f;     // Likely Block/Fireball/Bubble
+        if (f.strokeCount >= 3) score -= 0.15f;        // Likely LeafStorm
 
-        // Should NOT be spiky (that's Burn/zigzag territory)
-        if (f.spikyStrokes == 0) score += 0.1f;
-        else score *= 0.5f;
-
-        // Should NOT be curved (that's VineWhip/WaterSplash territory)
-        if (f.curvedStrokes == 0) score += 0.1f;
-
-        return Mathf.Clamp01(score);
+        // Cap tackle so signature moves always beat it when their pattern is present
+        return Mathf.Clamp(score, 0.15f, 0.55f);
     }
 
     // ===== FIRE MOVE DETECTION =====
@@ -232,7 +233,7 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
 
         // Strong bonus for circular shape
-        if (f.circularStrokes >= 1) score += 0.5f;
+        if (f.circularStrokes >= 1) score += 0.6f;
         else if (f.strokeCount <= 2) score += 0.1f; // Partial credit for simple strokes
 
         // Should be compact (not too spread out)
@@ -251,12 +252,16 @@ public class MovesetDetector : MonoBehaviour
 
         // Should be horizontal (wide, not tall)
         if (f.aspectRatio < 0.7f) score += 0.3f;
+        else if (f.aspectRatio < 1.0f) score += 0.15f;
 
         // Horizontal strokes
-        if (f.horizontalStrokes >= 1) score += 0.3f;
+        if (f.horizontalStrokes >= 1) score += 0.35f;
 
         // Wavy/curved pattern
         if (f.curvedStrokes >= 1) score += 0.3f;
+
+        // Even a single horizontal stroke without curve should score decently
+        if (f.horizontalStrokes >= 1 && f.strokeCount <= 2) score += 0.1f;
 
         // Penalty for circular shapes
         if (f.circularStrokes > 0) score *= 0.5f;
@@ -272,7 +277,7 @@ public class MovesetDetector : MonoBehaviour
         float score = 0f;
 
         // Strong bonus for sharp turns (spiky)
-        if (f.spikyStrokes >= 1) score += 0.5f;
+        if (f.spikyStrokes >= 1) score += 0.55f;
         else if (f.strokeCount >= 2) score += 0.15f; // Partial credit for multiple strokes
 
         // Can be vertical or diagonal
@@ -300,8 +305,8 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
 
         // Strong bonus for curved strokes
-        if (f.curvedStrokes >= 1) score += 0.4f;
-        else if (f.strokeCount <= 3) score += 0.1f; // Partial credit for few strokes
+        if (f.curvedStrokes >= 1) score += 0.5f;
+        else if (f.strokeCount <= 3) score += 0.15f; // Partial credit for few strokes
 
         // Should be elongated (not compact)
         if (f.aspectRatio > 0.8f && f.aspectRatio < 2.0f) score += 0.2f;
@@ -320,9 +325,9 @@ public class MovesetDetector : MonoBehaviour
         float score = 0f;
 
         // Should have many strokes (3+)
-        if (f.strokeCount >= 5) score += 0.4f;
-        else if (f.strokeCount >= 3) score += 0.25f;
-        else if (f.strokeCount >= 2) score += 0.1f; // Partial credit for some strokes
+        if (f.strokeCount >= 5) score += 0.5f;
+        else if (f.strokeCount >= 3) score += 0.35f;
+        else if (f.strokeCount >= 2) score += 0.15f; // Partial credit for some strokes
 
         // Strokes should be relatively short/scattered
         if (f.strokeCount >= 4) score += 0.3f;
@@ -346,10 +351,10 @@ public class MovesetDetector : MonoBehaviour
 
         // Should be tall (high aspect ratio)
         if (f.aspectRatio > 1.2f) score += 0.3f;
-        else if (f.aspectRatio > 0.9f) score += 0.1f; // Partial credit
+        else if (f.aspectRatio > 0.8f) score += 0.15f; // Partial credit
 
         // Strong bonus for vertical strokes
-        if (f.verticalStrokes >= 1) score += 0.4f;
+        if (f.verticalStrokes >= 1) score += 0.5f;
         else if (f.strokeCount >= 1) score += 0.1f; // Partial credit for any strokes
 
         // Bonus for multiple vertical strokes
@@ -374,7 +379,7 @@ public class MovesetDetector : MonoBehaviour
         float score = 0f;
 
         // Should have curved/wavy strokes
-        if (f.curvedStrokes >= 1) score += 0.4f;
+        if (f.curvedStrokes >= 1) score += 0.5f;
 
         // Can be vertical or mixed direction
         if (f.verticalStrokes >= 1 || (f.horizontalStrokes >= 1 && f.curvedStrokes >= 1)) score += 0.3f;
@@ -396,7 +401,7 @@ public class MovesetDetector : MonoBehaviour
         float score = 0f;
 
         // Strong bonus for circular strokes
-        if (f.circularStrokes >= 1) score += 0.5f;
+        if (f.circularStrokes >= 1) score += 0.6f;
         else if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f; // Partial credit for simple strokes
 
         // Bonus for multiple circles
@@ -418,10 +423,10 @@ public class MovesetDetector : MonoBehaviour
 
         // Should be horizontal and wide
         if (f.aspectRatio < 0.8f) score += 0.3f;
-        else if (f.aspectRatio < 1.2f) score += 0.1f; // Partial credit
+        else if (f.aspectRatio < 1.2f) score += 0.15f; // Partial credit
 
         // Strong bonus for horizontal strokes
-        if (f.horizontalStrokes >= 1) score += 0.3f;
+        if (f.horizontalStrokes >= 1) score += 0.35f;
         else if (f.curvedStrokes >= 1) score += 0.15f; // Partial credit for curved
 
         // Should be smooth/curved
