@@ -32,13 +32,32 @@ public class PythonServerManager: MonoBehaviour
         UnityEngine.Debug.Log("Script path: " + scriptPath);
         UnityEngine.Debug.Log("Working dir: " + workingDir);
 
+        if (!File.Exists(pythonPath))
+        {
+            UnityEngine.Debug.LogError("Python executable not found at: " + pythonPath);
+            return;
+        }
+
         pythonProcess = new Process();
         pythonProcess.StartInfo.FileName = pythonPath;
         pythonProcess.StartInfo.Arguments = "\"" + scriptPath + "\"";
         pythonProcess.StartInfo.WorkingDirectory = workingDir;
-        pythonProcess.StartInfo.UseShellExecute = true;
-        pythonProcess.StartInfo.CreateNoWindow = false;
+        pythonProcess.StartInfo.UseShellExecute = false;
+        pythonProcess.StartInfo.RedirectStandardOutput = true;
+        pythonProcess.StartInfo.RedirectStandardError = true;
+
+        pythonProcess.OutputDataReceived += (sender, args) => {
+            if (!string.IsNullOrEmpty(args.Data))
+                UnityEngine.Debug.Log("[TinyCLIP] " + args.Data);
+        };
+        pythonProcess.ErrorDataReceived += (sender, args) => {
+            if (!string.IsNullOrEmpty(args.Data))
+                UnityEngine.Debug.LogWarning("[TinyCLIP] " + args.Data);
+        };
+
         pythonProcess.Start();
+        pythonProcess.BeginOutputReadLine();
+        pythonProcess.BeginErrorReadLine();
 
         UnityEngine.Debug.Log("Python server started.");
     }
