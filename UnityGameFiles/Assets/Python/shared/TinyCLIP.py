@@ -15,7 +15,8 @@ model = AutoModelForZeroShotImageClassification.from_pretrained("wkcn/TinyCLIP-V
 model.eval()
 
 
-with open("Assets/Python/shared/labelMaps.json") as labelMapJson:
+label_map_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "labelMaps.json")
+with open(label_map_path) as labelMapJson:
     labelMaps = json.load(labelMapJson)
 
 
