@@ -163,6 +163,12 @@ if blocking: damage x 0.5
 - Live preview shows HP/ATK/DEF before and after the upgrade
 - The stroke is merged with the original plant drawing, visually evolving your plant
 
+**Tame Growth:**
+- When you tame a defeated plant, you must **redraw the plant in your own imagination**
+- The process is similar to the initial drawing scene — draw freely using the full color palette
+- TinyCLIP AI classifies your drawing to determine the tamed plant's type
+- This means the tamed plant becomes *your* version of it, not a copy of the enemy's
+
 ## Key Design Pillars
 
 **Drawing Recognition is Core:**
@@ -339,10 +345,11 @@ if blocking: damage x 0.5
 |    -> Stroke color biases stat growth             |
 |    -> +50% stats permanently                      |
 |                                                   |
-|  Option 2: TAME                                   |
-|    -> Add defeated enemy to your inventory        |
-|    -> CLIP AI re-analyzes the tamed plant         |
-|    -> Grows your plant collection                 |
+|  Option 2: TAME (Tame Growth)                      |
+|    -> Redraw the defeated plant in your own style |
+|    -> Similar to initial drawing scene            |
+|    -> CLIP AI classifies your drawing             |
+|    -> Tamed plant added to your inventory         |
 +-----------------------+---------------------------+
                         |
                         v
