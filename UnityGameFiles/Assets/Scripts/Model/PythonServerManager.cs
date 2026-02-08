@@ -34,7 +34,7 @@ public class PythonServerManager: MonoBehaviour
 
         pythonProcess = new Process();
         pythonProcess.StartInfo.FileName = pythonPath;
-        pythonProcess.StartInfo.Arguments = scriptPath;
+        pythonProcess.StartInfo.Arguments = "\"" + scriptPath + "\"";
         pythonProcess.StartInfo.WorkingDirectory = workingDir;
         pythonProcess.StartInfo.UseShellExecute = true;
         pythonProcess.StartInfo.CreateNoWindow = false;
