@@ -166,31 +166,30 @@ public class MovesetDetector : MonoBehaviour
 
     /// <summary>
     /// Block: Draw a SQUARE shape
-    /// A closed shape with ~4 corners, roughly 1:1 aspect ratio, no self-intersections
+    /// Key differentiator from circle: squares have sharp CORNERS (spikyStrokes),
+    /// circles have smooth curves (circularStrokes)
     /// </summary>
     private float CalculateBlockScore(DrawingFeatures f)
     {
         float score = 0f;
 
         // Must be a closed shape
-        if (f.isClosedShape) score += 0.35f;
-        else return 0.1f; // Not closed = very unlikely to be a square
+        if (f.isClosedShape) score += 0.3f;
+        else return 0.1f; // Not closed = not a square
 
-        // Should have ~3-6 sharp corners (hand-drawn squares are imperfect)
-        if (f.totalSharpTurns >= 3 && f.totalSharpTurns <= 8) score += 0.3f;
-        else if (f.totalSharpTurns >= 2 && f.totalSharpTurns <= 12) score += 0.1f;
+        // CRITICAL: Must have sharp corners (this is what makes a square, not a circle!)
+        if (f.spikyStrokes >= 1) score += 0.35f;
+        else return 0.15f; // No sharp corners = smooth circle, not a square
 
-        // Aspect ratio should be roughly square (0.6 to 1.6)
-        if (f.aspectRatio >= 0.6f && f.aspectRatio <= 1.6f) score += 0.15f;
+        // Penalty for circular strokes (smooth curves = circle, not square)
+        if (f.circularStrokes >= 1) score *= 0.4f;
 
-        // Path length should be close to perimeter (not much longer)
-        // Square: pathLengthRatio ~1.0-1.3, Star: pathLengthRatio ~1.8+
-        if (f.pathLengthRatio < 1.5f) score += 0.15f;
-        else score -= 0.15f; // Too long = probably a star
+        // Aspect ratio should be roughly square (0.5 to 1.8)
+        if (f.aspectRatio >= 0.5f && f.aspectRatio <= 1.8f) score += 0.1f;
 
         // No/few self-intersections (squares don't cross themselves)
-        if (f.selfIntersections <= 2) score += 0.15f;
-        else score -= 0.2f; // Many crossings = probably a star
+        if (f.selfIntersections <= 2) score += 0.1f;
+        else score *= 0.5f; // Many crossings = probably a star
 
         // Should be 1-4 strokes
         if (f.strokeCount >= 1 && f.strokeCount <= 4) score += 0.1f;
@@ -200,35 +199,35 @@ public class MovesetDetector : MonoBehaviour
 
     /// <summary>
     /// Tackle: Draw a STAR shape (pentagram)
-    /// A closed shape with many sharp turns, self-intersecting lines
+    /// Key differentiator: closed + sharp corners + self-intersecting lines
     /// </summary>
     private float CalculateTackleScore(DrawingFeatures f)
     {
         float score = 0f;
 
         // Must be a closed shape
-        if (f.isClosedShape) score += 0.25f;
-        else return 0.1f; // Not closed = very unlikely to be a star
+        if (f.isClosedShape) score += 0.2f;
+        else return 0.1f; // Not closed = not a star
 
-        // Stars have many sharp turns (5 outer points + 5 inner valleys = 8-15+ detected turns)
-        if (f.totalSharpTurns >= 8) score += 0.35f;
-        else if (f.totalSharpTurns >= 5) score += 0.15f;
-        else return Mathf.Clamp(score, 0.1f, 0.3f); // Too few turns = not a star
+        // Must have sharp corners (spiky strokes)
+        if (f.spikyStrokes >= 1) score += 0.25f;
+        else return 0.15f; // No sharp corners = not a star
 
-        // Stars self-intersect (the lines cross over each other)
-        if (f.selfIntersections >= 3) score += 0.3f;
+        // CRITICAL: Stars self-intersect (the lines cross over each other)
+        // This is the key differentiator from a square
+        if (f.selfIntersections >= 3) score += 0.35f;
         else if (f.selfIntersections >= 1) score += 0.15f;
+        else return Mathf.Clamp(score, 0.1f, 0.35f); // No crossings = probably a square
 
         // Path length should be significantly longer than perimeter
-        // Star: pathLengthRatio ~1.8+, Square: ~1.0-1.3
-        if (f.pathLengthRatio >= 1.5f) score += 0.15f;
+        if (f.pathLengthRatio >= 1.5f) score += 0.1f;
 
-        // Should be drawn in 1-2 strokes (a single pentagram stroke, or 5 lines)
+        // Should be drawn in 1-5 strokes
         if (f.strokeCount <= 2) score += 0.1f;
         else if (f.strokeCount <= 5) score += 0.05f;
 
         // Aspect ratio should be roughly equal (star is roughly symmetrical)
-        if (f.aspectRatio >= 0.6f && f.aspectRatio <= 1.6f) score += 0.1f;
+        if (f.aspectRatio >= 0.5f && f.aspectRatio <= 1.8f) score += 0.05f;
 
         return Mathf.Clamp01(score);
     }
@@ -236,7 +235,7 @@ public class MovesetDetector : MonoBehaviour
     // ===== FIRE MOVE DETECTION =====
 
     /// <summary>
-    /// Fireball: Single circular/oval shape (smooth circle, NOT a square or star)
+    /// Fireball: Single circular/oval shape (smooth circle)
     /// </summary>
     private float CalculateFireballScore(DrawingFeatures f)
     {
@@ -253,11 +252,8 @@ public class MovesetDetector : MonoBehaviour
         float size = Mathf.Max(f.width, f.height);
         if (size < 3f) score += 0.2f;
 
-        // Penalty for too many sharp turns (that's a star, not a circle)
-        if (f.totalSharpTurns >= 6) score *= 0.4f;
-
-        // Penalty for self-intersections (circles don't cross themselves, stars do)
-        if (f.selfIntersections >= 2) score *= 0.3f;
+        // Penalty for sharp corners (that's a square, not a circle)
+        if (f.spikyStrokes >= 1) score *= 0.5f;
 
         return Mathf.Clamp01(score);
     }
@@ -289,7 +285,7 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Burn: Zigzag or angular pattern (open-ended, NOT closed shapes like star/square)
+    /// Burn: Zigzag or angular pattern (open-ended spiky lines)
     /// </summary>
     private float CalculateBurnScore(DrawingFeatures f)
     {
@@ -302,14 +298,14 @@ public class MovesetDetector : MonoBehaviour
         // Can be vertical or diagonal
         if (f.verticalStrokes >= 1 || f.spikyStrokes >= 2) score += 0.3f;
 
-        // Penalty for circular shapes
+        // Penalty for circular shapes (zigzags are open, not circular)
         if (f.circularStrokes > 0) score *= 0.3f;
 
         // Bonus for multiple sharp strokes
         if (f.spikyStrokes >= 2) score += 0.2f;
 
-        // Penalty for closed shapes with self-intersections (that's a star, not a zigzag)
-        if (f.isClosedShape && f.selfIntersections >= 2) score *= 0.4f;
+        // Zigzags should be open (not closed like star/square)
+        if (!f.isClosedShape) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
@@ -416,7 +412,7 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Bubble: Small circular shapes (smooth circles, NOT a star or square)
+    /// Bubble: Small circular shapes (smooth circles)
     /// </summary>
     private float CalculateBubbleScore(DrawingFeatures f)
     {
@@ -433,11 +429,8 @@ public class MovesetDetector : MonoBehaviour
         float avgSize = (f.width + f.height) / 2f;
         if (avgSize < 4f) score += 0.2f;
 
-        // Penalty for too many sharp turns (that's a star, not bubbles)
-        if (f.totalSharpTurns >= 6) score *= 0.4f;
-
-        // Penalty for self-intersections (bubbles don't cross, stars do)
-        if (f.selfIntersections >= 2) score *= 0.3f;
+        // Penalty for sharp corners (that's a square, not bubbles)
+        if (f.spikyStrokes >= 1) score *= 0.5f;
 
         return Mathf.Clamp01(score);
     }
