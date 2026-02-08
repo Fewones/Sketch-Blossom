@@ -5,6 +5,7 @@ using System.Net;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using System;
+using System.Diagnostics;
 
 [InitializeOnLoad]
 public class PythonDownloader
@@ -59,6 +60,44 @@ public class PythonDownloader
             File.Delete(bad_dll);
             Debug.Log("Datei gelöscht: " + bad_dll);
         }
+
+        // Sync packages with requirements.txt to fix version mismatches
+        string requirementsPath = Path.GetFullPath(Path.Combine("Assets", "..", "requirements.txt"));
+        string depsMarker = Path.Combine(fullPath, ".deps_installed");
+
+        if (File.Exists(requirementsPath) && !File.Exists(depsMarker))
+        {
+            string pythonExe = "";
+            #if UNITY_EDITOR_WIN
+                pythonExe = Path.Combine(fullPath, "python.exe");
+            #elif UNITY_EDITOR_OSX
+                pythonExe = Path.Combine(fullPath, "bin", "python3");
+            #elif UNITY_EDITOR_LINUX
+                pythonExe = Path.Combine(fullPath, "bin", "python3");
+            #endif
+
+            if (File.Exists(pythonExe))
+            {
+                Debug.Log("Updating Python packages from requirements.txt...");
+                await Task.Run(() => {
+                    var pip = new Process();
+                    pip.StartInfo.FileName = pythonExe;
+                    pip.StartInfo.Arguments = "-m pip install -r \"" + requirementsPath + "\"";
+                    pip.StartInfo.UseShellExecute = false;
+                    pip.StartInfo.RedirectStandardOutput = true;
+                    pip.StartInfo.RedirectStandardError = true;
+                    pip.StartInfo.CreateNoWindow = true;
+                    pip.Start();
+                    pip.WaitForExit();
+                    if (pip.ExitCode == 0)
+                        Debug.Log("Python packages updated successfully.");
+                    else
+                        Debug.LogError("pip install failed (exit code " + pip.ExitCode + ")");
+                });
+                File.WriteAllText(depsMarker, DateTime.UtcNow.ToString());
+            }
+        }
+
         downloadComplete = true;
     }
 
