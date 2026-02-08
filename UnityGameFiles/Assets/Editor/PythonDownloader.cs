@@ -64,7 +64,11 @@ public class PythonDownloader
         // Sync packages with requirements.txt to fix version mismatches
         // requirements.txt is in the repo root, one level above the Unity project folder
         string requirementsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "requirements.txt"));
-        string depsMarker = Path.Combine(fullPath, ".deps_installed");
+        // Use versioned marker so old markers from failed attempts don't block us
+        string depsMarker = Path.Combine(fullPath, ".deps_v3");
+        // Clean up old markers
+        string oldMarker = Path.Combine(fullPath, ".deps_installed");
+        if (File.Exists(oldMarker)) File.Delete(oldMarker);
 
         if (File.Exists(requirementsPath) && !File.Exists(depsMarker))
         {
@@ -99,7 +103,8 @@ public class PythonDownloader
                     }
                 }
 
-                Debug.Log("Installing transformers and huggingface-hub...");
+                Debug.Log("Installing transformers and huggingface-hub with dependencies...");
+                int exitCode = -1;
                 await Task.Run(() => {
                     var pip = new System.Diagnostics.Process();
                     pip.StartInfo.FileName = pythonExe;
@@ -120,12 +125,15 @@ public class PythonDownloader
                     pip.BeginOutputReadLine();
                     pip.BeginErrorReadLine();
                     pip.WaitForExit();
-                    if (pip.ExitCode == 0)
+                    exitCode = pip.ExitCode;
+                    if (exitCode == 0)
                         Debug.Log("Python packages updated successfully.");
                     else
-                        Debug.LogError("pip install failed (exit code " + pip.ExitCode + ")");
+                        Debug.LogError("pip install failed (exit code " + exitCode + ")");
                 });
-                File.WriteAllText(depsMarker, DateTime.UtcNow.ToString());
+                // Only write marker if pip succeeded
+                if (exitCode == 0)
+                    File.WriteAllText(depsMarker, DateTime.UtcNow.ToString());
             }
         }
 
