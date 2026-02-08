@@ -103,7 +103,7 @@ public class PythonDownloader
                 await Task.Run(() => {
                     var pip = new System.Diagnostics.Process();
                     pip.StartInfo.FileName = pythonExe;
-                    pip.StartInfo.Arguments = "-m pip install --no-deps transformers huggingface-hub";
+                    pip.StartInfo.Arguments = "-m pip install --no-deps transformers==4.57.3 huggingface-hub==0.36.0";
                     pip.StartInfo.UseShellExecute = false;
                     pip.StartInfo.RedirectStandardOutput = true;
                     pip.StartInfo.RedirectStandardError = true;
