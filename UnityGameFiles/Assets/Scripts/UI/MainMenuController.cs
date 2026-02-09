@@ -89,9 +89,9 @@ namespace SketchBlossom.UI
             if (continuePrompt != null)
                 continuePrompt.SetActive(hasPlants);
 
-            // Update button states
+            // Inventory always clickable so player can view (empty or not)
             if (inventoryButton != null)
-                inventoryButton.interactable = hasPlants;
+                inventoryButton.interactable = true;
         }
 
         /// <summary>

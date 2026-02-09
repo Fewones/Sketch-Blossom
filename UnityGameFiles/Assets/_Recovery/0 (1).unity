@@ -1982,7 +1982,6 @@ GameObject:
   - component: {fileID: 1945729787}
   - component: {fileID: 1945729786}
   - component: {fileID: 1945729788}
-  - component: {fileID: 1945729789}
   m_Layer: 5
   m_Name: InventoryButton
   m_TagString: Untagged
@@ -2091,31 +2090,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1945729786}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1945729789}
-        m_TargetAssemblyTypeName: SceneLoader, Assembly-CSharp
-        m_MethodName: LoadScene
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: InventoryScene
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &1945729789
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1945729784}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 103290f91460d4cb18ef53e6077e8743, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneLoader
+      m_Calls: []
 --- !u!1 &1959406392
 GameObject:
   m_ObjectHideFlags: 0
