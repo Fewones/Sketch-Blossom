@@ -1,5 +1,16 @@
 # Sketch Blossom
 
+![Games_Thumbnail.jpg](Games_Thumbnail.jpg)
+
+**Draw your way to victory!** Sketch Blossom is a turn-based battle 
+game where **YOUR** drawings become your weapons. Sketch plants, unleash hand-drawn attacks,
+and watch your art come to life as fiery flames, crashing waves, and tangling vines. 
+An AI judges your drawing skill. the better you draw, the harder you hit. 
+Collect 9 unique plants across Fire, Water, and Grass types. Tame defeated enemies. 
+Upgrade your squad. But beware: lose a battle and your plant is gone forever. 
+Every stroke matters. Every battle counts. Pick up your pen and fight. 
+Are your drawing skills deadly enough?
+
 Engine: Unity
 Platforms: PC/Mac (Steam), Tablet, Mobile
 Input Methods: Mouse (PC), Touch/Stylus (Tablet/Mobile)
@@ -7,10 +18,10 @@ Genre: Drawing-Based Battle Game
 Theme: Draw to Fight
 
 ### Team Members
-- Michael Dieterle - Project Lead
+- Michael Dieterle - Project Lead, Lead Develop
 - Sanja Nikolic - Gameplay Programmer
-- Stefan - ..
-- Marwa - ..
+- Stefan - Core Technology Programmer
+- Muhammet Taskin - UI Support
 
 ## Overview
 
