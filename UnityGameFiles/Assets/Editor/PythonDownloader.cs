@@ -127,6 +127,14 @@ public class PythonDownloader
             Debug.Log("Upgrading pip...");
             await RunPipInstall(pythonExe, "-m pip install --upgrade pip");
 
+            // On macOS/Linux, torch and torchvision are NOT pre-bundled in the
+            // Python zip (unlike Windows).  Install them via pip before the
+            // remaining requirements so the CLIP model can load.
+            #if UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX
+            Debug.Log("Installing PyTorch (torch + torchvision)...");
+            await RunPipInstall(pythonExe, "-m pip install torch torchvision");
+            #endif
+
             // Install packages from requirements.txt
             // On fresh venvs (macOS/Linux) this installs everything;
             // on Windows zips this fixes stale/missing packages
