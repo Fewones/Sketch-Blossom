@@ -1577,12 +1577,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1265770988}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -7.006666, y: -2.2666664, z: 0.000013563369}
+  m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1555732112}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1327870977
 GameObject:
@@ -1893,7 +1893,6 @@ MonoBehaviour:
   enemySpawnPoints: []
   battlePreviewUI: {fileID: 1019342488}
   spawnEnemiesOnStart: 1
-  numberOfEnemies: 2
 --- !u!4 &1529402964
 Transform:
   m_ObjectHideFlags: 0
@@ -2113,12 +2112,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1555732110}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
+  m_LocalScale: {x: 100, y: 100, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
+  m_Children:
+  - {fileID: 1265770993}
+  m_Father: {fileID: 1441657804}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1579598002
 GameObject:
@@ -2390,9 +2390,8 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1129219123}
-  - {fileID: 1265770993}
   - {fileID: 1579598005}
   - {fileID: 1019342489}
   - {fileID: 1529402964}
   - {fileID: 1624968363}
-  - {fileID: 1555732112}
+  - {fileID: 1441657804}
