@@ -19,11 +19,11 @@
         "a red rose on fire":"fire rose", 
         "a shining sunflower": "sunflower", 
         "a cactus with many spines": "cactus", 
-        "a long vine sprouting many flowers":"vine flower", 
+        "a jungle vine sprouting many flowers":"vine flower", 
         "a small patch of grass":"grass sprout", 
         "a blooming lilypad floating on water": "water lily", 
         "underwater corals": "coral bloom", 
-        "a flower with water bubbles for petals": "bubble flower" 
+        "a flower with round bubbles for petals": "bubble flower" 
     },
     "Flame Tulip upgrade_labels":{
         "a weapon thematically matching flames": "power",

@@ -28,7 +28,7 @@ public class WorldMapEnemy : MonoBehaviour
     [SerializeField] private GameObject interactionPrompt;
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Sprite[] enemySprites;
-    // enemySprites = {Sunflower, Flame tulip, Fire rose}
+    // enemySprites = {Sunflower, Flame tulip, Fire rose, Bubble Flower, Water Lily, Coral Bloom, Cactus, Grass Sprout, Vine Flower}
     [SerializeField] private Color highlightColor = Color.yellow;
 
     private Transform player;
@@ -310,6 +310,18 @@ public class WorldMapEnemy : MonoBehaviour
             case "Flame Tulip": spriteNumber = 1;
             break;
             case "Fire Rose": spriteNumber = 2;
+            break;
+            case "Bubble Flower": spriteNumber = 3;
+            break;
+            case "Water Lily": spriteNumber = 4;
+            break;
+            case "Coral Bloom": spriteNumber = 5;
+            break;
+            case "Cactus": spriteNumber = 6;
+            break;
+            case "Grass Sprout": spriteNumber = 7;
+            break;
+            case "Vine Flower": spriteNumber = 8;
             break;
         }
         return enemySprites[spriteNumber];
