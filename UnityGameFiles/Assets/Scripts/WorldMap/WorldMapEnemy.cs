@@ -27,6 +27,8 @@ public class WorldMapEnemy : MonoBehaviour
     [Header("Visual Feedback")]
     [SerializeField] private GameObject interactionPrompt;
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Sprite[] enemySprites;
+    // enemySprites = {Sunflower, Flame tulip, Fire rose}
     [SerializeField] private Color highlightColor = Color.yellow;
 
     private Transform player;
@@ -194,8 +196,8 @@ public class WorldMapEnemy : MonoBehaviour
         // Set sprite color based on difficulty
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = GetDifficultyColor();
-            originalColor = spriteRenderer.color;
+            highlightColor = GetDifficultyColor();
+            spriteRenderer.sprite = GetEnemySprite(enemyDisplayName);
         }
     }
 
@@ -298,7 +300,22 @@ public class WorldMapEnemy : MonoBehaviour
         }
     }
 
-    // Public getters
+    private Sprite GetEnemySprite(string enemyDisplayName)
+    {
+        int spriteNumber = 0;
+        switch (enemyDisplayName)
+        {
+            case "Sunflower": spriteNumber = 0;
+            break;
+            case "Flame Tulip": spriteNumber = 1;
+            break;
+            case "Fire Rose": spriteNumber = 2;
+            break;
+        }
+        return enemySprites[spriteNumber];
+    }
+
+    // Public getters for enemy data
     public PlantRecognitionSystem.PlantType GetPlantType() => enemyPlantType;
     public PlantRecognitionSystem.ElementType GetElement() => enemyElement;
     public string GetDisplayName() => enemyDisplayName;
@@ -326,8 +343,7 @@ public class WorldMapEnemy : MonoBehaviour
 
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = GetDifficultyColor();
-            originalColor = spriteRenderer.color;
+            highlightColor = GetDifficultyColor();
         }
     }
 
@@ -360,8 +376,8 @@ public class WorldMapEnemy : MonoBehaviour
 
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = GetDifficultyColor();
-            originalColor = spriteRenderer.color;
+            highlightColor = GetDifficultyColor();
+            spriteRenderer.sprite = GetEnemySprite(enemyDisplayName);
         }
     }
 

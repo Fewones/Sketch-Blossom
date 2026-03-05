@@ -1992,7 +1992,6 @@ MonoBehaviour:
   playerController: {fileID: 0}
   enemyPrefab: {fileID: 2825286312004050028, guid: 6a5083ee42d5c3e40a03728b44b87ab9, type: 3}
   enemies: []
-  enemySpawnPoints: []
   battlePreviewUI: {fileID: 1019342488}
   spawnEnemiesOnStart: 1
 --- !u!4 &1529402964

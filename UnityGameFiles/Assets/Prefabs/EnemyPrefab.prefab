@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 22.90302, y: 0.97822, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 1}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7035624600601770823}
@@ -160,6 +160,10 @@ MonoBehaviour:
   interactionKey: 101
   interactionPrompt: {fileID: 6162482825631162576}
   spriteRenderer: {fileID: 0}
+  enemySprites:
+  - {fileID: -256329436847572505, guid: eb6620e1b17ad2246bbf08f17269bcea, type: 3}
+  - {fileID: -2737085831310580898, guid: 5d28f91b7885d5344bb6735fa6f6af76, type: 3}
+  - {fileID: -1065206991725740180, guid: 5e44558cc0e84f94faf20cb796da3035, type: 3}
   highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &5116472309060170551
 GameObject:
