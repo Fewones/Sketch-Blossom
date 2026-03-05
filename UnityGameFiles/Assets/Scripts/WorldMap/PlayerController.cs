@@ -39,6 +39,21 @@ public class PlayerController : MonoBehaviour
         movement.x = Input.GetAxisRaw("Horizontal"); // A/D or Left/Right arrows
         movement.y = Input.GetAxisRaw("Vertical");   // W/S or Up/Down arrows
 
+
+        // Movement Constraints so Player cant leave the worldmap or walk on the sky
+        if ((((this.GetPosition().x < -9) || 
+             ((this.GetPosition().x < -4.2) && (this.GetPosition().y > -1))) && (movement.x < 0)) || 
+             ((this.GetPosition().x > 9) && (movement.x > 0)))
+        {
+            movement.x = 0;
+        }
+        if (((this.GetPosition().y < -5) && (movement.y < 0)) || 
+        ((((this.GetPosition().x < -4.3) && (this.GetPosition().y > -1.1)) || 
+          ((this.GetPosition().x > -4.3) && (this.GetPosition().y > -0.3))) && (movement.y > 0)))
+        {
+            movement.y = 0;
+        }
+
         // Normalize diagonal movement to prevent faster movement
         if (movement.magnitude > 1)
         {
