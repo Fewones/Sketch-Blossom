@@ -82,13 +82,13 @@ public class DrawingColorSelector : MonoBehaviour
             UpdateButtonVisuals("green");
         }
 
-        // Set up labels if they exist
+       /*  // Set up labels if they exist
         if (redLabel != null)
             redLabel.text = "Red\n(Sunflower)";
         if (greenLabel != null)
             greenLabel.text = "Green\n(Cactus)";
         if (blueLabel != null)
-            blueLabel.text = "Blue\n(Water Lily)";
+            blueLabel.text = "Blue\n(Water Lily)"; */
         
         CreateHueImage();
         CreateSVImage();
