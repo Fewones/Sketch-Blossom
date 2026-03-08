@@ -124,11 +124,9 @@ namespace SketchBlossom.Battle
                 battleManager = managerObj.AddComponent<DrawingBattleSceneManager>();
 
                 // Add required components
-                var moveDetector = managerObj.AddComponent<MovesetDetector>();
-                var moveRecognition = managerObj.AddComponent<MoveRecognitionSystem>();
-                moveDetector.recognitionSystem = moveRecognition;
+                managerObj.AddComponent<MovesetDetector>();
 
-                Debug.Log("Created BattleManager with MovesetDetector and MoveRecognitionSystem");
+                Debug.Log("Created BattleManager with MovesetDetector");
             }
             else
             {
@@ -473,9 +471,7 @@ namespace SketchBlossom.Battle
 
             // Move Detection (already wired in CreateBattleManager)
             var moveDetector = battleManager.GetComponent<MovesetDetector>();
-            var moveRecognition = battleManager.GetComponent<MoveRecognitionSystem>();
             SetPrivateField(managerType, "movesetDetector", moveDetector);
-            SetPrivateField(managerType, "moveRecognitionSystem", moveRecognition);
 
             Debug.Log("✅ All references wired to BattleManager!");
             Debug.Log($"  - Drawing Canvas: {createdDrawingCanvas != null}");
