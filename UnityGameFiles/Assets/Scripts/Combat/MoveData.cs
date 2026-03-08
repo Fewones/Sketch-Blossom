@@ -64,6 +64,9 @@ public class MoveData
     public bool isHealingMove;
     public bool isDefensiveMove;
 
+    // Cooldown Properties
+    public int cooldownTurns;         // Turns of cooldown after use (0 = no cooldown)
+
     // Visual Properties (Robust Enhancement)
     public Color primaryColor;
     public Color secondaryColor;
@@ -75,7 +78,7 @@ public class MoveData
     public MoveData(MoveType type, string name, string desc, ElementType elem, int power,
                     Color primary, Color secondary, VisualEffect effect,
                     float intensity = 1.0f, float shake = 0.3f, string hint = "",
-                    bool heals = false, bool defensive = false)
+                    bool heals = false, bool defensive = false, int cooldown = 0)
     {
         moveType = type;
         moveName = name;
@@ -84,6 +87,7 @@ public class MoveData
         basePower = power;
         isHealingMove = heals;
         isDefensiveMove = defensive;
+        cooldownTurns = cooldown;
 
         // Visual properties
         primaryColor = primary;
@@ -131,11 +135,12 @@ public class MoveData
                         1.0f, 0.4f, "Draw a perfect circle"),
 
                     new MoveData(MoveType.Burn, "Solar Flare", "Unleash intense burning rays",
-                        ElementType.Fire, 22,
+                        ElementType.Fire, 25,
                         new Color(1f, 0.2f, 0f),       // Deep orange-red
                         new Color(1f, 1f, 0.3f),       // Bright yellow
                         VisualEffect.Lightning,
-                        1.5f, 0.7f, "Draw sharp zigzag patterns")
+                        1.5f, 0.7f, "Draw sharp zigzag patterns",
+                        false, false, 1)
                 };
 
             case PlantRecognitionSystem.PlantType.FireRose:
@@ -157,11 +162,12 @@ public class MoveData
                         1.2f, 0.5f, "Draw scattered jagged lines"),
 
                     new MoveData(MoveType.Fireball, "Passion Burst", "Explosive fire erupts from blooming roses",
-                        ElementType.Fire, 22,
+                        ElementType.Fire, 25,
                         new Color(1f, 0f, 0.3f),       // Hot pink-red
                         new Color(1f, 0.3f, 0f),       // Red-orange
                         VisualEffect.Flames,
-                        1.4f, 0.6f, "Draw a large circle with flair")
+                        1.4f, 0.6f, "Draw a large circle with flair",
+                        false, false, 1)
                 };
 
             case PlantRecognitionSystem.PlantType.FlameTulip:
@@ -183,11 +189,12 @@ public class MoveData
                         1.1f, 0.5f, "Draw a clean circle"),
 
                     new MoveData(MoveType.Burn, "Inferno Wave", "A devastating wave of scorching heat",
-                        ElementType.Fire, 22,
+                        ElementType.Fire, 25,
                         new Color(1f, 0.15f, 0f),      // Deep flame
                         new Color(1f, 0.7f, 0f),       // Bright fire
                         VisualEffect.Smoke,
-                        1.8f, 0.9f, "Draw aggressive zigzags")
+                        1.8f, 0.9f, "Draw aggressive zigzags",
+                        false, false, 1)
                 };
 
             // ═══════════════════════════════════════════════════════════
@@ -213,11 +220,12 @@ public class MoveData
                         1.0f, 0.4f, "Draw a single curved line"),
 
                     new MoveData(MoveType.LeafStorm, "Spine Storm", "A relentless barrage of sharp spines",
-                        ElementType.Grass, 22,
+                        ElementType.Grass, 25,
                         new Color(0.35f, 0.65f, 0.25f),// Dark green
                         new Color(0.9f, 0.85f, 0.5f),  // Pale yellow
                         VisualEffect.Crystals,
-                        1.4f, 0.6f, "Draw 5+ scattered strokes")
+                        1.4f, 0.6f, "Draw 5+ scattered strokes",
+                        false, false, 1)
                 };
 
             case PlantRecognitionSystem.PlantType.VineFlower:
@@ -239,11 +247,12 @@ public class MoveData
                         1.1f, 0.5f, "Draw a long curved line"),
 
                     new MoveData(MoveType.RootAttack, "Strangling Roots", "Massive roots bind and crush the enemy",
-                        ElementType.Grass, 22,
+                        ElementType.Grass, 25,
                         new Color(0.3f, 0.5f, 0.2f),   // Forest green
                         new Color(0.4f, 0.3f, 0.2f),   // Brown
                         VisualEffect.Roots,
-                        1.3f, 0.7f, "Draw vertical downward strokes")
+                        1.3f, 0.7f, "Draw vertical downward strokes",
+                        false, false, 1)
                 };
 
             case PlantRecognitionSystem.PlantType.GrassSprout:
@@ -265,11 +274,12 @@ public class MoveData
                         1.0f, 0.4f, "Draw 5+ quick strokes"),
 
                     new MoveData(MoveType.RootAttack, "Growth Surge", "Rapid growing roots assault the target",
-                        ElementType.Grass, 22,
+                        ElementType.Grass, 25,
                         new Color(0.45f, 0.85f, 0.35f),// Grass green
                         new Color(0.5f, 0.4f, 0.25f),  // Earth brown
                         VisualEffect.Roots,
-                        1.2f, 0.5f, "Draw tall vertical lines")
+                        1.2f, 0.5f, "Draw tall vertical lines",
+                        false, false, 1)
                 };
 
             // ═══════════════════════════════════════════════════════════
@@ -300,7 +310,7 @@ public class MoveData
                         new Color(0.7f, 0.95f, 0.7f),  // Mint
                         VisualEffect.Petals,
                         1.0f, 0.1f, "Draw gentle horizontal waves",
-                        true, false)
+                        true, false, 1)
                 };
 
             case PlantRecognitionSystem.PlantType.CoralBloom:
@@ -322,11 +332,12 @@ public class MoveData
                         1.1f, 0.5f, "Draw curved flowing lines"),
 
                     new MoveData(MoveType.Bubble, "Tidal Burst", "Explosive pressurized water bubbles",
-                        ElementType.Water, 22,
+                        ElementType.Water, 25,
                         new Color(0.2f, 0.6f, 1f),     // Vivid blue
                         new Color(0.8f, 0.95f, 1f),    // White foam
                         VisualEffect.Bubbles,
-                        1.4f, 0.6f, "Draw multiple circles")
+                        1.4f, 0.6f, "Draw multiple circles",
+                        false, false, 1)
                 };
 
             case PlantRecognitionSystem.PlantType.BubbleFlower:
@@ -353,7 +364,7 @@ public class MoveData
                         new Color(0.7f, 1f, 0.8f),     // Mint green
                         VisualEffect.Bubbles,
                         1.0f, 0.1f, "Draw smooth flowing waves",
-                        true, false)
+                        true, false, 1)
                 };
 
             default:
