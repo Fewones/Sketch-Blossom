@@ -3045,9 +3045,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c48a24e179baf4dfdba087872dd1287e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoveRecognitionSystem
-  minQualityMultiplier: 0.5
-  maxQualityMultiplier: 1.5
-  forgivenessFactor: 1
 --- !u!114 &948641824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3060,7 +3057,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 872e455c0e8d247558bbf6e696a12a9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovesetDetector
-  recognitionSystem: {fileID: 948641823}
   confidenceThreshold: 0.5
 --- !u!114 &948641825
 MonoBehaviour:
@@ -3088,7 +3084,7 @@ MonoBehaviour:
   finishDrawingButton: {fileID: 1369759735}
   clearDrawingButton: {fileID: 2086528223}
   movesetDetector: {fileID: 948641824}
-  moveRecognitionSystem: {fileID: 948641823}
+  moveConfidenceDisplay: {fileID: 1823754995}
   attackAnimationManager: {fileID: 0}
   moveExecutor: {fileID: 948641827}
   drawnMoveStorage: {fileID: 0}
@@ -5151,6 +5147,7 @@ GameObject:
   - component: {fileID: 1823754992}
   - component: {fileID: 1823754994}
   - component: {fileID: 1823754993}
+  - component: {fileID: 1823754995}
   m_Layer: 0
   m_Name: MoveConfidencePanel
   m_TagString: Untagged
@@ -5217,6 +5214,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1823754991}
   m_CullTransparentMesh: 1
+--- !u!114 &1823754995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1823754991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b320d1eaedefd4446b95accae9a51ca5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.Battle.MoveConfidenceDisplay
+  panelRoot: {fileID: 1823754991}
+  headerText: {fileID: 1206196359}
+  contentText: {fileID: 1981519819}
 --- !u!1 &1843803621
 GameObject:
   m_ObjectHideFlags: 0
