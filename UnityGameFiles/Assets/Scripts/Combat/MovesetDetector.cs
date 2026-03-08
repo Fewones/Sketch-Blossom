@@ -41,6 +41,8 @@ public class MovesetDetector : MonoBehaviour
             { "bubbles",       new[] { MoveData.MoveType.Bubble } },
             { "healing_wave",  new[] { MoveData.MoveType.HealingWave } },
             { "shield",        new[] { MoveData.MoveType.Block } },
+            { "slash",         new[] { MoveData.MoveType.Sting, MoveData.MoveType.Cut, MoveData.MoveType.Bump } },
+            { "straight_line", new[] { MoveData.MoveType.Sting, MoveData.MoveType.Cut, MoveData.MoveType.Bump } },
         };
 
     public class MoveDetectionResult
@@ -159,6 +161,12 @@ public class MovesetDetector : MonoBehaviour
             case MoveData.MoveType.Block:
                 return CalculateBlockScore(features);
 
+            // NORMAL MOVES
+            case MoveData.MoveType.Sting:
+            case MoveData.MoveType.Cut:
+            case MoveData.MoveType.Bump:
+                return CalculateSlashScore(features);
+
             // FIRE MOVES
             case MoveData.MoveType.Fireball:
                 return CalculateFireballScore(features);
@@ -212,6 +220,39 @@ public class MovesetDetector : MonoBehaviour
         // Block is still forgiving but won't dominate other moves
         // Reduced from 0.4f to 0.15f to act as a true fallback
         score = Mathf.Max(score, 0.15f);
+
+        return Mathf.Clamp01(score);
+    }
+
+    // ===== NORMAL MOVE DETECTION =====
+
+    /// <summary>
+    /// Sting/Cut/Bump: A single straight line slash - simple and quick to draw
+    /// </summary>
+    private float CalculateSlashScore(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // Should be exactly 1 stroke (a single line)
+        if (f.strokeCount == 1) score += 0.4f;
+        else if (f.strokeCount == 2) score += 0.15f;
+        else return 0f; // Too many strokes - not a slash
+
+        // Should NOT be circular (straight line, not a loop)
+        if (f.circularStrokes == 0) score += 0.2f;
+        else score *= 0.2f;
+
+        // Should NOT be spiky (straight, not zigzag)
+        if (f.spikyStrokes == 0) score += 0.15f;
+        else score *= 0.3f;
+
+        // Should NOT be very curved (straight line)
+        if (f.curvedStrokes == 0) score += 0.2f;
+        else score *= 0.5f;
+
+        // Bonus for having some length (not just a dot)
+        float size = Mathf.Max(f.width, f.height);
+        if (size > 0.5f) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
@@ -629,6 +670,10 @@ public class MovesetDetector : MonoBehaviour
         {
             case MoveData.MoveType.Block:
                 return QualityBlock(f);
+            case MoveData.MoveType.Sting:
+            case MoveData.MoveType.Cut:
+            case MoveData.MoveType.Bump:
+                return QualitySlash(f);
             case MoveData.MoveType.Fireball:
             case MoveData.MoveType.Bubble:
                 return QualityBall(f);
@@ -654,6 +699,18 @@ public class MovesetDetector : MonoBehaviour
         s += Mathf.Clamp01(f.compactness * 2f) * 0.4f;
         s += (1f - Mathf.Clamp01((f.strokeCount - 2) / 5f)) * 0.3f;
         s += (1f - Mathf.Abs(f.curviness - 0.5f) * 2f) * 0.3f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualitySlash(ShapeFeatures f)
+    {
+        float s = 0f;
+        // Reward straightness (low curviness)
+        s += (1f - f.curviness) * 0.4f;
+        // Reward single stroke
+        s += (1f - Mathf.Clamp01((f.strokeCount - 1) / 3f)) * 0.3f;
+        // Reward decent length
+        s += Mathf.Clamp01(f.totalLength / 3f) * 0.3f;
         return Mathf.Clamp01(s);
     }
 

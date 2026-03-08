@@ -14,6 +14,11 @@ public class MoveData
         // Universal Moves
         Block,          // Defensive move - easy to draw and recognize
 
+        // Normal Moves (no type advantage)
+        Sting,          // Fire plant basic attack
+        Cut,            // Grass plant basic attack
+        Bump,           // Water plant basic attack
+
         // Fire Moves
         Fireball,
         FlameWave,
@@ -32,6 +37,7 @@ public class MoveData
 
     public enum ElementType
     {
+        Normal,
         Fire,
         Grass,
         Water
@@ -127,6 +133,13 @@ public class MoveData
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
 
+                    new MoveData(MoveType.Sting, "Sting", "A quick stinging jab of solar energy",
+                        ElementType.Normal, 10,
+                        new Color(1f, 0.9f, 0.6f),     // Warm white
+                        new Color(1f, 0.7f, 0.3f),     // Soft orange
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
+
                     new MoveData(MoveType.Fireball, "Fireball", "Launch a blazing sphere of solar fire",
                         ElementType.Fire, 15,
                         new Color(1f, 0.4f, 0f),       // Bright orange
@@ -154,6 +167,13 @@ public class MoveData
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
 
+                    new MoveData(MoveType.Sting, "Sting", "A sharp thorn jabs the enemy",
+                        ElementType.Normal, 10,
+                        new Color(0.9f, 0.7f, 0.7f),   // Light rose
+                        new Color(0.7f, 0.3f, 0.3f),   // Muted red
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
+
                     new MoveData(MoveType.Burn, "Ember Petals", "Burning rose petals rain down on foes",
                         ElementType.Fire, 15,
                         new Color(1f, 0.1f, 0.2f),     // Crimson
@@ -180,6 +200,13 @@ public class MoveData
                         VisualEffect.Petals,
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
+
+                    new MoveData(MoveType.Sting, "Sting", "A swift fiery poke singes the target",
+                        ElementType.Normal, 10,
+                        new Color(1f, 0.8f, 0.6f),     // Peach
+                        new Color(1f, 0.5f, 0.3f),     // Soft coral
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
 
                     new MoveData(MoveType.Fireball, "Flame Strike", "A precise beam of concentrated fire",
                         ElementType.Fire, 15,
@@ -212,6 +239,13 @@ public class MoveData
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
 
+                    new MoveData(MoveType.Cut, "Cut", "A quick slash with a sharp spine",
+                        ElementType.Normal, 10,
+                        new Color(0.6f, 0.7f, 0.5f),   // Pale sage
+                        new Color(0.4f, 0.5f, 0.3f),   // Muted green
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
+
                     new MoveData(MoveType.VineWhip, "Needle Shot", "Fire sharp cactus needles at enemies",
                         ElementType.Grass, 15,
                         new Color(0.4f, 0.7f, 0.3f),   // Bright green
@@ -239,6 +273,13 @@ public class MoveData
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
 
+                    new MoveData(MoveType.Cut, "Cut", "A swift vine slices through the air",
+                        ElementType.Normal, 10,
+                        new Color(0.5f, 0.8f, 0.5f),   // Light green
+                        new Color(0.3f, 0.6f, 0.3f),   // Medium green
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
+
                     new MoveData(MoveType.VineWhip, "Vine Lash", "A powerful whipping vine strikes with force",
                         ElementType.Grass, 15,
                         new Color(0.25f, 0.75f, 0.3f), // Fresh green
@@ -265,6 +306,13 @@ public class MoveData
                         VisualEffect.Leaves,
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
+
+                    new MoveData(MoveType.Cut, "Cut", "A sharp leaf blade slashes the foe",
+                        ElementType.Normal, 10,
+                        new Color(0.7f, 0.9f, 0.5f),   // Yellow-green
+                        new Color(0.5f, 0.7f, 0.3f),   // Olive green
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
 
                     new MoveData(MoveType.LeafStorm, "Razor Leaf", "Sharp grass blades slice through the air",
                         ElementType.Grass, 15,
@@ -297,6 +345,13 @@ public class MoveData
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
 
+                    new MoveData(MoveType.Bump, "Bump", "A forceful watery shove",
+                        ElementType.Normal, 10,
+                        new Color(0.6f, 0.8f, 0.9f),   // Pale blue
+                        new Color(0.7f, 0.85f, 0.8f),  // Light teal
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
+
                     new MoveData(MoveType.WaterSplash, "Lily Splash", "Gentle waves wash over the enemy",
                         ElementType.Water, 15,
                         new Color(0.3f, 0.6f, 0.95f),  // Clear blue
@@ -323,6 +378,13 @@ public class MoveData
                         VisualEffect.Crystals,
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
+
+                    new MoveData(MoveType.Bump, "Bump", "A solid coral headbutt",
+                        ElementType.Normal, 10,
+                        new Color(0.9f, 0.7f, 0.75f),  // Light coral
+                        new Color(0.6f, 0.5f, 0.7f),   // Muted purple
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
 
                     new MoveData(MoveType.WaterSplash, "Coral Spike", "Sharp coral projectiles pierce enemies",
                         ElementType.Water, 15,
@@ -351,6 +413,13 @@ public class MoveData
                         0.8f, 0.1f, "Draw 1-3 circular strokes",
                         false, true),
 
+                    new MoveData(MoveType.Bump, "Bump", "A bubbly body slam",
+                        ElementType.Normal, 10,
+                        new Color(0.7f, 0.85f, 1f),    // Soft blue
+                        new Color(0.85f, 0.9f, 0.95f), // Pale silver
+                        VisualEffect.Sparks,
+                        0.7f, 0.2f, "Draw a single straight line"),
+
                     new MoveData(MoveType.Bubble, "Bubble Barrage", "Countless bubbles bombard the target",
                         ElementType.Water, 15,
                         new Color(0.5f, 0.75f, 0.95f), // Medium blue
@@ -378,6 +447,9 @@ public class MoveData
     /// </summary>
     public static float GetTypeAdvantage(ElementType attackType, ElementType defenseType)
     {
+        // Normal type is always neutral - no advantage or disadvantage
+        if (attackType == ElementType.Normal) return 1.0f;
+
         if (attackType == ElementType.Water && defenseType == ElementType.Fire) return 1.5f;
         if (attackType == ElementType.Fire && defenseType == ElementType.Grass) return 1.5f;
         if (attackType == ElementType.Grass && defenseType == ElementType.Water) return 1.5f;
