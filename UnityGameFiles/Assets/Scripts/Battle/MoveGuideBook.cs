@@ -26,6 +26,10 @@ namespace SketchBlossom.Battle
         public Image backgroundPanel;            // For page background color
         public TextMeshProUGUI pageNumberText;
 
+        [Header("Shape Previews")]
+        [Tooltip("Assign 3 RawImage slots in the Inspector – one per move row on a plant page.")]
+        public RawImage[] moveShapePreviews;
+
         [Header("Animation")]
         public float transitionSpeed = 5f;
         public bool useSlideAnimation = true;
@@ -36,6 +40,9 @@ namespace SketchBlossom.Battle
         private Vector3 closedPosition;
         private Vector3 openPosition;
 
+        // Textures created for the current page – destroyed when we move to another page.
+        private Texture2D[] activePreviewTextures;
+
         [System.Serializable]
         public class MoveGuidePageData
         {
@@ -45,6 +52,15 @@ namespace SketchBlossom.Battle
             public Color primaryColor;
             public Color secondaryColor;
             public Color pageBackgroundColor;
+            /// <summary>Populated for plant pages – one entry per move (Block, Attack1, Attack2).</summary>
+            public MoveData[] movesOnPage;
+        }
+
+        private void OnDestroy()
+        {
+            if (activePreviewTextures != null)
+                foreach (var t in activePreviewTextures)
+                    if (t != null) Object.Destroy(t);
         }
 
         private void Start()
@@ -237,7 +253,8 @@ namespace SketchBlossom.Battle
                 description = movesDescription,
                 primaryColor = themeMove.primaryColor,
                 secondaryColor = themeMove.secondaryColor,
-                pageBackgroundColor = GetPageBackgroundColor(elementName)
+                pageBackgroundColor = GetPageBackgroundColor(elementName),
+                movesOnPage = moves
             });
         }
 
@@ -435,6 +452,61 @@ namespace SketchBlossom.Battle
             if (nextPageButton != null)
             {
                 nextPageButton.interactable = currentPage < pages.Length - 1;
+            }
+
+            // Update shape reference previews
+            UpdateShapePreviews(page);
+        }
+
+        /// <summary>
+        /// Generate and display the reference-drawing shape for each move on the current plant page.
+        /// Hides all preview images on non-plant pages (welcome, tips, etc.).
+        /// </summary>
+        private void UpdateShapePreviews(MoveGuidePageData page)
+        {
+            if (moveShapePreviews == null || moveShapePreviews.Length == 0)
+                return;
+
+            // Destroy textures we created for the previous page to avoid leaks.
+            if (activePreviewTextures != null)
+            {
+                foreach (var t in activePreviewTextures)
+                    if (t != null) Object.Destroy(t);
+            }
+            activePreviewTextures = null;
+
+            bool isPlantPage = page.movesOnPage != null && page.movesOnPage.Length > 0;
+
+            if (!isPlantPage)
+            {
+                // Hide all preview slots on non-plant pages.
+                foreach (var img in moveShapePreviews)
+                    if (img != null) img.gameObject.SetActive(false);
+                return;
+            }
+
+            activePreviewTextures = new Texture2D[moveShapePreviews.Length];
+
+            for (int i = 0; i < moveShapePreviews.Length; i++)
+            {
+                if (moveShapePreviews[i] == null) continue;
+
+                if (i < page.movesOnPage.Length)
+                {
+                    MoveData move = page.movesOnPage[i];
+                    // Use a darkened version of the move's primary color so it reads on the pale background.
+                    Color previewColor = move.primaryColor;
+                    previewColor.a = 1f;
+
+                    Texture2D tex = MoveShapePreview.GeneratePreview(move.moveType, 80, 80, previewColor);
+                    activePreviewTextures[i] = tex;
+                    moveShapePreviews[i].texture = tex;
+                    moveShapePreviews[i].gameObject.SetActive(true);
+                }
+                else
+                {
+                    moveShapePreviews[i].gameObject.SetActive(false);
+                }
             }
         }
 
