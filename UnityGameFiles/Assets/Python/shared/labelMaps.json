@@ -1,15 +1,18 @@
 {
     "move_shapes": {
-        "a single large circle or fireball shape": "fireball",
-        "a sharp aggressive horizontal wave with tall crests": "flame_wave",
+        "a single large closed circle or round loop": "circle",
+        "a single straight line drawn in one direction": "straight_line",
         "a jagged lightning bolt or sharp angular zigzag": "zigzag",
-        "a single long curved swooping arc or whip stroke": "curved_line",
-        "many scattered short diagonal strokes going in different directions": "scattered",
-        "multiple parallel vertical lines going straight downward": "downward_lines",
-        "a smooth flowing wave like water splashing upward": "water_splash",
-        "multiple small circles or bubbles clustered together": "bubbles",
-        "a gentle smooth horizontal undulating wave": "healing_wave",
-        "a triangular shield shape or protective barrier": "shield"
+        "a smooth wavy horizontal curved line": "wavy_line",
+        "two lines crossing in a plus or cross shape": "plus",
+        "two diagonal lines crossing in an X shape": "x_cross",
+        "an arrow pointing in a direction with a V-shaped tip": "arrow",
+        "multiple small circles or bubbles drawn separately": "multiple_circles",
+        "several lines radiating outward from a center like a star or asterisk": "star",
+        "a closed square or rectangular box shape": "square",
+        "a closed triangle shape with three corners": "triangle",
+        "a V-shaped checkmark or tick mark": "checkmark",
+        "a spiral curving inward or outward like a snail shell": "spiral"
     },
     "plant_labels": {
         "a red tulip emitting flames": "flame tulip", 

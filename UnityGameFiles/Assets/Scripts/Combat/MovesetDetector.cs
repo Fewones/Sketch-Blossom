@@ -460,7 +460,7 @@ public class MovesetDetector : MonoBehaviour
         return Mathf.Clamp01(score);
     }
 
-    /// <summary> Spiral: single curved non-closed stroke </summary>
+    /// <summary> Spiral: single curved stroke (open or closed) </summary>
     private float ScoreSpiral(DrawingFeatures f)
     {
         float score = 0f;
@@ -470,12 +470,12 @@ public class MovesetDetector : MonoBehaviour
         else if (f.strokeCount == 2) score += 0.1f;
         else return 0.05f;
 
-        // Should be curved
-        if (f.curvedStrokes >= 1) score += 0.4f;
+        // Must be curved — this is the defining feature
+        if (f.curvedStrokes >= 1) score += 0.45f;
 
-        // Ideally NOT fully closed (spiral doesn't close perfectly)
-        if (f.circularStrokes == 0 && f.curvedStrokes >= 1) score += 0.2f;
-        else if (f.circularStrokes >= 1) score += 0.05f;
+        // Spirals can be open or closed — accept both, slight bonus for open
+        if (f.circularStrokes == 0 && f.curvedStrokes >= 1) score += 0.15f;
+        else if (f.circularStrokes >= 1 && f.curvedStrokes >= 1) score += 0.1f;
 
         // Should NOT be spiky
         if (f.spikyStrokes == 0) score += 0.1f;
@@ -628,7 +628,8 @@ public class MovesetDetector : MonoBehaviour
             }
 
             float avgAngle = angleCount > 0 ? totalAngleChange / angleCount : 0f;
-            if (avgAngle > 5f && avgAngle < 45f)
+            // Accept smooth curves and tighter curves like spirals (up to 60)
+            if (avgAngle > 5f && avgAngle < 60f)
                 count++;
         }
         return count;
