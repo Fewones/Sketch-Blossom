@@ -1,4 +1,13 @@
 {
+    "move_shapes": {
+        "a circle or closed round loop": "circle",
+        "a horizontal wave or sinusoidal undulating line": "wave",
+        "a zigzag lightning bolt or spiky sharp angles": "zigzag",
+        "multiple parallel vertical lines going downward": "downward_lines",
+        "many scattered short strokes or marks in different directions": "scattered",
+        "a single long curved swooping line or arc": "curved_line",
+        "a shield or protective barrier or a cross symbol": "shield"
+    },
     "plant_labels": {
         "a red tulip emitting flames": "flame tulip", 
         "a red rose on fire":"fire rose", 

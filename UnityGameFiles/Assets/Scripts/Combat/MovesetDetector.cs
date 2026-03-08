@@ -4,7 +4,8 @@ using System.Linq;
 
 /// <summary>
 /// Detects which move the player drew during battle
-/// Analyzes drawing patterns to match type-specific moves
+/// Analyzes drawing patterns to match type-specific moves.
+/// Supports an optional TinyCLIP shape hint to boost recognition accuracy.
 /// </summary>
 public class MovesetDetector : MonoBehaviour
 {
@@ -15,6 +16,33 @@ public class MovesetDetector : MonoBehaviour
     [Header("Detection Settings")]
     [Tooltip("Minimum confidence score required to recognize a move")]
     public float confidenceThreshold = 0.5f;
+
+    /// <summary>
+    /// Shape label returned by TinyCLIP for the player's drawn gesture.
+    /// shapeLabel must match a key in the move_shapes label map (e.g. "circle", "wave").
+    /// confidence is the cosine-similarity score from TinyCLIP (0-1).
+    /// </summary>
+    public struct CLIPMoveHint
+    {
+        public string shapeLabel;
+        public float confidence;
+    }
+
+    // Maps each TinyCLIP shape label to the move types it represents.
+    // When TinyCLIP recognises one of these shapes the matching moves get
+    // a large score bonus, making recognition far more robust than pure
+    // geometric heuristics alone.
+    private static readonly Dictionary<string, MoveData.MoveType[]> shapeToMoveTypes =
+        new Dictionary<string, MoveData.MoveType[]>
+        {
+            { "circle",        new[] { MoveData.MoveType.Fireball, MoveData.MoveType.Bubble } },
+            { "wave",          new[] { MoveData.MoveType.FlameWave, MoveData.MoveType.WaterSplash, MoveData.MoveType.HealingWave } },
+            { "zigzag",        new[] { MoveData.MoveType.Burn } },
+            { "downward_lines",new[] { MoveData.MoveType.RootAttack } },
+            { "scattered",     new[] { MoveData.MoveType.LeafStorm } },
+            { "curved_line",   new[] { MoveData.MoveType.VineWhip } },
+            { "shield",        new[] { MoveData.MoveType.Block } },
+        };
 
     public class MoveDetectionResult
     {
@@ -110,6 +138,91 @@ public class MovesetDetector : MonoBehaviour
             }
 
             Debug.Log($"✅ MOVE RECOGNIZED: {result}");
+        }
+        else
+        {
+            result.wasRecognized = false;
+            Debug.Log($"❌ MOVE NOT RECOGNIZED (best: {result.detectedMove} at {result.confidence:P0})");
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Detect which move was drawn, using a TinyCLIP shape hint to boost accuracy.
+    /// When clipHint.confidence is high the recognised shape strongly biases the
+    /// result; when it is low the system falls back to pure geometric heuristics.
+    /// </summary>
+    public MoveDetectionResult DetectMoveWithCLIP(
+        List<LineRenderer> strokes,
+        PlantRecognitionSystem.PlantType plantType,
+        CLIPMoveHint clipHint)
+    {
+        if (strokes == null || strokes.Count == 0)
+        {
+            Debug.LogWarning("No strokes to analyse for move detection!");
+            return CreateFailedResult();
+        }
+
+        Debug.Log($"=== CLIP-ASSISTED MOVE DETECTION for {plantType} ===");
+        Debug.Log($"CLIP hint: shape='{clipHint.shapeLabel}' confidence={clipHint.confidence:F2}");
+
+        DrawingFeatures features = ExtractFeatures(strokes);
+        MoveData[] availableMoves = MoveData.GetMovesForPlant(plantType);
+        if (availableMoves.Length == 0)
+        {
+            Debug.LogWarning($"No moves defined for {plantType}!");
+            return CreateFailedResult();
+        }
+
+        // Determine which move types the CLIP shape hint supports.
+        MoveData.MoveType[] clipSupportedTypes = null;
+        bool hasCLIPHint = !string.IsNullOrEmpty(clipHint.shapeLabel) &&
+                           shapeToMoveTypes.TryGetValue(clipHint.shapeLabel, out clipSupportedTypes);
+
+        MoveDetectionResult result = new MoveDetectionResult();
+
+        foreach (var moveData in availableMoves)
+        {
+            // Base geometric score (same logic as before).
+            float geometricScore = CalculateMoveScore(moveData.moveType, features);
+
+            // CLIP boost: scale with confidence so a low-confidence hint has
+            // little influence while a high-confidence hit dominates.
+            float clipBoost = 0f;
+            if (hasCLIPHint && System.Array.IndexOf(clipSupportedTypes, moveData.moveType) >= 0)
+            {
+                // Max boost of 0.6 at full CLIP confidence.
+                clipBoost = clipHint.confidence * 0.6f;
+            }
+
+            float combinedScore = Mathf.Clamp01(geometricScore + clipBoost);
+            result.scores[moveData.moveType] = combinedScore;
+
+            Debug.Log($"{moveData.moveType}: geometric={geometricScore:F2} clipBoost={clipBoost:F2} total={combinedScore:F2}");
+        }
+
+        var bestMatch = result.scores.OrderByDescending(x => x.Value).First();
+        result.detectedMove = bestMatch.Key;
+        result.confidence = bestMatch.Value;
+
+        if (result.confidence >= confidenceThreshold)
+        {
+            result.wasRecognized = true;
+            if (recognitionSystem != null)
+            {
+                var qualityResult = recognitionSystem.AnalyzeMove(strokes, result.detectedMove);
+                result.quality = qualityResult.quality;
+                result.damageMultiplier = qualityResult.damageMultiplier;
+                result.qualityRating = qualityResult.qualityRating;
+            }
+            else
+            {
+                result.quality = result.confidence;
+                result.damageMultiplier = 1f;
+                result.qualityRating = "Unknown";
+            }
+            Debug.Log($"✅ CLIP-ASSISTED MOVE RECOGNIZED: {result}");
         }
         else
         {

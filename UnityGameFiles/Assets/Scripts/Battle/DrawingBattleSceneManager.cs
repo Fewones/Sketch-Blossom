@@ -3,8 +3,10 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using SketchBlossom.Progression;
+using SketchBlossom.Model;
 
 namespace SketchBlossom.Battle
 {
@@ -47,6 +49,20 @@ namespace SketchBlossom.Battle
         [Header("Battle Settings")]
         [SerializeField] private float turnDelay = 1.5f;
         [SerializeField] private float actionTextDelay = 2f;
+
+        [Header("CLIP Move Recognition")]
+        [Tooltip("Minimum TinyCLIP confidence to apply the shape boost. Below this, pure geometric detection is used.")]
+        [SerializeField] private float clipConfidenceThreshold = 0.2f;
+
+        // TinyCLIP model manager – same server used for plant recognition.
+        private readonly ModelManager clipModelManager = new ModelManager();
+
+        [System.Serializable]
+        private class PredictionResponse
+        {
+            public string label;
+            public float score;
+        }
 
         // Battle state
         private enum BattleState
@@ -526,7 +542,8 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Called when finish drawing button is clicked
+        /// Called when finish drawing button is clicked.
+        /// Captures the drawing, queries TinyCLIP for the shape, then detects the move.
         /// </summary>
         private void OnFinishDrawingClicked()
         {
@@ -534,7 +551,6 @@ namespace SketchBlossom.Battle
 
             currentState = BattleState.PlayerExecuting;
 
-            // Get all line renderers from canvas
             List<LineRenderer> lineRenderers = drawingCanvas.GetAllLineRenderers();
 
             if (lineRenderers.Count == 0)
@@ -544,15 +560,67 @@ namespace SketchBlossom.Battle
                 return;
             }
 
-            // Detect the move
-            var result = movesetDetector.DetectMove(lineRenderers, playerPlantType);
+            StartCoroutine(ProcessMoveTurn(lineRenderers));
+        }
+
+        /// <summary>
+        /// Captures the move drawing, queries TinyCLIP for shape recognition,
+        /// then runs CLIP-assisted move detection.
+        /// </summary>
+        private IEnumerator ProcessMoveTurn(List<LineRenderer> lineRenderers)
+        {
+            UpdateActionText("Analysing your move...");
+
+            // --- Capture texture for TinyCLIP ---
+            Camera mainCamera = Camera.main;
+            MovesetDetector.CLIPMoveHint clipHint = default;
+
+            if (moveDrawingCapture != null && mainCamera != null)
+            {
+                Texture2D moveTexture = moveDrawingCapture.CaptureDrawing(
+                    lineRenderers, mainCamera, drawingCanvas.drawingArea);
+
+                if (moveTexture != null)
+                {
+                    // Query TinyCLIP asynchronously via the shared server.
+                    Task<string> clipTask = clipModelManager.SendImage(moveTexture, "move_shapes");
+                    yield return new WaitUntil(() => clipTask.IsCompleted);
+
+                    if (!clipTask.IsFaulted && !string.IsNullOrEmpty(clipTask.Result) &&
+                        !clipTask.Result.StartsWith("error"))
+                    {
+                        PredictionResponse response = JsonUtility.FromJson<PredictionResponse>(clipTask.Result);
+                        if (response != null && response.score >= clipConfidenceThreshold)
+                        {
+                            clipHint = new MovesetDetector.CLIPMoveHint
+                            {
+                                shapeLabel = response.label,
+                                confidence = response.score
+                            };
+                            Debug.Log($"[CLIP] Shape detected: '{clipHint.shapeLabel}' ({clipHint.confidence:P0})");
+                        }
+                        else
+                        {
+                            Debug.Log("[CLIP] Confidence too low – using geometric detection only.");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[CLIP] Server request failed – using geometric detection only.");
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[CLIP] Capture handler or camera not available – using geometric detection only.");
+            }
+
+            // --- Detect move (geometric + optional CLIP boost) ---
+            var result = movesetDetector.DetectMoveWithCLIP(lineRenderers, playerPlantType, clipHint);
 
             if (result.wasRecognized)
             {
-                // CAPTURE THE MOVE DRAWING before clearing the canvas
                 CaptureMoveDrawing(lineRenderers);
-
-                // Execute the move
                 StartCoroutine(ExecutePlayerMove(result));
             }
             else
