@@ -35,12 +35,15 @@ public class MovesetDetector : MonoBehaviour
     private static readonly Dictionary<string, MoveData.MoveType[]> shapeToMoveTypes =
         new Dictionary<string, MoveData.MoveType[]>
         {
-            { "circle",        new[] { MoveData.MoveType.Fireball, MoveData.MoveType.Bubble } },
-            { "wave",          new[] { MoveData.MoveType.FlameWave, MoveData.MoveType.WaterSplash, MoveData.MoveType.HealingWave } },
+            { "fireball",      new[] { MoveData.MoveType.Fireball } },
+            { "flame_wave",    new[] { MoveData.MoveType.FlameWave } },
             { "zigzag",        new[] { MoveData.MoveType.Burn } },
-            { "downward_lines",new[] { MoveData.MoveType.RootAttack } },
-            { "scattered",     new[] { MoveData.MoveType.LeafStorm } },
             { "curved_line",   new[] { MoveData.MoveType.VineWhip } },
+            { "scattered",     new[] { MoveData.MoveType.LeafStorm } },
+            { "downward_lines",new[] { MoveData.MoveType.RootAttack } },
+            { "water_splash",  new[] { MoveData.MoveType.WaterSplash } },
+            { "bubbles",       new[] { MoveData.MoveType.Bubble } },
+            { "healing_wave",  new[] { MoveData.MoveType.HealingWave } },
             { "shield",        new[] { MoveData.MoveType.Block } },
         };
 
