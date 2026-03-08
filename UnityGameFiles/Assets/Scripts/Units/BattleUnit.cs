@@ -9,10 +9,10 @@ public class BattleUnit : MonoBehaviour
 {
     [Header("Unit Stats")]
     public string unitName = "Unit";
-    public int maxHealth = 30;
+    public int maxHealth = 90;
     public int currentHealth;
-    public int attack = 10;
-    public int defense = 5;
+    public int attack = 12;
+    public int defense = 12;
     
     [Header("Visual")]
     public SpriteRenderer spriteRenderer;

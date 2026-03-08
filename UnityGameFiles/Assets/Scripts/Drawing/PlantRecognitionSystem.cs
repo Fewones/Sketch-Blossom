@@ -92,54 +92,54 @@ public class PlantRecognitionSystem : MonoBehaviour
     {
         plantDatabase = new Dictionary<PlantType, PlantData>
         {
-            // FIRE PLANTS (Red) - High attack, medium HP, low defense
+            // FIRE PLANTS (Red) - High attack, lower HP (BST 115)
             { PlantType.Sunflower, new PlantData(
                 PlantType.Sunflower, ElementType.Fire, "Sunflower",
-                hp: 30, atk: 18, def: 8,
+                hp: 90, atk: 15, def: 10,
                 "Radiant fire flower with circular petals"
             )},
             { PlantType.FireRose, new PlantData(
                 PlantType.FireRose, ElementType.Fire, "Fire Rose",
-                hp: 35, atk: 16, def: 10,
+                hp: 85, atk: 17, def: 13,
                 "Compact blazing rose with many layers"
             )},
             { PlantType.FlameTulip, new PlantData(
                 PlantType.FlameTulip, ElementType.Fire, "Flame Tulip",
-                hp: 28, atk: 20, def: 6,
+                hp: 80, atk: 20, def: 15,
                 "Tall elegant flame flower with simple shape"
             )},
 
-            // GRASS PLANTS (Green) - Balanced stats
+            // GRASS PLANTS (Green) - Balanced, higher defense (BST 115)
             { PlantType.Cactus, new PlantData(
                 PlantType.Cactus, ElementType.Grass, "Cactus",
-                hp: 32, atk: 12, def: 14,
+                hp: 85, atk: 12, def: 18,
                 "Spiky vertical desert guardian"
             )},
             { PlantType.VineFlower, new PlantData(
                 PlantType.VineFlower, ElementType.Grass, "Vine Flower",
-                hp: 35, atk: 14, def: 12,
+                hp: 90, atk: 14, def: 11,
                 "Flowing curved vine with blooms"
             )},
             { PlantType.GrassSprout, new PlantData(
                 PlantType.GrassSprout, ElementType.Grass, "Grass Sprout",
-                hp: 30, atk: 10, def: 16,
+                hp: 95, atk: 10, def: 10,
                 "Bushy low-growing grass cluster"
             )},
 
-            // WATER PLANTS (Blue) - High HP, low attack, high defense
+            // WATER PLANTS (Blue) - High HP, supportive (BST 115)
             { PlantType.WaterLily, new PlantData(
                 PlantType.WaterLily, ElementType.Water, "Water Lily",
-                hp: 40, atk: 10, def: 14,
+                hp: 95, atk: 10, def: 10,
                 "Peaceful floating flower spreading wide"
             )},
             { PlantType.CoralBloom, new PlantData(
                 PlantType.CoralBloom, ElementType.Water, "Coral Bloom",
-                hp: 38, atk: 12, def: 12,
+                hp: 85, atk: 15, def: 15,
                 "Branching underwater coral flower"
             )},
             { PlantType.BubbleFlower, new PlantData(
                 PlantType.BubbleFlower, ElementType.Water, "Bubble Flower",
-                hp: 36, atk: 8, def: 16,
+                hp: 90, atk: 12, def: 13,
                 "Clustered bubble-like blooms"
             )}
         };
