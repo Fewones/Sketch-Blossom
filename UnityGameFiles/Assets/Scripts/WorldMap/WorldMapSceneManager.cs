@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Main manager for the World Map scene
-/// Handles player spawning, enemy setup, and scene transitions
+/// Main manager for the World Map scene.
+/// Handles player spawning, enemy setup, and scene transitions.
+/// Spawns enemies with varying difficulty levels (1-3) representing different encounter sizes.
 /// </summary>
 public class WorldMapSceneManager : MonoBehaviour
 {
@@ -22,27 +23,24 @@ public class WorldMapSceneManager : MonoBehaviour
 
     [Header("Scene Settings")]
     [SerializeField] private bool spawnEnemiesOnStart = true;
-    [SerializeField] private int numberOfEnemies = 2;
+    [SerializeField] private int numberOfEnemies = 3; // One of each difficulty by default
+    [SerializeField] private bool isFirstEncounter = false; // Set true for tutorial/first map
 
     private void Start()
     {
-        // Initialize player
         SetupPlayer();
 
-        // Initialize enemies
         if (spawnEnemiesOnStart)
         {
             SetupEnemies();
         }
 
-        // Ensure EnemyEncounterData singleton exists
         if (EnemyEncounterData.Instance == null)
         {
             GameObject encounterDataObj = new GameObject("EnemyEncounterData");
             encounterDataObj.AddComponent<EnemyEncounterData>();
         }
 
-        // Find battle preview UI if not assigned
         if (battlePreviewUI == null)
         {
             battlePreviewUI = FindObjectOfType<BattlePreviewUI>();
@@ -53,17 +51,14 @@ public class WorldMapSceneManager : MonoBehaviour
 
     private void SetupPlayer()
     {
-        // If player controller is already assigned, just set position
         if (playerController != null)
         {
             playerController.transform.position = playerSpawnPosition;
             return;
         }
 
-        // Try to find existing player in scene
         playerController = FindObjectOfType<PlayerController>();
 
-        // If no player exists, spawn one
         if (playerController == null && playerPrefab != null)
         {
             GameObject playerObj = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
@@ -71,7 +66,6 @@ public class WorldMapSceneManager : MonoBehaviour
             playerObj.tag = "Player";
             playerController = playerObj.GetComponent<PlayerController>();
 
-            // Add PlayerController if not on prefab
             if (playerController == null)
             {
                 playerController = playerObj.AddComponent<PlayerController>();
@@ -95,23 +89,34 @@ public class WorldMapSceneManager : MonoBehaviour
             return;
         }
 
-        // Otherwise, spawn new enemies
         if (enemyPrefab == null)
         {
             Debug.LogWarning("Enemy prefab not assigned! Cannot spawn enemies.");
             return;
         }
 
-        // Determine spawn points
         Vector3[] spawnPositions = GetEnemySpawnPositions();
 
-        // Spawn enemies
         enemies = new WorldMapEnemy[numberOfEnemies];
         for (int i = 0; i < numberOfEnemies; i++)
         {
             Vector3 spawnPos = spawnPositions[i];
             GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-            enemyObj.name = $"Enemy_{i + 1}";
+
+            // Determine difficulty: if first encounter, all are difficulty 1
+            // Otherwise, cycle through difficulties 1, 2, 3
+            int difficulty;
+            if (isFirstEncounter)
+            {
+                difficulty = 1;
+            }
+            else
+            {
+                difficulty = (i % 3) + 1; // 1, 2, 3, 1, 2, 3...
+            }
+
+            string diffLabel = difficulty == 1 ? "Easy" : difficulty == 2 ? "Medium" : "Hard";
+            enemyObj.name = $"Enemy_{diffLabel}_{i + 1}";
 
             WorldMapEnemy enemy = enemyObj.GetComponent<WorldMapEnemy>();
             if (enemy == null)
@@ -119,15 +124,17 @@ public class WorldMapSceneManager : MonoBehaviour
                 enemy = enemyObj.AddComponent<WorldMapEnemy>();
             }
 
+            // Set difficulty which also generates appropriate number of plants
+            enemy.SetEnemyData(difficulty);
+
             enemies[i] = enemy;
 
-            Debug.Log($"Spawned enemy {i + 1} at {spawnPos}");
+            Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
         }
     }
 
     private Vector3[] GetEnemySpawnPositions()
     {
-        // If spawn points are defined, use those
         if (enemySpawnPoints != null && enemySpawnPoints.Length >= numberOfEnemies)
         {
             Vector3[] positions = new Vector3[numberOfEnemies];
@@ -138,11 +145,9 @@ public class WorldMapSceneManager : MonoBehaviour
             return positions;
         }
 
-        // Otherwise, generate random positions around the player
         Vector3[] randomPositions = new Vector3[numberOfEnemies];
         for (int i = 0; i < numberOfEnemies; i++)
         {
-            // Random position in a circle around player
             float angle = (360f / numberOfEnemies) * i;
             float distance = Random.Range(5f, 10f);
 
@@ -169,17 +174,11 @@ public class WorldMapSceneManager : MonoBehaviour
         battlePreviewUI.ShowPreview(enemy);
     }
 
-    /// <summary>
-    /// Return to main menu
-    /// </summary>
     public void ReturnToMainMenu()
     {
         SceneManager.LoadScene("MainMenuScene");
     }
 
-    /// <summary>
-    /// Open inventory scene
-    /// </summary>
     public void OpenInventory()
     {
         SceneManager.LoadScene("InventoryScene");
@@ -192,7 +191,6 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         if (removeDefeated && EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.isWorldMapEncounter)
         {
-            // Find and remove the defeated enemy
             foreach (WorldMapEnemy enemy in enemies)
             {
                 if (enemy != null && enemy.GetPlantType() == EnemyEncounterData.Instance.encounterPlantType)
@@ -202,7 +200,6 @@ public class WorldMapSceneManager : MonoBehaviour
                 }
             }
 
-            // Clear encounter data
             EnemyEncounterData.Instance.ClearEncounterData();
         }
     }

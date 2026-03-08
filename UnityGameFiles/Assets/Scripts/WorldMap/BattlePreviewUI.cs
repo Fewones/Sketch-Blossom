@@ -2,9 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 /// <summary>
-/// UI popup that displays battle preview information when interacting with an enemy
+/// UI popup that displays battle preview information when interacting with an enemy.
+/// Shows difficulty level, plant count, and a list of enemy plants in the encounter.
 /// </summary>
 public class BattlePreviewUI : MonoBehaviour
 {
@@ -16,18 +18,20 @@ public class BattlePreviewUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI flavorText;
     [SerializeField] private Button goToBattleButton;
     [SerializeField] private Button cancelButton;
-    [SerializeField] private Image enemyElementIcon; // Optional: icon for element type
+    [SerializeField] private Image enemyElementIcon;
 
     [Header("Visual Settings")]
     [SerializeField] private Color fireColor = new Color(1f, 0.3f, 0.3f);
     [SerializeField] private Color waterColor = new Color(0.3f, 0.5f, 1f);
     [SerializeField] private Color grassColor = new Color(0.3f, 1f, 0.3f);
+    [SerializeField] private Color easyColor = new Color(0.4f, 0.9f, 0.4f);
+    [SerializeField] private Color mediumColor = new Color(0.9f, 0.7f, 0.2f);
+    [SerializeField] private Color hardColor = new Color(0.9f, 0.3f, 0.3f);
 
     private WorldMapEnemy currentEnemy;
 
     private void Awake()
     {
-        // Setup button listeners
         if (goToBattleButton != null)
         {
             goToBattleButton.onClick.AddListener(OnGoToBattleClicked);
@@ -38,7 +42,6 @@ public class BattlePreviewUI : MonoBehaviour
             cancelButton.onClick.AddListener(OnCancelClicked);
         }
 
-        // Hide popup initially
         if (popupPanel != null)
         {
             popupPanel.SetActive(false);
@@ -46,7 +49,7 @@ public class BattlePreviewUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Show the battle preview popup with enemy data
+    /// Show the battle preview popup with enemy data including difficulty and plant list
     /// </summary>
     public void ShowPreview(WorldMapEnemy enemy)
     {
@@ -57,46 +60,64 @@ public class BattlePreviewUI : MonoBehaviour
         }
 
         currentEnemy = enemy;
+        int difficulty = enemy.GetDifficulty();
+        List<EnemyPlantEntry> plants = enemy.GetEncounterPlants();
 
-        // Populate UI with enemy data
+        // Encounter title
         if (enemyNameText != null)
         {
             enemyNameText.text = enemy.GetDisplayName();
         }
 
+        // Element text - show all elements present in the encounter
         if (elementText != null)
         {
-            PlantRecognitionSystem.ElementType element = enemy.GetElement();
-            elementText.text = $"Element: {element}";
-
-            // Color the element text
-            elementText.color = GetElementColor(element);
+            if (plants.Count == 1)
+            {
+                PlantRecognitionSystem.ElementType element = plants[0].element;
+                string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(element));
+                elementText.text = $"Element: <color=#{colorHex}>{element}</color>";
+            }
+            else
+            {
+                string elementsStr = "";
+                for (int i = 0; i < plants.Count; i++)
+                {
+                    string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(plants[i].element));
+                    if (i > 0) elementsStr += "  ";
+                    elementsStr += $"<color=#{colorHex}>{plants[i].displayName} ({plants[i].element})</color>";
+                }
+                elementText.text = elementsStr;
+            }
+            elementText.color = Color.white; // Use white since we have rich text coloring
         }
 
+        // Difficulty display with label and stars
         if (difficultyText != null)
         {
-            int difficulty = enemy.GetDifficulty();
-            difficultyText.text = $"Difficulty: {GetDifficultyStars(difficulty)}";
+            string diffLabel = GetDifficultyLabel(difficulty);
+            string stars = GetDifficultyStars(difficulty);
+            string diffColorHex = ColorUtility.ToHtmlStringRGB(GetDifficultyColor(difficulty));
+            difficultyText.text = $"Difficulty: <color=#{diffColorHex}>{diffLabel} {stars}</color>\nPlants: {plants.Count}";
         }
 
+        // Flavor text
         if (flavorText != null)
         {
             flavorText.text = enemy.GetFlavorText();
         }
 
-        // Set element icon color if available
+        // Set element icon to difficulty color
         if (enemyElementIcon != null)
         {
-            enemyElementIcon.color = GetElementColor(enemy.GetElement());
+            enemyElementIcon.color = GetDifficultyColor(difficulty);
         }
 
-        // Show the popup
         if (popupPanel != null)
         {
             popupPanel.SetActive(true);
         }
 
-        // Pause player movement
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
         {
@@ -104,9 +125,6 @@ public class BattlePreviewUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Hide the battle preview popup
-    /// </summary>
     public void HidePreview()
     {
         if (popupPanel != null)
@@ -116,7 +134,6 @@ public class BattlePreviewUI : MonoBehaviour
 
         currentEnemy = null;
 
-        // Resume player movement
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
         {
@@ -132,13 +149,11 @@ public class BattlePreviewUI : MonoBehaviour
             return;
         }
 
-        // Store enemy encounter data for the battle scene
+        // Store encounter data with all plants
         if (EnemyEncounterData.Instance != null)
         {
             EnemyEncounterData.Instance.SetEncounterData(
-                currentEnemy.GetPlantType(),
-                currentEnemy.GetElement(),
-                currentEnemy.GetDisplayName(),
+                currentEnemy.GetEncounterPlants(),
                 currentEnemy.GetDifficulty(),
                 currentEnemy.GetFlavorText()
             );
@@ -149,18 +164,14 @@ public class BattlePreviewUI : MonoBehaviour
             GameObject encounterDataObj = new GameObject("EnemyEncounterData");
             EnemyEncounterData encounterData = encounterDataObj.AddComponent<EnemyEncounterData>();
             encounterData.SetEncounterData(
-                currentEnemy.GetPlantType(),
-                currentEnemy.GetElement(),
-                currentEnemy.GetDisplayName(),
+                currentEnemy.GetEncounterPlants(),
                 currentEnemy.GetDifficulty(),
                 currentEnemy.GetFlavorText()
             );
         }
 
-        // Hide the popup
         HidePreview();
 
-        // Transition to plant selection scene (where player chooses which plant to battle with)
         Debug.Log("Loading PlantSelectionScene for battle preparation...");
         SceneManager.LoadScene("PlantSelectionScene");
     }
@@ -170,31 +181,43 @@ public class BattlePreviewUI : MonoBehaviour
         HidePreview();
     }
 
-    /// <summary>
-    /// Get color based on element type
-    /// </summary>
     private Color GetElementColor(PlantRecognitionSystem.ElementType element)
     {
         switch (element)
         {
-            case PlantRecognitionSystem.ElementType.Fire:
-                return fireColor;
-            case PlantRecognitionSystem.ElementType.Water:
-                return waterColor;
-            case PlantRecognitionSystem.ElementType.Grass:
-                return grassColor;
-            default:
-                return Color.white;
+            case PlantRecognitionSystem.ElementType.Fire: return fireColor;
+            case PlantRecognitionSystem.ElementType.Water: return waterColor;
+            case PlantRecognitionSystem.ElementType.Grass: return grassColor;
+            default: return Color.white;
         }
     }
 
-    /// <summary>
-    /// Get difficulty as stars (★★★☆☆)
-    /// </summary>
+    private Color GetDifficultyColor(int difficulty)
+    {
+        switch (difficulty)
+        {
+            case 1: return easyColor;
+            case 2: return mediumColor;
+            case 3: return hardColor;
+            default: return Color.white;
+        }
+    }
+
+    private string GetDifficultyLabel(int difficulty)
+    {
+        switch (difficulty)
+        {
+            case 1: return "Easy";
+            case 2: return "Medium";
+            case 3: return "Hard";
+            default: return "Unknown";
+        }
+    }
+
     private string GetDifficultyStars(int difficulty)
     {
         string stars = "";
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 3; i++)
         {
             stars += i < difficulty ? "★" : "☆";
         }

@@ -1,7 +1,12 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
-/// Represents an enemy entity on the world map that the player can interact with
+/// Represents an enemy entity on the world map that the player can interact with.
+/// Difficulty level determines the number of plants in the encounter:
+///   Difficulty 1 = 1 random plant
+///   Difficulty 2 = 2 random plants
+///   Difficulty 3 = 3 random plants
 /// </summary>
 public class WorldMapEnemy : MonoBehaviour
 {
@@ -9,15 +14,18 @@ public class WorldMapEnemy : MonoBehaviour
     [SerializeField] private PlantRecognitionSystem.PlantType enemyPlantType;
     [SerializeField] private PlantRecognitionSystem.ElementType enemyElement;
     [SerializeField] private string enemyDisplayName;
-    [SerializeField] private int difficulty = 1; // 1-5 difficulty rating
+    [SerializeField] private int difficulty = 1; // 1-3: also determines number of plants
     [SerializeField] [TextArea(3, 5)] private string flavorText;
+
+    [Header("Multi-Plant Encounter")]
+    [SerializeField] private List<EnemyPlantEntry> enemyPlants = new List<EnemyPlantEntry>();
 
     [Header("Interaction Settings")]
     [SerializeField] private float interactionRange = 2f;
     [SerializeField] private KeyCode interactionKey = KeyCode.E;
 
     [Header("Visual Feedback")]
-    [SerializeField] private GameObject interactionPrompt; // "Press E to Interact" UI
+    [SerializeField] private GameObject interactionPrompt;
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Color highlightColor = Color.yellow;
 
@@ -47,23 +55,19 @@ public class WorldMapEnemy : MonoBehaviour
 
     private void Start()
     {
-        // Find the player
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
         {
             player = playerObj.transform;
         }
 
-        // Find the scene manager
         sceneManager = FindObjectOfType<WorldMapSceneManager>();
 
-        // Create interaction prompt if it doesn't exist
         if (interactionPrompt == null)
         {
             CreateInteractionPrompt();
         }
 
-        // Hide interaction prompt initially
         if (interactionPrompt != null)
         {
             interactionPrompt.SetActive(false);
@@ -75,20 +79,17 @@ public class WorldMapEnemy : MonoBehaviour
     /// </summary>
     private void CreateInteractionPrompt()
     {
-        // Create a simple world space canvas for the prompt
         GameObject promptObj = new GameObject("InteractionPrompt");
         promptObj.transform.SetParent(transform);
-        promptObj.transform.localPosition = new Vector3(0, 1.5f, 0); // Above the enemy
+        promptObj.transform.localPosition = new Vector3(0, 1.5f, 0);
 
         Canvas canvas = promptObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
 
-        // Make it small in world space (1 unit = reasonable size)
         RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(2f, 0.5f); // 2 units wide, 0.5 units tall
-        canvasRect.localScale = new Vector3(0.01f, 0.01f, 0.01f); // Scale down for crisp text
+        canvasRect.sizeDelta = new Vector2(2f, 0.5f);
+        canvasRect.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
-        // Add text
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(promptObj.transform);
 
@@ -107,13 +108,12 @@ public class WorldMapEnemy : MonoBehaviour
         textRect.offsetMin = Vector2.zero;
         textRect.offsetMax = Vector2.zero;
 
-        // Add background panel for visibility
         GameObject bgObj = new GameObject("Background");
         bgObj.transform.SetParent(promptObj.transform);
-        bgObj.transform.SetAsFirstSibling(); // Behind text
+        bgObj.transform.SetAsFirstSibling();
 
         UnityEngine.UI.Image bgImage = bgObj.AddComponent<UnityEngine.UI.Image>();
-        bgImage.color = new Color(0, 0, 0, 0.7f); // Semi-transparent black
+        bgImage.color = new Color(0, 0, 0, 0.7f);
 
         RectTransform bgRect = bgImage.GetComponent<RectTransform>();
         bgRect.anchorMin = Vector2.zero;
@@ -128,18 +128,15 @@ public class WorldMapEnemy : MonoBehaviour
     {
         if (player == null) return;
 
-        // Check distance to player
         float distance = Vector2.Distance(transform.position, player.position);
         bool wasInRange = playerInRange;
         playerInRange = distance <= interactionRange;
 
-        // Update visual feedback
         if (playerInRange != wasInRange)
         {
             OnRangeChanged(playerInRange);
         }
 
-        // Check for interaction input
         if (playerInRange && Input.GetKeyDown(interactionKey))
         {
             OnInteract();
@@ -148,13 +145,11 @@ public class WorldMapEnemy : MonoBehaviour
 
     private void OnRangeChanged(bool inRange)
     {
-        // Show/hide interaction prompt
         if (interactionPrompt != null)
         {
             interactionPrompt.SetActive(inRange);
         }
 
-        // Highlight enemy when player is in range
         if (spriteRenderer != null)
         {
             spriteRenderer.color = inRange ? highlightColor : originalColor;
@@ -174,66 +169,117 @@ public class WorldMapEnemy : MonoBehaviour
     }
 
     /// <summary>
-    /// Generate random enemy data
+    /// Generate a random enemy encounter. Difficulty determines number of plants (1-3).
     /// </summary>
     private void GenerateRandomEnemy()
     {
-        // Random plant type
-        System.Array plantTypes = System.Enum.GetValues(typeof(PlantRecognitionSystem.PlantType));
-        enemyPlantType = (PlantRecognitionSystem.PlantType)plantTypes.GetValue(Random.Range(0, plantTypes.Length));
+        // Random difficulty 1-3
+        difficulty = Random.Range(1, 4);
 
-        // Get plant data
-        var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
-        enemyElement = plantData.element;
-        enemyDisplayName = plantData.displayName;
+        // Generate plants based on difficulty (difficulty = number of plants)
+        GenerateEncounterPlants();
 
-        // Random difficulty (1-5)
-        difficulty = Random.Range(1, 6);
+        // Set primary display data from first plant
+        if (enemyPlants.Count > 0)
+        {
+            var firstPlant = enemyPlants[0];
+            enemyPlantType = firstPlant.plantType;
+            enemyElement = firstPlant.element;
+            enemyDisplayName = GetEncounterDisplayName();
+        }
 
-        // Generate flavor text based on plant type
-        flavorText = GenerateFlavorText(enemyPlantType, enemyElement);
+        // Generate flavor text
+        flavorText = GenerateFlavorText();
 
-        // Set sprite color based on element
+        // Set sprite color based on difficulty
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = GetElementColor(enemyElement);
+            spriteRenderer.color = GetDifficultyColor();
             originalColor = spriteRenderer.color;
         }
     }
 
-    private string GenerateFlavorText(PlantRecognitionSystem.PlantType plantType, PlantRecognitionSystem.ElementType element)
+    /// <summary>
+    /// Generate random plants for the encounter based on difficulty level
+    /// </summary>
+    private void GenerateEncounterPlants()
     {
-        string[] fireTexts = new string[]
+        enemyPlants.Clear();
+        System.Array plantTypes = System.Enum.GetValues(typeof(PlantRecognitionSystem.PlantType));
+
+        for (int i = 0; i < difficulty; i++)
         {
-            "A fierce plant warrior burning with determination!",
-            "This blazing bloom won't go down without a fight!",
-            "Feel the heat of battle against this fiery foe!"
+            var plantType = (PlantRecognitionSystem.PlantType)plantTypes.GetValue(Random.Range(0, plantTypes.Length));
+            var plantData = PlantRecognitionSystem.GetPlantData(plantType);
+            int artVariant = Random.Range(0, 3); // 1 of 3 art variations
+
+            enemyPlants.Add(new EnemyPlantEntry(
+                plantType,
+                plantData.element,
+                plantData.displayName,
+                artVariant
+            ));
+        }
+    }
+
+    /// <summary>
+    /// Get a display name for the encounter based on difficulty and plants
+    /// </summary>
+    private string GetEncounterDisplayName()
+    {
+        if (enemyPlants.Count == 1)
+        {
+            return enemyPlants[0].displayName;
+        }
+        else
+        {
+            return $"Wild Pack ({enemyPlants.Count} plants)";
+        }
+    }
+
+    private string GenerateFlavorText()
+    {
+        string[] easyTexts = new string[]
+        {
+            "A lone wild plant stands in your path!",
+            "A solitary bloom challenges you to battle!",
+            "A single wild plant guards this area!"
         };
 
-        string[] waterTexts = new string[]
+        string[] mediumTexts = new string[]
         {
-            "A calm yet powerful plant waiting to strike!",
-            "This aquatic bloom flows with ancient wisdom!",
-            "Dive into battle against this mysterious water guardian!"
+            "A pair of wild plants have joined forces!",
+            "Two fierce blooms block your way!",
+            "A duo of wild plants stand ready to fight!"
         };
 
-        string[] grassTexts = new string[]
+        string[] hardTexts = new string[]
         {
-            "A resilient plant rooted in strength!",
-            "This verdant warrior draws power from the earth!",
-            "Nature's champion stands ready to defend its territory!"
+            "A trio of wild plants form an imposing wall!",
+            "Three fierce blooms challenge all who approach!",
+            "A fearsome pack of wild plants guards this territory!"
         };
 
-        switch (element)
+        switch (difficulty)
         {
-            case PlantRecognitionSystem.ElementType.Fire:
-                return fireTexts[Random.Range(0, fireTexts.Length)];
-            case PlantRecognitionSystem.ElementType.Water:
-                return waterTexts[Random.Range(0, waterTexts.Length)];
-            case PlantRecognitionSystem.ElementType.Grass:
-                return grassTexts[Random.Range(0, grassTexts.Length)];
-            default:
-                return "A mysterious plant appears before you!";
+            case 1: return easyTexts[Random.Range(0, easyTexts.Length)];
+            case 2: return mediumTexts[Random.Range(0, mediumTexts.Length)];
+            case 3: return hardTexts[Random.Range(0, hardTexts.Length)];
+            default: return "A mysterious plant appears before you!";
+        }
+    }
+
+    /// <summary>
+    /// Get a color representing the difficulty level for the world map sprite
+    /// </summary>
+    private Color GetDifficultyColor()
+    {
+        switch (difficulty)
+        {
+            case 1: return new Color(0.4f, 0.9f, 0.4f); // Green - Easy
+            case 2: return new Color(0.9f, 0.7f, 0.2f); // Yellow/Orange - Medium
+            case 3: return new Color(0.9f, 0.3f, 0.3f); // Red - Hard
+            default: return Color.white;
         }
     }
 
@@ -242,66 +288,94 @@ public class WorldMapEnemy : MonoBehaviour
         switch (element)
         {
             case PlantRecognitionSystem.ElementType.Fire:
-                return new Color(1f, 0.3f, 0.3f); // Red
+                return new Color(1f, 0.3f, 0.3f);
             case PlantRecognitionSystem.ElementType.Water:
-                return new Color(0.3f, 0.5f, 1f); // Blue
+                return new Color(0.3f, 0.5f, 1f);
             case PlantRecognitionSystem.ElementType.Grass:
-                return new Color(0.3f, 1f, 0.3f); // Green
+                return new Color(0.3f, 1f, 0.3f);
             default:
                 return Color.white;
         }
     }
 
-    // Public getters for enemy data
+    // Public getters
     public PlantRecognitionSystem.PlantType GetPlantType() => enemyPlantType;
     public PlantRecognitionSystem.ElementType GetElement() => enemyElement;
     public string GetDisplayName() => enemyDisplayName;
     public int GetDifficulty() => difficulty;
     public string GetFlavorText() => flavorText;
+    public List<EnemyPlantEntry> GetEncounterPlants() => enemyPlants;
 
-    // Public setters for manual configuration
-    public void SetEnemyData(PlantRecognitionSystem.PlantType plantType, int difficultyLevel, string customFlavorText = "")
+    /// <summary>
+    /// Set enemy data with a specific difficulty and auto-generate plants
+    /// </summary>
+    public void SetEnemyData(int difficultyLevel, string customFlavorText = "")
     {
-        enemyPlantType = plantType;
-        var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
-        enemyElement = plantData.element;
-        enemyDisplayName = plantData.displayName;
-        difficulty = difficultyLevel;
+        difficulty = Mathf.Clamp(difficultyLevel, 1, 3);
+        GenerateEncounterPlants();
 
-        if (!string.IsNullOrEmpty(customFlavorText))
+        if (enemyPlants.Count > 0)
         {
-            flavorText = customFlavorText;
+            var firstPlant = enemyPlants[0];
+            enemyPlantType = firstPlant.plantType;
+            enemyElement = firstPlant.element;
+            enemyDisplayName = GetEncounterDisplayName();
         }
-        else
-        {
-            flavorText = GenerateFlavorText(enemyPlantType, enemyElement);
-        }
+
+        flavorText = !string.IsNullOrEmpty(customFlavorText) ? customFlavorText : GenerateFlavorText();
 
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = GetElementColor(enemyElement);
+            spriteRenderer.color = GetDifficultyColor();
             originalColor = spriteRenderer.color;
         }
     }
 
-    // Optional: Visualize interaction range in editor
+    /// <summary>
+    /// Legacy setter for backward compatibility
+    /// </summary>
+    public void SetEnemyData(PlantRecognitionSystem.PlantType plantType, int difficultyLevel, string customFlavorText = "")
+    {
+        difficulty = Mathf.Clamp(difficultyLevel, 1, 3);
+        enemyPlantType = plantType;
+        var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
+        enemyElement = plantData.element;
+        enemyDisplayName = plantData.displayName;
+
+        // Build plants list with the specified plant as first
+        enemyPlants.Clear();
+        enemyPlants.Add(new EnemyPlantEntry(plantType, plantData.element, plantData.displayName, Random.Range(0, 3)));
+
+        // Add additional random plants for higher difficulties
+        System.Array plantTypes = System.Enum.GetValues(typeof(PlantRecognitionSystem.PlantType));
+        for (int i = 1; i < difficulty; i++)
+        {
+            var randomType = (PlantRecognitionSystem.PlantType)plantTypes.GetValue(Random.Range(0, plantTypes.Length));
+            var randomData = PlantRecognitionSystem.GetPlantData(randomType);
+            enemyPlants.Add(new EnemyPlantEntry(randomType, randomData.element, randomData.displayName, Random.Range(0, 3)));
+        }
+
+        enemyDisplayName = GetEncounterDisplayName();
+        flavorText = !string.IsNullOrEmpty(customFlavorText) ? customFlavorText : GenerateFlavorText();
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = GetDifficultyColor();
+            originalColor = spriteRenderer.color;
+        }
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionRange);
     }
 
-    /// <summary>
-    /// Remove this enemy from the world map (e.g., after defeating it)
-    /// </summary>
     public void RemoveEnemy()
     {
         Destroy(gameObject);
     }
 
-    /// <summary>
-    /// Temporarily disable this enemy (e.g., during battle)
-    /// </summary>
     public void SetActive(bool active)
     {
         gameObject.SetActive(active);

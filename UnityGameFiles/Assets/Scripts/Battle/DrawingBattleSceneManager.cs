@@ -101,6 +101,9 @@ namespace SketchBlossom.Battle
         private bool playerIsBlocking = false;
         private bool enemyIsBlocking = false;
 
+        // Multi-plant encounter tracking
+        private int enemyArtVariant = 0;
+
         private void Start()
         {
             InitializeBattle();
@@ -231,29 +234,51 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Load enemy unit (from world map encounter or random)
+        /// Load enemy unit (from world map encounter or random).
+        /// For multi-plant encounters, loads the current plant from EnemyEncounterData.
+        /// Uses EnemyPlantArtGenerator to create procedural art (1 of 3 variants per plant type).
         /// </summary>
         private void LoadEnemyUnit()
         {
-            // Check if this is a world map encounter
+            Texture2D enemyArtTexture = null;
+
+            // Check if this is a world map encounter with multi-plant support
             if (EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.isWorldMapEncounter)
             {
-                // Use the enemy data from the world map encounter
-                enemyPlantType = EnemyEncounterData.Instance.encounterPlantType;
-                enemyElement = EnemyEncounterData.Instance.encounterElement;
-                enemyPlantName = EnemyEncounterData.Instance.encounterDisplayName;
+                EnemyPlantEntry currentPlant = EnemyEncounterData.Instance.GetCurrentPlant();
 
-                // Get base stats and potentially scale by difficulty
+                if (currentPlant != null)
+                {
+                    enemyPlantType = currentPlant.plantType;
+                    enemyElement = currentPlant.element;
+                    enemyPlantName = currentPlant.displayName;
+                    enemyArtVariant = currentPlant.artVariant;
+                }
+                else
+                {
+                    // Fallback to legacy fields
+                    enemyPlantType = EnemyEncounterData.Instance.encounterPlantType;
+                    enemyElement = EnemyEncounterData.Instance.encounterElement;
+                    enemyPlantName = EnemyEncounterData.Instance.encounterDisplayName;
+                    enemyArtVariant = Random.Range(0, 3);
+                }
+
+                // Get base stats and scale by difficulty
                 var plantData = PlantRecognitionSystem.GetPlantData(enemyPlantType);
                 int difficulty = EnemyEncounterData.Instance.encounterDifficulty;
 
-                // Scale enemy stats based on difficulty (1-5)
-                float difficultyMultiplier = 1.0f + ((difficulty - 1) * 0.15f); // 1.0x to 1.6x
+                // Scale enemy stats based on difficulty (1-3)
+                float difficultyMultiplier = 1.0f + ((difficulty - 1) * 0.15f);
                 enemyMaxHP = Mathf.RoundToInt(plantData.baseHP * difficultyMultiplier);
                 enemyAttack = Mathf.RoundToInt(plantData.baseAttack * difficultyMultiplier);
                 enemyDefense = Mathf.RoundToInt(plantData.baseDefense * difficultyMultiplier);
 
-                Debug.Log($"World Map Encounter! Enemy: {enemyPlantName} (Difficulty: {difficulty}★)");
+                // Generate procedural art for this enemy plant (1 of 3 variants)
+                enemyArtTexture = EnemyPlantArtGenerator.GeneratePlantArt(enemyPlantType, enemyArtVariant);
+
+                int remaining = EnemyEncounterData.Instance.GetRemainingPlantCount();
+                int total = EnemyEncounterData.Instance.GetPlantCount();
+                Debug.Log($"World Map Encounter! Enemy: {enemyPlantName} [Art Variant {enemyArtVariant + 1}] (Plant {total - remaining + 1}/{total}, Difficulty: {difficulty})");
                 Debug.Log($"Enemy stats: HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense}");
             }
             else
@@ -268,15 +293,19 @@ namespace SketchBlossom.Battle
                 enemyMaxHP = plantData.baseHP;
                 enemyAttack = plantData.baseAttack;
                 enemyDefense = plantData.baseDefense;
+                enemyArtVariant = Random.Range(0, 3);
 
-                Debug.Log($"Random enemy: {enemyPlantName} (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
+                // Generate procedural art for random enemy too
+                enemyArtTexture = EnemyPlantArtGenerator.GeneratePlantArt(enemyPlantType, enemyArtVariant);
+
+                Debug.Log($"Random enemy: {enemyPlantName} [Art Variant {enemyArtVariant + 1}] (HP:{enemyMaxHP}, ATK:{enemyAttack}, DEF:{enemyDefense})");
             }
 
-            // Initialize enemy unit display (no drawing texture for enemy)
+            // Initialize enemy unit display with generated art texture
             if (enemyUnit != null)
             {
                 enemyUnit.SetCoroutineRunner(this);
-                enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName, null, false);
+                enemyUnit.Initialize(enemyPlantType, enemyElement, enemyPlantName, enemyArtTexture, false);
             }
         }
 
@@ -382,7 +411,18 @@ namespace SketchBlossom.Battle
         private IEnumerator BattleSequence()
         {
             currentState = BattleState.Start;
-            UpdateActionText("Battle Start!");
+
+            // Show encounter info for multi-plant battles
+            if (EnemyEncounterData.Instance != null && EnemyEncounterData.Instance.GetPlantCount() > 1)
+            {
+                int current = EnemyEncounterData.Instance.GetPlantCount() - EnemyEncounterData.Instance.GetRemainingPlantCount() + 1;
+                int total = EnemyEncounterData.Instance.GetPlantCount();
+                UpdateActionText($"Battle Start! (Plant {current}/{total})");
+            }
+            else
+            {
+                UpdateActionText("Battle Start!");
+            }
             yield return new WaitForSeconds(turnDelay);
 
             while (true)
@@ -993,20 +1033,32 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Handle victory
+        /// Handle victory. For multi-plant encounters, advances to the next plant if available.
         /// </summary>
         private IEnumerator HandleVictory()
         {
-            UpdateTurnIndicator("VICTORY!");
-            UpdateActionText("You win!");
+            // Check if there are more enemy plants in this encounter
+            bool hasMorePlants = EnemyEncounterData.Instance != null &&
+                                 EnemyEncounterData.Instance.isWorldMapEncounter &&
+                                 EnemyEncounterData.Instance.HasMorePlants();
 
-            Debug.Log("=== VICTORY! Player wins the battle ===");
+            if (hasMorePlants)
+            {
+                int remaining = EnemyEncounterData.Instance.GetRemainingPlantCount() - 1; // -1 for the one we just beat
+                UpdateTurnIndicator("PLANT DEFEATED!");
+                UpdateActionText($"Next opponent incoming! ({remaining} remaining)");
+            }
+            else
+            {
+                UpdateTurnIndicator("VICTORY!");
+                UpdateActionText("You win!");
+            }
 
-            // Ensure player unit stays visible during victory
+            Debug.Log("=== Enemy plant defeated! ===");
+
             if (playerUnit != null)
             {
                 playerUnit.EnsureVisible();
-                Debug.Log("Player unit visibility ensured during victory");
             }
 
             // Trigger enemy death animation
@@ -1016,18 +1068,59 @@ namespace SketchBlossom.Battle
                 enemyUnit.Die(this);
             }
 
-            // Store enemy plant data for potential taming
-            StoreEnemyPlantData();
-
-            // Record victory for player's plant in inventory
-            RecordPlayerVictory();
-
-            // Keep ensuring player visibility during the victory wait period
             yield return new WaitForSeconds(1.5f);
             if (playerUnit != null)
             {
                 playerUnit.EnsureVisible();
             }
+
+            // If more plants to fight, load the next one
+            if (hasMorePlants)
+            {
+                EnemyEncounterData.Instance.AdvanceToNextPlant();
+
+                yield return new WaitForSeconds(1.0f);
+
+                // Load next enemy
+                LoadEnemyUnit();
+
+                // Reset enemy HP bar
+                if (enemyHPBar != null)
+                {
+                    enemyHPBar.Initialize(enemyPlantName, enemyMaxHP);
+                }
+
+                // Reset combat state
+                enemyIsBlocking = false;
+                playerIsBlocking = false;
+                currentState = BattleState.Start;
+
+                // Setup attack animation points for new enemy
+                if (attackAnimationManager != null && playerUnit != null && enemyUnit != null)
+                {
+                    Transform playerTransform = playerUnit.GetTransform();
+                    Transform enemyTransform = enemyUnit.GetTransform();
+                    if (playerTransform != null && enemyTransform != null)
+                    {
+                        attackAnimationManager.SetAttackPoints(playerTransform, enemyTransform);
+                    }
+                }
+
+                UpdateTurnIndicator("NEXT OPPONENT!");
+                UpdateActionText($"A wild {enemyPlantName} appears!");
+                yield return new WaitForSeconds(turnDelay);
+
+                // Resume battle sequence with new enemy
+                StartCoroutine(BattleSequence());
+                yield break;
+            }
+
+            // All plants defeated - full victory
+            // Store enemy plant data for potential taming (last defeated plant)
+            StoreEnemyPlantData();
+
+            // Record victory for player's plant in inventory
+            RecordPlayerVictory();
 
             yield return new WaitForSeconds(1.5f);
 
@@ -1302,10 +1395,11 @@ namespace SketchBlossom.Battle
                     Debug.Log($"BattleUnitDisplay: Ensured unitImage GameObject is active");
                 }
 
-                // If we have a drawing texture (player's drawn plant), use it as the sprite
-                if (drawingTexture != null && isPlayerUnit)
+                // If we have a drawing texture, use it as the sprite (works for both player and enemy)
+                if (drawingTexture != null)
                 {
-                    Debug.Log($"BattleUnitDisplay: Using player's drawing texture as sprite! Texture size: {drawingTexture.width}x{drawingTexture.height}");
+                    string unitType = isPlayerUnit ? "player" : "enemy";
+                    Debug.Log($"BattleUnitDisplay: Using {unitType} texture as sprite! Texture size: {drawingTexture.width}x{drawingTexture.height}");
 
                     // Convert Texture2D to Sprite and keep reference
                     assignedSprite = Texture2DToSprite(drawingTexture);
@@ -1316,18 +1410,18 @@ namespace SketchBlossom.Battle
                         unitImage.color = Color.white; // Reset color to show texture properly
                         unitImage.preserveAspect = true; // Keep aspect ratio
                         unitImage.enabled = true; // Ensure Image component is enabled
-                        Debug.Log($"✓ Drawing sprite applied to player unit! Sprite bounds: {assignedSprite.bounds}");
+                        Debug.Log($"✓ Sprite applied to {unitType} unit! Sprite bounds: {assignedSprite.bounds}");
                     }
                     else
                     {
-                        Debug.LogError("Failed to convert drawing texture to sprite!");
+                        Debug.LogError("Failed to convert texture to sprite!");
                         ApplyElementColor(element);
                     }
                 }
                 else
                 {
-                    // No drawing texture - use element color as fallback (for enemy or if texture missing)
-                    if (drawingTexture == null && isPlayerUnit)
+                    // No texture - use element color as fallback
+                    if (isPlayerUnit)
                     {
                         Debug.LogWarning("BattleUnitDisplay: Player unit has no drawing texture! Using fallback color.");
                     }
