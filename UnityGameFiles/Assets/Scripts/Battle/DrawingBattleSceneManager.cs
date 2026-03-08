@@ -31,7 +31,10 @@ namespace SketchBlossom.Battle
 
         [Header("Move Detection")]
         [SerializeField] private MovesetDetector movesetDetector;
-        [SerializeField] private MoveRecognitionSystem moveRecognitionSystem;
+
+        [Header("Confidence Display")]
+        [Tooltip("Small panel that shows per-move confidence scores after each drawing attempt.")]
+        [SerializeField] private MoveConfidenceDisplay moveConfidenceDisplay;
 
         [Header("Attack Animations")]
         [SerializeField] private AttackAnimationManager attackAnimationManager;
@@ -437,6 +440,7 @@ namespace SketchBlossom.Battle
             UpdateTurnIndicator("YOUR TURN");
             UpdateActionText("Draw your move!");
             ShowPlayerTurnUI(true);
+            if (moveConfidenceDisplay != null) moveConfidenceDisplay.Hide();
 
             // Enable drawing
             currentState = BattleState.PlayerDrawing;
@@ -618,6 +622,18 @@ namespace SketchBlossom.Battle
             // --- Detect move (geometric + optional CLIP boost) ---
             var result = movesetDetector.DetectMoveWithCLIP(lineRenderers, playerPlantType, clipHint);
 
+            // Always show the confidence breakdown so the player can see why a move
+            // was (or was not) recognised before the next turn begins.
+            if (moveConfidenceDisplay != null)
+            {
+                moveConfidenceDisplay.ShowScores(
+                    result.scores,
+                    result.detectedMove,
+                    result.wasRecognized,
+                    result.qualityRating,
+                    result.damageMultiplier);
+            }
+
             if (result.wasRecognized)
             {
                 CaptureMoveDrawing(lineRenderers);
@@ -639,6 +655,7 @@ namespace SketchBlossom.Battle
             if (currentState == BattleState.PlayerDrawing)
             {
                 drawingCanvas.ClearCanvas();
+                if (moveConfidenceDisplay != null) moveConfidenceDisplay.Hide();
             }
         }
 

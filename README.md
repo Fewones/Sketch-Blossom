@@ -29,10 +29,11 @@ Sketch Blossom is a turn-based drawing battle game where players draw plants and
 
 **Key highlights:**
 - **CLIP AI-powered plant detection** using TinyCLIP zero-shot image classification for realistic plant recognition
-- **CLIP AI-powered move recognition** — the same AI model now also recognises the gestures you draw for attacks
+- **CLIP AI-powered move recognition** — the same AI model also recognises the gestures you draw for attacks
 - **Full color palette support** — draw with any color, not just primary RGB
 - **27 unique battle moves** across 9 plant types with drawing quality-based damage
 - **Visual move reference** — the in-battle guide book shows a small sketch of each gesture to draw
+- **Live confidence display** — a small panel below the move list shows each move's confidence score after every drawing attempt, just like the plant-drawing scene
 - **Roguelike permadeath** — lose a battle and your plant is gone forever
 - **Working upgrade system** — Wild Growth screen lets you power up plants by drawing
 
@@ -157,6 +158,15 @@ Recognition uses two layers that work together for maximum robustness:
 
 The final score for each candidate move is `geometric_score + (clip_confidence × 0.6)` clamped to 1.0. If the server is unavailable or confidence is below 0.2 the system falls back to geometry alone. A combined confidence of ≥ 0.5 is required to accept a move.
 
+**Live Confidence Display:**
+
+After every drawing attempt a small panel appears below the available-moves list showing all evaluated moves ranked by confidence, mirroring what the plant-drawing scene shows. The panel uses coloured bars:
+- **Green (✓)** — the move that was recognised and accepted
+- **Amber (?)** — the best-guess move when recognition failed (below threshold)
+- **Grey** — all other candidate moves
+
+The panel also shows the drawing quality rating and the resulting damage multiplier. It is hidden automatically at the start of each new turn, and when the player clears their canvas.
+
 **Drawing Quality Matters:**
 - System scores how well your drawing matches the intended move (0.0 - 1.0)
 - Quality multipliers affect damage:
@@ -247,6 +257,8 @@ if blocking: damage x 0.5
 13. TinyCLIP Python server auto-setup (Windows)
 14. **TinyCLIP-assisted move recognition** — 10 gesture shape labels (one per move type) sent to the AI server each turn; CLIP confidence boosts the geometric score for much more reliable detection
 15. **Visual move reference previews** — guide book generates a small procedural sketch of each gesture shape per page so players always know what to draw
+16. **Live confidence display** — `MoveConfidenceDisplay` panel shows ranked confidence bars for all candidate moves after every drawing attempt (green = recognised, amber = best guess, grey = others), plus quality rating and damage multiplier
+17. **Codebase cleanup** — `MoveRecognitionSystem` removed; its quality-scoring logic is now inlined directly into `MovesetDetector`, and the old non-CLIP `DetectMove()` path is gone — the system always uses CLIP-assisted detection
 
 **Still To Do:**
 - [ ] **Switch plants in battle** — Allow players to swap to a different plant from their inventory mid-battle
@@ -417,8 +429,7 @@ UnityGameFiles/
 |   |   |
 |   |   +-- Recognition/
 |   |   |   +-- PlantRecognitionSystem.cs     CLIP AI + color analysis (9 plant types)
-|   |   |   +-- MovesetDetector.cs            CLIP-assisted + geometric move recognition (10 shapes)
-|   |   |   +-- MoveRecognitionSystem.cs      Quality scoring (0.5x - 1.5x damage)
+|   |   |   +-- MovesetDetector.cs            CLIP-assisted + geometric recognition + quality scoring
 |   |   |
 |   |   +-- Combat/
 |   |   |   +-- DrawingBattleSceneManager.cs  Main battle controller (turn-based loop, CLIP move query)
@@ -427,6 +438,7 @@ UnityGameFiles/
 |   |   |   +-- MoveExecutor.cs               Move execution with animations
 |   |   |   +-- MoveGuideBook.cs              In-battle move reference with visual shape previews
 |   |   |   +-- MoveShapePreview.cs           Procedural gesture preview textures (10 shapes)
+|   |   |   +-- MoveConfidenceDisplay.cs      Live confidence bar panel after each drawing attempt
 |   |   |
 |   |   +-- World/
 |   |   |   +-- WorldMapSceneManager.cs       Enemy exploration & battle preview
@@ -472,7 +484,8 @@ UnityGameFiles/
 |------|---------|
 | `DrawingBattleSceneManager.cs` | Main battle controller — turn-based loop, CLIP move query, damage |
 | `PlantRecognitionSystem.cs` | CLIP AI plant detection & validation (9 types) |
-| `MovesetDetector.cs` | CLIP-assisted + geometric move recognition (10 gesture shapes) |
+| `MovesetDetector.cs` | CLIP-assisted + geometric move recognition with inlined quality scoring (10 shapes) |
+| `MoveConfidenceDisplay.cs` | Live confidence bar panel shown after each drawing attempt |
 | `MoveShapePreview.cs` | Procedural reference-drawing generator for the guide book |
 | `MoveGuideBook.cs` | In-battle move reference with visual shape previews |
 | `MoveData.cs` | All 27 moves defined with stats, colors, effects |
