@@ -29,8 +29,11 @@ Sketch Blossom is a turn-based drawing battle game where players draw plants and
 
 **Key highlights:**
 - **CLIP AI-powered plant detection** using TinyCLIP zero-shot image classification for realistic plant recognition
+- **CLIP AI-powered move recognition** — the same AI model also recognises the gestures you draw for attacks
 - **Full color palette support** — draw with any color, not just primary RGB
 - **27 unique battle moves** across 9 plant types with drawing quality-based damage
+- **Visual move reference** — the in-battle guide book shows a small sketch of each gesture to draw
+- **Live confidence display** — a small panel below the move list shows each move's confidence score after every drawing attempt, just like the plant-drawing scene
 - **Roguelike permadeath** — lose a battle and your plant is gone forever
 - **Working upgrade system** — Wild Growth screen lets you power up plants by drawing
 
@@ -87,49 +90,82 @@ The game features **turn-based drawing combat** where what you draw directly det
 
 **27 Unique Moves** (3 per plant type):
 
-Every plant has a **Block** move (defensive, 0 power) plus two unique attack or healing moves. Each move has a specific drawing pattern the player must draw to execute it.
+Every plant has a **Block** move (defensive, 0 power) plus two unique attack or healing moves. Each move maps to one of **10 gesture shapes** recognised by the combined TinyCLIP + geometric detection system. The in-battle guide book shows a small visual sketch of the gesture next to each move description.
+
+### Move Gesture Shapes
+
+| Shape label | What to draw | Used by |
+|---|---|---|
+| `fireball` | One large circle | Fireball |
+| `flame_wave` | Sharp horizontal wave with tall peaks | FlameWave |
+| `zigzag` | Jagged lightning-bolt zigzag | Burn |
+| `curved_line` | Single long sweeping arc | VineWhip |
+| `scattered` | 5+ short strokes in random directions | LeafStorm |
+| `downward_lines` | 3 parallel vertical lines going down | RootAttack |
+| `water_splash` | Smooth wave sweeping upward | WaterSplash |
+| `bubbles` | Multiple small circles clustered | Bubble |
+| `healing_wave` | Gentle low-amplitude horizontal wave | HealingWave |
+| `shield` | Triangular shield outline (flat top, pointed bottom) | Block |
 
 **Fire Plant Movesets:**
 
-| Plant | Move | Power | Type | Drawing Hint | Description |
-|-------|------|-------|------|--------------|-------------|
-| Sunflower | Block | 0 | Defensive | Draw 1-3 circular strokes | Create a protective golden shield |
-| Sunflower | Fireball | 20 | Attack | Draw a perfect circle | Launch a blazing sphere of solar fire |
-| Sunflower | Solar Flare | 28 | Attack | Draw sharp zigzag patterns | Unleash intense burning rays |
-| Fire Rose | Block | 0 | Defensive | Draw 1-3 circular strokes | Thorny petals form a defensive barrier |
-| Fire Rose | Ember Petals | 22 | Attack | Draw scattered jagged lines | Burning rose petals rain down on foes |
-| Fire Rose | Passion Burst | 26 | Attack | Draw a large circle with flair | Explosive fire erupts from blooming roses |
-| Flame Tulip | Block | 0 | Defensive | Draw 1-3 circular strokes | Tulip petals close into a protective shell |
-| Flame Tulip | Flame Strike | 24 | Attack | Draw a clean circle | A precise beam of concentrated fire |
-| Flame Tulip | Inferno Wave | 30 | Attack | Draw aggressive zigzags | A devastating wave of scorching heat |
+| Plant | Move | Power | Type | Shape to Draw | Description |
+|-------|------|-------|------|---------------|-------------|
+| Sunflower | Block | 0 | Defensive | Shield (flat top, pointed base) | Create a protective golden shield |
+| Sunflower | Fireball | 20 | Attack | Single large circle | Launch a blazing sphere of solar fire |
+| Sunflower | Solar Flare | 28 | Attack | Jagged zigzag / lightning bolt | Unleash intense burning rays |
+| Fire Rose | Block | 0 | Defensive | Shield (flat top, pointed base) | Thorny petals form a defensive barrier |
+| Fire Rose | Ember Petals | 22 | Attack | Scattered short strokes | Burning rose petals rain down on foes |
+| Fire Rose | Passion Burst | 26 | Attack | Single large circle | Explosive fire erupts from blooming roses |
+| Flame Tulip | Block | 0 | Defensive | Shield (flat top, pointed base) | Tulip petals close into a protective shell |
+| Flame Tulip | Flame Strike | 24 | Attack | Single large circle | A precise beam of concentrated fire |
+| Flame Tulip | Inferno Wave | 30 | Attack | Jagged zigzag / lightning bolt | A devastating wave of scorching heat |
 
 **Grass Plant Movesets:**
 
-| Plant | Move | Power | Type | Drawing Hint | Description |
-|-------|------|-------|------|--------------|-------------|
-| Cactus | Block | 0 | Defensive | Draw 1-3 circular strokes | Harden into a spiny defensive posture |
-| Cactus | Needle Shot | 20 | Attack | Draw a single curved line | Fire sharp cactus needles at enemies |
-| Cactus | Spine Storm | 26 | Attack | Draw 5+ scattered strokes | A relentless barrage of sharp spines |
-| Vine Flower | Block | 0 | Defensive | Draw 1-3 circular strokes | Vines coil into a protective shield |
-| Vine Flower | Vine Lash | 22 | Attack | Draw a long curved line | A powerful whipping vine strikes with force |
-| Vine Flower | Strangling Roots | 26 | Attack | Draw vertical downward strokes | Massive roots bind and crush the enemy |
-| Grass Sprout | Block | 0 | Defensive | Draw 1-3 circular strokes | Young sprouts form a protective wall |
-| Grass Sprout | Razor Leaf | 20 | Attack | Draw 5+ quick strokes | Sharp grass blades slice through the air |
-| Grass Sprout | Growth Surge | 24 | Attack | Draw tall vertical lines | Rapid growing roots assault the target |
+| Plant | Move | Power | Type | Shape to Draw | Description |
+|-------|------|-------|------|---------------|-------------|
+| Cactus | Block | 0 | Defensive | Shield (flat top, pointed base) | Harden into a spiny defensive posture |
+| Cactus | Needle Shot | 20 | Attack | Single long curved arc | Fire sharp cactus needles at enemies |
+| Cactus | Spine Storm | 26 | Attack | Scattered short strokes | A relentless barrage of sharp spines |
+| Vine Flower | Block | 0 | Defensive | Shield (flat top, pointed base) | Vines coil into a protective shield |
+| Vine Flower | Vine Lash | 22 | Attack | Single long curved arc | A powerful whipping vine strikes with force |
+| Vine Flower | Strangling Roots | 26 | Attack | 3 parallel vertical lines going down | Massive roots bind and crush the enemy |
+| Grass Sprout | Block | 0 | Defensive | Shield (flat top, pointed base) | Young sprouts form a protective wall |
+| Grass Sprout | Razor Leaf | 20 | Attack | Scattered short strokes | Sharp grass blades slice through the air |
+| Grass Sprout | Growth Surge | 24 | Attack | 3 parallel vertical lines going down | Rapid growing roots assault the target |
 
 **Water Plant Movesets:**
 
-| Plant | Move | Power | Type | Drawing Hint | Description |
-|-------|------|-------|------|--------------|-------------|
-| Water Lily | Block | 0 | Defensive | Draw 1-3 circular strokes | Float on a cushion of protective water |
-| Water Lily | Lily Splash | 20 | Attack | Draw smooth wavy curves | Gentle waves wash over the enemy |
-| Water Lily | Tranquil Petals | 25 | Healing | Draw gentle horizontal waves | Soothing lily petals restore health |
-| Coral Bloom | Block | 0 | Defensive | Draw 1-3 circular strokes | Coral hardens into a defensive formation |
-| Coral Bloom | Coral Spike | 22 | Attack | Draw curved flowing lines | Sharp coral projectiles pierce enemies |
-| Coral Bloom | Tidal Burst | 26 | Attack | Draw multiple circles | Explosive pressurized water bubbles |
-| Bubble Flower | Block | 0 | Defensive | Draw 1-3 circular strokes | Surround yourself with protective bubbles |
-| Bubble Flower | Bubble Barrage | 24 | Attack | Draw many small circles | Countless bubbles bombard the target |
-| Bubble Flower | Bubble Remedy | 22 | Healing | Draw smooth flowing waves | Healing bubbles restore vitality |
+| Plant | Move | Power | Type | Shape to Draw | Description |
+|-------|------|-------|------|---------------|-------------|
+| Water Lily | Block | 0 | Defensive | Shield (flat top, pointed base) | Float on a cushion of protective water |
+| Water Lily | Lily Splash | 20 | Attack | Wave sweeping upward | Gentle waves wash over the enemy |
+| Water Lily | Tranquil Petals | 25 | Healing | Gentle horizontal wave (low amplitude) | Soothing lily petals restore health |
+| Coral Bloom | Block | 0 | Defensive | Shield (flat top, pointed base) | Coral hardens into a defensive formation |
+| Coral Bloom | Coral Spike | 22 | Attack | Wave sweeping upward | Sharp coral projectiles pierce enemies |
+| Coral Bloom | Tidal Burst | 26 | Attack | Multiple small circles clustered | Explosive pressurized water bubbles |
+| Bubble Flower | Block | 0 | Defensive | Shield (flat top, pointed base) | Surround yourself with protective bubbles |
+| Bubble Flower | Bubble Barrage | 24 | Attack | Multiple small circles clustered | Countless bubbles bombard the target |
+| Bubble Flower | Bubble Remedy | 22 | Healing | Gentle horizontal wave (low amplitude) | Healing bubbles restore vitality |
+
+**Move Recognition Pipeline:**
+
+Recognition uses two layers that work together for maximum robustness:
+
+1. **TinyCLIP shape classification** — the drawing is captured as a texture and sent to the same Python AI server used for plant recognition. The server compares it against the 10 natural-language shape descriptions above and returns the best-matching label with a confidence score (0–1).
+2. **Geometric heuristics** — stroke patterns (circular, vertical, horizontal, spiky, curved) are analysed locally without any server round-trip.
+
+The final score for each candidate move is `geometric_score + (clip_confidence × 0.6)` clamped to 1.0. If the server is unavailable or confidence is below 0.2 the system falls back to geometry alone. A combined confidence of ≥ 0.5 is required to accept a move.
+
+**Live Confidence Display:**
+
+After every drawing attempt a small panel appears below the available-moves list showing all evaluated moves ranked by confidence, mirroring what the plant-drawing scene shows. The panel uses coloured bars:
+- **Green (✓)** — the move that was recognised and accepted
+- **Amber (?)** — the best-guess move when recognition failed (below threshold)
+- **Grey** — all other candidate moves
+
+The panel also shows the drawing quality rating and the resulting damage multiplier. It is hidden automatically at the start of each new turn, and when the player clears their canvas.
 
 **Drawing Quality Matters:**
 - System scores how well your drawing matches the intended move (0.0 - 1.0)
@@ -219,6 +255,10 @@ if blocking: damage x 0.5
 11. Permadeath and game over mechanics
 12. Plant inventory management with persistence
 13. TinyCLIP Python server auto-setup (Windows)
+14. **TinyCLIP-assisted move recognition** — 10 gesture shape labels (one per move type) sent to the AI server each turn; CLIP confidence boosts the geometric score for much more reliable detection
+15. **Visual move reference previews** — guide book generates a small procedural sketch of each gesture shape per page so players always know what to draw
+16. **Live confidence display** — `MoveConfidenceDisplay` panel shows ranked confidence bars for all candidate moves after every drawing attempt (green = recognised, amber = best guess, grey = others), plus quality rating and damage multiplier
+17. **Codebase cleanup** — `MoveRecognitionSystem` removed; its quality-scoring logic is now inlined directly into `MovesetDetector`, and the old non-CLIP `DetectMove()` path is gone — the system always uses CLIP-assisted detection
 
 **Still To Do:**
 - [ ] **Switch plants in battle** — Allow players to swap to a different plant from their inventory mid-battle
@@ -229,7 +269,6 @@ if blocking: damage x 0.5
   - Easy (1-2 stars): Low stats, random moves, no blocking
   - Medium (3 stars): Balanced stats, type awareness, blocks at low HP
   - Hard (4-5 stars): High stats, full strategy, counter-play
-- [ ] **Move detection refinement** — Integrate color analysis into move recognition for more expressive combat drawing
 - [ ] **Battle animation polish** — Projectile trajectories, impact animations, plant reaction animations, floating damage numbers
 - [ ] **Audio system** — Sound effects and music
 - [ ] **Tutorial system** — Guided introduction for new players
@@ -302,7 +341,10 @@ if blocking: damage x 0.5
 |     -> Click "Finish Drawing"                     |
 |                                                   |
 |  2. MOVE RECOGNITION & QUALITY SCORING            |
-|     -> Pattern matching against 27 moves          |
+|     -> Drawing captured as texture                |
+|     -> TinyCLIP classifies gesture shape (10)     |
+|     -> Geometric heuristics as fallback/boost     |
+|     -> Combined score: geometric + CLIP boost     |
 |     -> Confidence threshold (>= 0.5 required)     |
 |     -> Quality calculation (0.0 - 1.0):           |
 |        Perfect (>=0.9) -> 1.5x damage             |
@@ -387,15 +429,16 @@ UnityGameFiles/
 |   |   |
 |   |   +-- Recognition/
 |   |   |   +-- PlantRecognitionSystem.cs     CLIP AI + color analysis (9 plant types)
-|   |   |   +-- MovesetDetector.cs            27 move patterns (3 per plant type)
-|   |   |   +-- MoveRecognitionSystem.cs      Quality scoring (0.5x - 1.5x damage)
+|   |   |   +-- MovesetDetector.cs            CLIP-assisted + geometric recognition + quality scoring
 |   |   |
 |   |   +-- Combat/
-|   |   |   +-- DrawingBattleSceneManager.cs  Main battle controller (turn-based loop)
+|   |   |   +-- DrawingBattleSceneManager.cs  Main battle controller (turn-based loop, CLIP move query)
 |   |   |   +-- BattleUnit.cs                 Plant stats, HP tracking, blocking
 |   |   |   +-- MoveData.cs                   All 27 moves with properties
 |   |   |   +-- MoveExecutor.cs               Move execution with animations
-|   |   |   +-- MoveGuideBook.cs              In-battle move reference
+|   |   |   +-- MoveGuideBook.cs              In-battle move reference with visual shape previews
+|   |   |   +-- MoveShapePreview.cs           Procedural gesture preview textures (10 shapes)
+|   |   |   +-- MoveConfidenceDisplay.cs      Live confidence bar panel after each drawing attempt
 |   |   |
 |   |   +-- World/
 |   |   |   +-- WorldMapSceneManager.cs       Enemy exploration & battle preview
@@ -421,7 +464,7 @@ UnityGameFiles/
 |   +-- Python/
 |   |   +-- shared/
 |   |       +-- TinyCLIP.py                   FastAPI server for CLIP classification
-|   |       +-- labelMaps.json                Plant & upgrade label definitions
+|   |       +-- labelMaps.json                Plant, move-shape (10 labels), & upgrade label definitions
 |   |
 |   +-- Scenes/
 |       +-- MainMenuScene.unity               Entry point
@@ -439,9 +482,12 @@ UnityGameFiles/
 
 | File | Purpose |
 |------|---------|
-| `DrawingBattleSceneManager.cs` | Main battle controller — turn-based loop, AI, damage |
+| `DrawingBattleSceneManager.cs` | Main battle controller — turn-based loop, CLIP move query, damage |
 | `PlantRecognitionSystem.cs` | CLIP AI plant detection & validation (9 types) |
-| `MovesetDetector.cs` | Move pattern recognition & quality scoring |
+| `MovesetDetector.cs` | CLIP-assisted + geometric move recognition with inlined quality scoring (10 shapes) |
+| `MoveConfidenceDisplay.cs` | Live confidence bar panel shown after each drawing attempt |
+| `MoveShapePreview.cs` | Procedural reference-drawing generator for the guide book |
+| `MoveGuideBook.cs` | In-battle move reference with visual shape previews |
 | `MoveData.cs` | All 27 moves defined with stats, colors, effects |
 | `BattleUnit.cs` | Unit stats, HP tracking, blocking |
 | `PlayerInventory.cs` | Plant collection persistence |
@@ -449,4 +495,4 @@ UnityGameFiles/
 | `PythonServerManager.cs` | TinyCLIP Python server lifecycle |
 | `ModelManager.cs` | HTTP client for classification requests |
 | `TinyCLIP.py` | FastAPI server running TinyCLIP model |
-| `labelMaps.json` | Plant & upgrade label definitions |
+| `labelMaps.json` | Plant, move-shape, and upgrade label definitions |

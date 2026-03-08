@@ -4,17 +4,44 @@ using System.Linq;
 
 /// <summary>
 /// Detects which move the player drew during battle
-/// Analyzes drawing patterns to match type-specific moves
+/// Analyzes drawing patterns to match type-specific moves.
+/// Supports an optional TinyCLIP shape hint to boost recognition accuracy.
 /// </summary>
 public class MovesetDetector : MonoBehaviour
 {
-    [Header("References")]
-    [Tooltip("Move recognition system for quality scoring")]
-    public MoveRecognitionSystem recognitionSystem;
-
     [Header("Detection Settings")]
     [Tooltip("Minimum confidence score required to recognize a move")]
     public float confidenceThreshold = 0.5f;
+
+    /// <summary>
+    /// Shape label returned by TinyCLIP for the player's drawn gesture.
+    /// shapeLabel must match a key in the move_shapes label map (e.g. "circle", "wave").
+    /// confidence is the cosine-similarity score from TinyCLIP (0-1).
+    /// </summary>
+    public struct CLIPMoveHint
+    {
+        public string shapeLabel;
+        public float confidence;
+    }
+
+    // Maps each TinyCLIP shape label to the move types it represents.
+    // When TinyCLIP recognises one of these shapes the matching moves get
+    // a large score bonus, making recognition far more robust than pure
+    // geometric heuristics alone.
+    private static readonly Dictionary<string, MoveData.MoveType[]> shapeToMoveTypes =
+        new Dictionary<string, MoveData.MoveType[]>
+        {
+            { "fireball",      new[] { MoveData.MoveType.Fireball } },
+            { "flame_wave",    new[] { MoveData.MoveType.FlameWave } },
+            { "zigzag",        new[] { MoveData.MoveType.Burn } },
+            { "curved_line",   new[] { MoveData.MoveType.VineWhip } },
+            { "scattered",     new[] { MoveData.MoveType.LeafStorm } },
+            { "downward_lines",new[] { MoveData.MoveType.RootAttack } },
+            { "water_splash",  new[] { MoveData.MoveType.WaterSplash } },
+            { "bubbles",       new[] { MoveData.MoveType.Bubble } },
+            { "healing_wave",  new[] { MoveData.MoveType.HealingWave } },
+            { "shield",        new[] { MoveData.MoveType.Block } },
+        };
 
     public class MoveDetectionResult
     {
@@ -47,24 +74,25 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Analyze drawing and detect which move was drawn
-    /// Only checks moves available to the given plant type
+    /// Detect which move was drawn, using a TinyCLIP shape hint to boost accuracy.
+    /// When clipHint.confidence is high the recognised shape strongly biases the
+    /// result; when it is low the system falls back to pure geometric heuristics.
     /// </summary>
-    public MoveDetectionResult DetectMove(List<LineRenderer> strokes, PlantRecognitionSystem.PlantType plantType)
+    public MoveDetectionResult DetectMoveWithCLIP(
+        List<LineRenderer> strokes,
+        PlantRecognitionSystem.PlantType plantType,
+        CLIPMoveHint clipHint)
     {
         if (strokes == null || strokes.Count == 0)
         {
-            Debug.LogWarning("No strokes to analyze for move detection!");
+            Debug.LogWarning("No strokes to analyse for move detection!");
             return CreateFailedResult();
         }
 
-        Debug.Log($"=== MOVE DETECTION START for {plantType} ===");
-        Debug.Log($"Analyzing {strokes.Count} strokes...");
+        Debug.Log($"=== CLIP-ASSISTED MOVE DETECTION for {plantType} ===");
+        Debug.Log($"CLIP hint: shape='{clipHint.shapeLabel}' confidence={clipHint.confidence:F2}");
 
-        // Extract features from the drawing
         DrawingFeatures features = ExtractFeatures(strokes);
-
-        // Get available moves for this plant type
         MoveData[] availableMoves = MoveData.GetMovesForPlant(plantType);
         if (availableMoves.Length == 0)
         {
@@ -72,44 +100,44 @@ public class MovesetDetector : MonoBehaviour
             return CreateFailedResult();
         }
 
-        // Calculate scores for each available move
+        // Determine which move types the CLIP shape hint supports.
+        MoveData.MoveType[] clipSupportedTypes = null;
+        bool hasCLIPHint = !string.IsNullOrEmpty(clipHint.shapeLabel) &&
+                           shapeToMoveTypes.TryGetValue(clipHint.shapeLabel, out clipSupportedTypes);
+
         MoveDetectionResult result = new MoveDetectionResult();
 
         foreach (var moveData in availableMoves)
         {
-            float score = CalculateMoveScore(moveData.moveType, features);
-            result.scores[moveData.moveType] = score;
-            Debug.Log($"{moveData.moveType} Score: {score:F2}");
+            // Base geometric score (same logic as before).
+            float geometricScore = CalculateMoveScore(moveData.moveType, features);
+
+            // CLIP boost: scale with confidence so a low-confidence hint has
+            // little influence while a high-confidence hit dominates.
+            float clipBoost = 0f;
+            if (hasCLIPHint && System.Array.IndexOf(clipSupportedTypes, moveData.moveType) >= 0)
+            {
+                // Max boost of 0.6 at full CLIP confidence.
+                clipBoost = clipHint.confidence * 0.6f;
+            }
+
+            float combinedScore = Mathf.Clamp01(geometricScore + clipBoost);
+            result.scores[moveData.moveType] = combinedScore;
+
+            Debug.Log($"{moveData.moveType}: geometric={geometricScore:F2} clipBoost={clipBoost:F2} total={combinedScore:F2}");
         }
 
-        // Find best match
         var bestMatch = result.scores.OrderByDescending(x => x.Value).First();
         result.detectedMove = bestMatch.Key;
         result.confidence = bestMatch.Value;
 
-        // Check if confidence meets threshold
         if (result.confidence >= confidenceThreshold)
         {
             result.wasRecognized = true;
-
-            // Calculate quality using MoveRecognitionSystem
-            if (recognitionSystem != null)
-            {
-                var qualityResult = recognitionSystem.AnalyzeMove(strokes, result.detectedMove);
-                result.quality = qualityResult.quality;
-                result.damageMultiplier = qualityResult.damageMultiplier;
-                result.qualityRating = qualityResult.qualityRating;
-            }
-            else
-            {
-                // Fallback if no recognition system
-                result.quality = result.confidence;
-                result.damageMultiplier = 1f;
-                result.qualityRating = "Unknown";
-                Debug.LogWarning("MoveRecognitionSystem not assigned! Quality scoring disabled.");
-            }
-
-            Debug.Log($"✅ MOVE RECOGNIZED: {result}");
+            result.quality = CalculateDrawingQuality(strokes, result.detectedMove);
+            result.damageMultiplier = Mathf.Lerp(0.5f, 1.5f, result.quality);
+            result.qualityRating = GetQualityRating(result.quality);
+            Debug.Log($"✅ CLIP-ASSISTED MOVE RECOGNIZED: {result}");
         }
         else
         {
@@ -581,6 +609,238 @@ public class MovesetDetector : MonoBehaviour
             length += Vector3.Distance(positions[i - 1], positions[i]);
         }
         return length;
+    }
+
+    // ── Quality Scoring ───────────────────────────────────────────────────────
+    // Inlined from the former MoveRecognitionSystem component so that all move
+    // logic lives in one place.
+
+    private float CalculateDrawingQuality(List<LineRenderer> strokes, MoveData.MoveType moveType)
+    {
+        if (strokes == null || strokes.Count == 0) return 0f;
+        ShapeFeatures sf = AnalyzeShapeFeatures(strokes);
+        float quality = CalculateMoveQuality(moveType, sf);
+        return Mathf.Clamp01(quality);
+    }
+
+    private float CalculateMoveQuality(MoveData.MoveType moveType, ShapeFeatures f)
+    {
+        switch (moveType)
+        {
+            case MoveData.MoveType.Block:
+                return QualityBlock(f);
+            case MoveData.MoveType.Fireball:
+            case MoveData.MoveType.Bubble:
+                return QualityBall(f);
+            case MoveData.MoveType.FlameWave:
+            case MoveData.MoveType.VineWhip:
+                return QualityWave(f);
+            case MoveData.MoveType.Burn:
+                return QualityFire(f);
+            case MoveData.MoveType.RootAttack:
+            case MoveData.MoveType.LeafStorm:
+                return QualityPlantGrowth(f);
+            case MoveData.MoveType.WaterSplash:
+            case MoveData.MoveType.HealingWave:
+                return QualityWater(f);
+            default:
+                return QualityGeneric(f);
+        }
+    }
+
+    private float QualityBlock(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += Mathf.Clamp01(f.compactness * 2f) * 0.4f;
+        s += (1f - Mathf.Clamp01((f.strokeCount - 2) / 5f)) * 0.3f;
+        s += (1f - Mathf.Abs(f.curviness - 0.5f) * 2f) * 0.3f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualityBall(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += (1f - Mathf.Abs(1f - f.aspectRatio)) * 0.4f;
+        s += f.compactness * 0.4f;
+        s += f.curviness * 0.2f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualityWave(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += Mathf.Clamp01(f.aspectRatio - 1f) * 0.4f;
+        s += (1f - f.compactness) * 0.3f;
+        s += f.curviness * 0.3f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualityFire(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += Mathf.Clamp01((1f / Mathf.Max(f.aspectRatio, 0.01f)) - 0.5f) * 0.3f;
+        s += Mathf.Clamp01(f.strokeCount / 5f) * 0.3f;
+        s += Mathf.Clamp01(1f - f.curviness) * 0.2f;
+        s += f.radialness * 0.2f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualityPlantGrowth(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += f.branchiness * 0.4f;
+        s += Mathf.Clamp01(f.strokeCount / 4f) * 0.3f;
+        s += f.curviness * 0.3f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualityWater(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += f.curviness * 0.4f;
+        s += (1f - Mathf.Abs(1.5f - f.aspectRatio) / 2f) * 0.3f;
+        s += Mathf.Clamp01(f.strokeCount / 4f) * 0.3f;
+        return Mathf.Clamp01(s);
+    }
+
+    private float QualityGeneric(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += f.compactness * 0.3f;
+        s += Mathf.Clamp01(f.strokeCount / 4f) * 0.3f;
+        s += f.curviness * 0.2f;
+        s += (f.branchiness + f.radialness) * 0.2f;
+        return Mathf.Clamp01(s);
+    }
+
+    private string GetQualityRating(float q)
+    {
+        if (q >= 0.9f)  return "Perfect!";
+        if (q >= 0.75f) return "Excellent";
+        if (q >= 0.6f)  return "Good";
+        if (q >= 0.4f)  return "Decent";
+        if (q >= 0.2f)  return "Poor";
+        return "Very Poor";
+    }
+
+    // ── ShapeFeatures analysis (different from DrawingFeatures; measures
+    //    compactness/curviness/radialness/branchiness rather than stroke counts)
+
+    private class ShapeFeatures
+    {
+        public int   strokeCount;
+        public float aspectRatio;
+        public float compactness;
+        public float curviness;
+        public float radialness;
+        public float branchiness;
+        public float totalLength;
+    }
+
+    private ShapeFeatures AnalyzeShapeFeatures(List<LineRenderer> strokes)
+    {
+        ShapeFeatures f = new ShapeFeatures { strokeCount = strokes.Count };
+
+        Bounds bounds = SFBounds(strokes);
+        float w = bounds.size.x, h = bounds.size.y;
+        f.aspectRatio = h > 0f ? w / h : 1f;
+
+        float totalCurv = 0f;
+        foreach (var s in strokes)
+        {
+            f.totalLength += SFStrokeLength(s);
+            totalCurv     += SFStrokeCurviness(s);
+        }
+        f.curviness = strokes.Count > 0 ? totalCurv / strokes.Count : 0f;
+
+        float area = w * h;
+        float perim = f.totalLength;
+        f.compactness = (area > 0f && perim > 0f)
+            ? Mathf.Clamp01((4f * Mathf.PI * area) / (perim * perim))
+            : 0f;
+
+        f.radialness  = SFRadialness(strokes, bounds.center);
+        f.branchiness = SFBranchiness(strokes);
+        return f;
+    }
+
+    private Bounds SFBounds(List<LineRenderer> strokes)
+    {
+        Vector3 min = Vector3.one * float.MaxValue;
+        Vector3 max = Vector3.one * float.MinValue;
+        foreach (var s in strokes)
+        {
+            for (int i = 0; i < s.positionCount; i++)
+            {
+                Vector3 p = s.GetPosition(i);
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            }
+        }
+        Bounds b = new Bounds();
+        b.SetMinMax(min, max);
+        return b;
+    }
+
+    private float SFStrokeLength(LineRenderer s)
+    {
+        float len = 0f;
+        for (int i = 1; i < s.positionCount; i++)
+            len += Vector3.Distance(s.GetPosition(i - 1), s.GetPosition(i));
+        return len;
+    }
+
+    private float SFStrokeCurviness(LineRenderer s)
+    {
+        if (s.positionCount < 3) return 0f;
+        float total = 0f; int cnt = 0;
+        for (int i = 1; i < s.positionCount - 1; i++)
+        {
+            Vector3 v1 = s.GetPosition(i)     - s.GetPosition(i - 1);
+            Vector3 v2 = s.GetPosition(i + 1) - s.GetPosition(i);
+            if (v1.magnitude > 0.01f && v2.magnitude > 0.01f)
+            { total += Vector3.Angle(v1, v2); cnt++; }
+        }
+        return cnt > 0 ? Mathf.Clamp01(total / (cnt * 90f)) : 0f;
+    }
+
+    private float SFRadialness(List<LineRenderer> strokes, Vector3 center)
+    {
+        if (strokes.Count < 2) return 0f;
+        float score = 0f; int valid = 0;
+        foreach (var s in strokes)
+        {
+            if (s.positionCount < 2) continue;
+            Vector3 start = s.GetPosition(0);
+            Vector3 end   = s.GetPosition(s.positionCount - 1);
+            if (Vector3.Distance(start, center) < Vector3.Distance(end, center) &&
+                Vector3.Distance(start, center) < 2f)
+                score += 1f;
+            valid++;
+        }
+        return valid > 0 ? score / valid : 0f;
+    }
+
+    private float SFBranchiness(List<LineRenderer> strokes)
+    {
+        if (strokes.Count < 2) return 0f;
+        int conn = 0;
+        const float threshold = 1f;
+        for (int i = 0; i < strokes.Count; i++)
+        for (int j = i + 1; j < strokes.Count; j++)
+        {
+            var a = strokes[i]; var b = strokes[j];
+            if (a.positionCount == 0 || b.positionCount == 0) continue;
+            Vector3 aS = a.GetPosition(0), aE = a.GetPosition(a.positionCount - 1);
+            Vector3 bS = b.GetPosition(0), bE = b.GetPosition(b.positionCount - 1);
+            if (Vector3.Distance(aS, bS) < threshold ||
+                Vector3.Distance(aS, bE) < threshold ||
+                Vector3.Distance(aE, bS) < threshold ||
+                Vector3.Distance(aE, bE) < threshold)
+                conn++;
+        }
+        int maxConn = (strokes.Count * (strokes.Count - 1)) / 2;
+        return maxConn > 0 ? (float)conn / maxConn : 0f;
     }
 
     private MoveDetectionResult CreateFailedResult()
