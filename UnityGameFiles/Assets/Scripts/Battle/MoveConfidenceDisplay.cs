@@ -135,6 +135,9 @@ namespace SketchBlossom.Battle
             switch (moveType)
             {
                 case MoveData.MoveType.Block:       return "Block";
+                case MoveData.MoveType.Sting:       return "Sting";
+                case MoveData.MoveType.Cut:         return "Cut";
+                case MoveData.MoveType.Bump:        return "Bump";
                 case MoveData.MoveType.Fireball:    return "Fireball";
                 case MoveData.MoveType.FlameWave:   return "Flame Wave";
                 case MoveData.MoveType.Burn:        return "Burn";
