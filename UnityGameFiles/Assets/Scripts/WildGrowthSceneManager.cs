@@ -497,7 +497,10 @@ public class WildGrowthSceneManager : MonoBehaviour
     private void OnConfirmClicked()
     {
         if (isConfirming)
+        {
+            Debug.Log("Confirm was already pressed");
             return;
+        }   
 
         if (selectedPlant == null)
         {
