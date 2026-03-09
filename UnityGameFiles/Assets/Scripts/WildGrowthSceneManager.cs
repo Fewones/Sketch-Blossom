@@ -197,11 +197,6 @@ public class WildGrowthSceneManager : MonoBehaviour
     /// </summary> 
     private void SetupUI()
     {
-        if (messageText != null)
-        {
-            messageText.text = "Draw to help your plant grow stronger!";
-        }
-
         // Clear button: remove any previous listeners, then attach our handler
         if (clearButton != null)
         {
