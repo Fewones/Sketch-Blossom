@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4923260}
   - component: {fileID: 4923261}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -349,7 +349,7 @@ GameObject:
   m_Component:
   - component: {fileID: 35062272}
   - component: {fileID: 35062273}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -439,7 +439,7 @@ GameObject:
   m_Component:
   - component: {fileID: 44358385}
   - component: {fileID: 44358386}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: First Trees (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -528,7 +528,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 47860624}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: GREENS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -602,7 +602,7 @@ GameObject:
   m_Component:
   - component: {fileID: 80589900}
   - component: {fileID: 80589901}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -692,7 +692,7 @@ GameObject:
   m_Component:
   - component: {fileID: 84831986}
   - component: {fileID: 84831987}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: back trees_2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -903,7 +903,7 @@ GameObject:
   m_Component:
   - component: {fileID: 105252977}
   - component: {fileID: 105252978}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1033,7 +1033,7 @@ GameObject:
   - component: {fileID: 113271612}
   - component: {fileID: 113271614}
   - component: {fileID: 113271613}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Forest ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1235,7 +1235,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 116684884}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ROCK
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1269,7 +1269,7 @@ GameObject:
   m_Component:
   - component: {fileID: 138101546}
   - component: {fileID: 138101547}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: dungeon background 2_8 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1359,7 +1359,7 @@ GameObject:
   m_Component:
   - component: {fileID: 140866182}
   - component: {fileID: 140866183}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1485,7 +1485,7 @@ GameObject:
   m_Component:
   - component: {fileID: 156189229}
   - component: {fileID: 156189230}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: clouds_11 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1576,7 +1576,7 @@ GameObject:
   - component: {fileID: 158673585}
   - component: {fileID: 158673587}
   - component: {fileID: 158673586}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Liana (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1729,7 +1729,7 @@ GameObject:
   m_Component:
   - component: {fileID: 160608918}
   - component: {fileID: 160608919}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1819,7 +1819,7 @@ GameObject:
   m_Component:
   - component: {fileID: 186048856}
   - component: {fileID: 186048857}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: back trees_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1946,7 +1946,7 @@ GameObject:
   - component: {fileID: 195105737}
   - component: {fileID: 195105739}
   - component: {fileID: 195105738}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Shadow 1 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2137,7 +2137,7 @@ GameObject:
   m_Component:
   - component: {fileID: 197420513}
   - component: {fileID: 197420514}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (16)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2227,7 +2227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 207647968}
   - component: {fileID: 207647969}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2396,7 +2396,7 @@ GameObject:
   m_Component:
   - component: {fileID: 220621966}
   - component: {fileID: 220621967}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2486,7 +2486,7 @@ GameObject:
   m_Component:
   - component: {fileID: 225936789}
   - component: {fileID: 225936790}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2697,7 +2697,7 @@ GameObject:
   m_Component:
   - component: {fileID: 237658565}
   - component: {fileID: 237658566}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2787,7 +2787,7 @@ GameObject:
   m_Component:
   - component: {fileID: 260779393}
   - component: {fileID: 260779394}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3267,7 +3267,7 @@ GameObject:
   - component: {fileID: 293134848}
   - component: {fileID: 293134850}
   - component: {fileID: 293134849}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Liana (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3492,7 +3492,7 @@ GameObject:
   m_Component:
   - component: {fileID: 321651153}
   - component: {fileID: 321651154}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3581,7 +3581,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 330075511}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Leaf pack first (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3754,7 +3754,7 @@ GameObject:
   m_Component:
   - component: {fileID: 334798309}
   - component: {fileID: 334798310}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: First Trees (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3845,7 +3845,7 @@ GameObject:
   - component: {fileID: 341203087}
   - component: {fileID: 341203089}
   - component: {fileID: 341203088}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: needles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4148,7 +4148,7 @@ GameObject:
   m_Component:
   - component: {fileID: 358534710}
   - component: {fileID: 358534711}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (13)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4238,7 +4238,7 @@ GameObject:
   m_Component:
   - component: {fileID: 418690590}
   - component: {fileID: 418690591}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4426,7 +4426,7 @@ GameObject:
   m_Component:
   - component: {fileID: 423486434}
   - component: {fileID: 423486435}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (67)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4857,7 +4857,7 @@ GameObject:
   m_Component:
   - component: {fileID: 470372973}
   - component: {fileID: 470372974}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (18)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4947,7 +4947,7 @@ GameObject:
   m_Component:
   - component: {fileID: 473133839}
   - component: {fileID: 473133840}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (12)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5037,7 +5037,7 @@ GameObject:
   m_Component:
   - component: {fileID: 483038804}
   - component: {fileID: 483038805}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (17)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5206,7 +5206,7 @@ GameObject:
   m_Component:
   - component: {fileID: 488053712}
   - component: {fileID: 488053713}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Leaf pack first
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5280,7 +5280,7 @@ GameObject:
   m_Component:
   - component: {fileID: 488729262}
   - component: {fileID: 488729263}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (11)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5370,7 +5370,7 @@ GameObject:
   m_Component:
   - component: {fileID: 502483089}
   - component: {fileID: 502483090}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5612,7 +5612,7 @@ GameObject:
   m_Component:
   - component: {fileID: 506649566}
   - component: {fileID: 506649567}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5851,10 +5851,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1956776154447397352, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300008, guid: ab4f83bf3015b8447bc3770240b465b1, type: 3}
+    - target: {fileID: 2073718996729540456, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 2344652789996939907, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalScale.x
       value: 2.8296056
@@ -5946,7 +5954,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 539731236}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: BACKGROUNDS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6111,6 +6119,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: needles (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 6001934581928581524, guid: 31625a86569f734418b45db5f125ac2b, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8102635041248542912, guid: 31625a86569f734418b45db5f125ac2b, type: 3}
       propertyPath: m_Color.b
       value: 0
@@ -6223,7 +6235,7 @@ GameObject:
   m_Component:
   - component: {fileID: 558118732}
   - component: {fileID: 558118733}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6706,7 +6718,7 @@ GameObject:
   m_Component:
   - component: {fileID: 591521136}
   - component: {fileID: 591521137}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: mount big
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6795,7 +6807,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 599310991}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Sprite shape
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6843,6 +6855,14 @@ PrefabInstance:
     - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_Name
       value: Tree (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073718996729540456, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2344652789996939907, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6920,7 +6940,7 @@ GameObject:
   m_Component:
   - component: {fileID: 619810747}
   - component: {fileID: 619810748}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7010,7 +7030,7 @@ GameObject:
   m_Component:
   - component: {fileID: 624089346}
   - component: {fileID: 624089347}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7515,7 +7535,7 @@ GameObject:
   m_Component:
   - component: {fileID: 685510873}
   - component: {fileID: 685510874}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (23)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7605,7 +7625,7 @@ GameObject:
   m_Component:
   - component: {fileID: 687285975}
   - component: {fileID: 687285976}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7695,7 +7715,7 @@ GameObject:
   m_Component:
   - component: {fileID: 689360514}
   - component: {fileID: 689360515}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7860,7 +7880,7 @@ GameObject:
   m_Component:
   - component: {fileID: 702558351}
   - component: {fileID: 702558352}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7950,7 +7970,7 @@ GameObject:
   m_Component:
   - component: {fileID: 710754557}
   - component: {fileID: 710754558}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (72)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8040,7 +8060,7 @@ GameObject:
   m_Component:
   - component: {fileID: 755554580}
   - component: {fileID: 755554581}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: First Trees (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8130,7 +8150,7 @@ GameObject:
   m_Component:
   - component: {fileID: 781183113}
   - component: {fileID: 781183114}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: dungeon background 2_8 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8220,7 +8240,7 @@ GameObject:
   m_Component:
   - component: {fileID: 783971247}
   - component: {fileID: 783971248}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8309,7 +8329,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 785745217}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Background pack leafs (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8341,7 +8361,7 @@ GameObject:
   m_Component:
   - component: {fileID: 789368218}
   - component: {fileID: 789368219}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8431,7 +8451,7 @@ GameObject:
   m_Component:
   - component: {fileID: 789894928}
   - component: {fileID: 789894929}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8855,7 +8875,7 @@ GameObject:
   m_Component:
   - component: {fileID: 829538562}
   - component: {fileID: 829538563}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (68)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9081,7 +9101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 861148393}
   - component: {fileID: 861148394}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Black
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9171,7 +9191,7 @@ GameObject:
   m_Component:
   - component: {fileID: 869546201}
   - component: {fileID: 869546202}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: clouds_11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9261,7 +9281,7 @@ GameObject:
   m_Component:
   - component: {fileID: 873008728}
   - component: {fileID: 873008729}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (13)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9455,7 +9475,7 @@ GameObject:
   m_Component:
   - component: {fileID: 881865170}
   - component: {fileID: 881865171}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (15)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9681,7 +9701,7 @@ GameObject:
   m_Component:
   - component: {fileID: 898577257}
   - component: {fileID: 898577258}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9771,7 +9791,7 @@ GameObject:
   m_Component:
   - component: {fileID: 900131198}
   - component: {fileID: 900131199}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (19)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9861,7 +9881,7 @@ GameObject:
   m_Component:
   - component: {fileID: 900850184}
   - component: {fileID: 900850185}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: clouds_11 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9951,7 +9971,7 @@ GameObject:
   m_Component:
   - component: {fileID: 905587006}
   - component: {fileID: 905587007}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (70)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10042,7 +10062,7 @@ GameObject:
   - component: {fileID: 905872603}
   - component: {fileID: 905872605}
   - component: {fileID: 905872604}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Liana (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10195,7 +10215,7 @@ GameObject:
   m_Component:
   - component: {fileID: 922733427}
   - component: {fileID: 922733428}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (16)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10421,7 +10441,7 @@ GameObject:
   m_Component:
   - component: {fileID: 945295575}
   - component: {fileID: 945295576}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10509,9 +10529,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2015328453}
     m_Modifications:
+    - target: {fileID: 1579594446014018, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1590767612561926, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1711198334903098, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
       propertyPath: m_Name
       value: light (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1711198334903098, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4225101714995872, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
       propertyPath: m_RootOrder
@@ -10594,7 +10626,7 @@ GameObject:
   m_Component:
   - component: {fileID: 957680078}
   - component: {fileID: 957680079}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (69)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10683,7 +10715,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 975176456}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WORLD forest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10720,7 +10752,7 @@ GameObject:
   m_Component:
   - component: {fileID: 977694603}
   - component: {fileID: 977694604}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10810,7 +10842,7 @@ GameObject:
   m_Component:
   - component: {fileID: 977754060}
   - component: {fileID: 977754061}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (15)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11057,6 +11089,10 @@ PrefabInstance:
     - target: {fileID: 7066146461792856490, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
       propertyPath: m_Name
       value: Forest ground (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7066146461792856490, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7066146461792856491, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
       propertyPath: m_Creator
@@ -12907,7 +12943,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1062121386}
   - component: {fileID: 1062121387}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12997,7 +13033,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1073770159}
   - component: {fileID: 1073770160}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: clouds_11 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13087,7 +13123,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1097273954}
   - component: {fileID: 1097273955}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: sky 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13298,7 +13334,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1100263447}
   - component: {fileID: 1100263448}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13524,7 +13560,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1165865955}
   - component: {fileID: 1165865956}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: shrubs._2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13614,7 +13650,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1173791656}
   - component: {fileID: 1173791657}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13840,7 +13876,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1203136266}
   - component: {fileID: 1203136267}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (21)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14437,7 +14473,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1271161866}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Fields pack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14933,7 +14969,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1339917233}
   - component: {fileID: 1339917234}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15024,7 +15060,7 @@ GameObject:
   - component: {fileID: 1356951391}
   - component: {fileID: 1356951393}
   - component: {fileID: 1356951392}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Liana
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15177,7 +15213,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1362891219}
   - component: {fileID: 1362891220}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15491,7 +15527,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1398160621}
   - component: {fileID: 1398160622}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (18)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15733,7 +15769,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1405186416}
   - component: {fileID: 1405186417}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15823,7 +15859,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1406669721}
   - component: {fileID: 1406669722}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: waterfall tree_25
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15913,7 +15949,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1407588984}
   - component: {fileID: 1407588985}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: greens._38
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16003,7 +16039,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1422595339}
   - component: {fileID: 1422595340}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16093,7 +16129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1430158287}
   - component: {fileID: 1430158288}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16183,7 +16219,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1431397346}
   - component: {fileID: 1431397347}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16409,7 +16445,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1457191229}
   - component: {fileID: 1457191230}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (14)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16498,7 +16534,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1457277630}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Trees
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16689,7 +16725,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1490193648}
   - component: {fileID: 1490193649}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: shrubs._0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16779,7 +16815,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1501776319}
   - component: {fileID: 1501776320}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16869,7 +16905,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1502174992}
   - component: {fileID: 1502174993}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: back trees_2 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16959,7 +16995,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1505022296}
   - component: {fileID: 1505022297}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17337,7 +17373,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1529858943}
   - component: {fileID: 1529858944}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (65)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17458,7 +17494,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1558925080}
   - component: {fileID: 1558925081}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17549,7 +17585,7 @@ GameObject:
   - component: {fileID: 1560312923}
   - component: {fileID: 1560312925}
   - component: {fileID: 1560312924}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Shadow 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17716,7 +17752,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1571955640}
   - component: {fileID: 1571955641}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (12)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17805,7 +17841,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1583870607}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CLOUDS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17840,9 +17876,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2015328453}
     m_Modifications:
+    - target: {fileID: 1579594446014018, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1590767612561926, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1711198334903098, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
       propertyPath: m_Name
       value: light
+      objectReference: {fileID: 0}
+    - target: {fileID: 1711198334903098, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4225101714995872, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
       propertyPath: m_RootOrder
@@ -17925,7 +17973,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1597754429}
   - component: {fileID: 1597754430}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18211,7 +18259,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1638315241}
   - component: {fileID: 1638315242}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18422,7 +18470,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1657423135}
   - component: {fileID: 1657423136}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18512,7 +18560,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1658625822}
   - component: {fileID: 1658625823}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (14)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18602,7 +18650,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1689982971}
   - component: {fileID: 1689982972}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18692,7 +18740,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1692351912}
   - component: {fileID: 1692351913}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18782,7 +18830,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1695580936}
   - component: {fileID: 1695580937}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18872,7 +18920,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1708297627}
   - component: {fileID: 1708297628}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19017,7 +19065,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1722029229}
   - component: {fileID: 1722029230}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (71)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19259,7 +19307,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1736960342}
   - component: {fileID: 1736960343}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_2 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19349,7 +19397,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1746509674}
   - component: {fileID: 1746509675}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (11)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19439,7 +19487,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1759329852}
   - component: {fileID: 1759329853}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: clouds_11 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19529,7 +19577,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1760813260}
   - component: {fileID: 1760813261}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (17)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19775,9 +19823,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2015328453}
     m_Modifications:
+    - target: {fileID: 1579594446014018, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1590767612561926, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1711198334903098, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
       propertyPath: m_Name
       value: light (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1711198334903098, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4225101714995872, guid: 95ee83bd7d308d3409d7ce76f0f254cd, type: 3}
       propertyPath: m_RootOrder
@@ -19894,6 +19954,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073718996729540456, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 2344652789996939907, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.21
@@ -19982,7 +20050,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1812849346}
   - component: {fileID: 1812849347}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20072,7 +20140,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1814083388}
   - component: {fileID: 1814083389}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: greens._1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20164,6 +20232,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073718996729540456, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 2344652789996939907, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.91
@@ -20240,7 +20316,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1838964196}
   - component: {fileID: 1838964197}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (64)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20329,7 +20405,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1842931614}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Background pack leafs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20482,7 +20558,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1847976552}
   - component: {fileID: 1847976553}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: back trees_2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20572,7 +20648,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1849409793}
   - component: {fileID: 1849409794}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20774,7 +20850,7 @@ GameObject:
   - component: {fileID: 1893855065}
   - component: {fileID: 1893855067}
   - component: {fileID: 1893855066}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Shadow 1 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20981,7 +21057,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1904540854}
   - component: {fileID: 1904540855}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21208,6 +21284,10 @@ PrefabInstance:
     - target: {fileID: 7066146461792856490, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
       propertyPath: m_Name
       value: Forest ground (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7066146461792856490, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7066146461792856491, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
       propertyPath: m_Creator
@@ -23041,7 +23121,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1918601221}
   - component: {fileID: 1918601222}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: mount big (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23273,7 +23353,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1936739080}
   - component: {fileID: 1936739081}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23362,7 +23442,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1947306955}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: TREES
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23544,7 +23624,7 @@ GameObject:
   - component: {fileID: 1949425990}
   - component: {fileID: 1949425992}
   - component: {fileID: 1949425991}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Liana (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23697,7 +23777,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1953796723}
   - component: {fileID: 1953796724}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23787,7 +23867,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1964306846}
   - component: {fileID: 1964306847}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23877,7 +23957,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1966078701}
   - component: {fileID: 1966078702}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: shrubs._4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23967,7 +24047,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1980505720}
   - component: {fileID: 1980505721}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: tree leafs blis2 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24057,7 +24137,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1981444430}
   - component: {fileID: 1981444431}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: dungeon background 2_8 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24388,7 +24468,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2015328453}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Lights
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24513,7 +24593,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 300, y: 20}
+  m_SizeDelta: {x: 350, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2021954320
 GameObject:
@@ -24524,7 +24604,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2021954321}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ForestBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24564,6 +24644,14 @@ PrefabInstance:
     - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_Name
       value: Tree
+      objectReference: {fileID: 0}
+    - target: {fileID: 1576264394909228069, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073718996729540456, guid: 42a18d9073075964983d4434926bb355, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8523807056093973740, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_RootOrder
@@ -24630,7 +24718,7 @@ GameObject:
   - component: {fileID: 2032453525}
   - component: {fileID: 2032453527}
   - component: {fileID: 2032453526}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Grass shadow (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24992,7 +25080,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2038245591}
   - component: {fileID: 2038245592}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25082,7 +25170,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2039074201}
   - component: {fileID: 2039074202}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25172,7 +25260,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2046330524}
   - component: {fileID: 2046330525}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: danger_3 (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25263,7 +25351,7 @@ GameObject:
   - component: {fileID: 2048439340}
   - component: {fileID: 2048439342}
   - component: {fileID: 2048439341}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Grass field (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25658,7 +25746,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2069519247}
   - component: {fileID: 2069519248}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (22)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25747,7 +25835,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2071126120}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Leaf pack first (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25782,7 +25870,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2072762132}
   - component: {fileID: 2072762133}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: fields._2 (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26021,6 +26109,10 @@ PrefabInstance:
     - target: {fileID: 7066146461792856490, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
       propertyPath: m_Name
       value: Forest ground
+      objectReference: {fileID: 0}
+    - target: {fileID: 7066146461792856490, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7066146461792856491, guid: 67290c5d6aebf07448d0e3d021dd947e, type: 3}
       propertyPath: m_Creator
@@ -26988,7 +27080,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2103343375}
   - component: {fileID: 2103343376}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: First Trees (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27078,7 +27170,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2104136251}
   - component: {fileID: 2104136252}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: first layer greens_0 (66)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27168,7 +27260,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2108980420}
   - component: {fileID: 2108980421}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: stone big (20)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27258,7 +27350,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2136230432}
   - component: {fileID: 2136230433}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: bushes (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

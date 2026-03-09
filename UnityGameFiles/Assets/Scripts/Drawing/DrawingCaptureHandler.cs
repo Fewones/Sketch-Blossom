@@ -84,7 +84,7 @@ public class DrawingCaptureHandler : MonoBehaviour
             captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;  
         }
         captureCamera.clearFlags = CameraClearFlags.SolidColor;
-        captureCamera.cullingMask = -1; // Render everything (all layers)
+        captureCamera.cullingMask = 1 + 2 + 4 + 16 + 32; // Render all layers except background layer (layer 3)
         captureCamera.depth = sourceCamera.depth + 1; // Render after main camera
         captureCamera.nearClipPlane = 0.1f;
         captureCamera.farClipPlane = 100f;
