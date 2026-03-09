@@ -338,7 +338,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
     public void SetColor(Color color)
     {
         currentColor = color;
-        Debug.Log($"Drawing color changed to: {color}");
     }
 
     void OnValidate()
