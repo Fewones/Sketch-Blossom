@@ -360,7 +360,8 @@ namespace SketchBlossom.Drawing
                 drawingCanvas.allStrokes,
                 mainCamera,
                 drawingCanvas.drawingArea,
-                forceTransparent: true
+                forceTransparent: true,
+                fillTexture: drawingCanvas.GetFillTexture()
             );
 
             if (drawingTexture != null)
@@ -406,7 +407,8 @@ namespace SketchBlossom.Drawing
             Texture2D drawingTexture = captureHandler.CaptureDrawing(
                 drawingCanvas.allStrokes,
                 drawingCanvas.mainCamera,
-                drawingCanvas.drawingArea
+                drawingCanvas.drawingArea,
+                fillTexture: drawingCanvas.GetFillTexture()
             );
 
 

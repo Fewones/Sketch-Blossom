@@ -53,27 +53,43 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     public float currentz = 0;
 
+    // ── Fill Tool ──────────────────────────────────────────────
+    private const int FillTexSize = 512;
+    private Texture2D fillTexture;
+    private Color[] fillPixels;
+    private RawImage fillDisplay;
+    private bool isFillMode = false;
+    public bool IsFillMode => isFillMode;
+
+    void Start()
+    {
+        InitFillTexture();
+    }
+
     void Update()
     {
         if (visible){
-           HandleDrawingInput(); 
-        }  
+           HandleDrawingInput();
+        }
     }
 
     void HandleDrawingInput()
     {
-        // Start drawing
+        // Start drawing or fill
         if (Input.GetMouseButtonDown(0))
         {
             Vector2 mousePos = Input.mousePosition;
             if (IsInsideDrawingArea(mousePos))
             {
-                StartStroke(mousePos);
+                if (isFillMode)
+                    PerformFill(mousePos);
+                else
+                    StartStroke(mousePos);
             }
         }
 
-        // Continue drawing
-        if (Input.GetMouseButton(0) && isDrawing)
+        // Continue drawing (only in draw mode)
+        if (!isFillMode && Input.GetMouseButton(0) && isDrawing)
         {
             Vector2 mousePos = Input.mousePosition;
             if (IsInsideDrawingArea(mousePos))
@@ -89,7 +105,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         // End drawing
-        if (Input.GetMouseButtonUp(0) && isDrawing)
+        if (!isFillMode && Input.GetMouseButtonUp(0) && isDrawing)
         {
             FinishStroke();
         }
@@ -238,7 +254,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     }
 
     /// <summary>
-    /// Clear all strokes
+    /// Clear all strokes and fill layer
     /// </summary>
     public void ClearAll()
     {
@@ -259,16 +275,231 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
 
         currentPoints.Clear();
+        currentz = 0;
         strokeFinished = false; // NEW: allow drawing again
 
         drawingArea.GetComponent<Image> ().color = new Color(1,1,1,1);
 
-        Debug.Log("Cleared all strokes");
+        ClearFillTexture();
+
+        Debug.Log("Cleared all strokes and fill");
     }
 
-    public void FillBackground()
+    // ── Fill Tool Public API ───────────────────────────────────
+
+    public void ToggleFillMode()
     {
-       drawingArea.GetComponent<Image> ().color = currentColor;
+        isFillMode = !isFillMode;
+        Debug.Log($"Fill mode: {(isFillMode ? "ON" : "OFF")}");
+    }
+
+    public Texture2D GetFillTexture()
+    {
+        return fillTexture;
+    }
+
+    // ── Fill Tool Internals ────────────────────────────────────
+
+    private void InitFillTexture()
+    {
+        fillTexture = new Texture2D(FillTexSize, FillTexSize, TextureFormat.RGBA32, false);
+        fillTexture.filterMode = FilterMode.Bilinear;
+        fillPixels = new Color[FillTexSize * FillTexSize];
+        ClearFillTexture();
+
+        // Create a RawImage child of the drawing area to display fills behind strokes
+        if (drawingArea != null)
+        {
+            GameObject fillObj = new GameObject("FillLayer");
+            fillObj.transform.SetParent(drawingArea, false);
+            fillDisplay = fillObj.AddComponent<RawImage>();
+            RectTransform rt = fillDisplay.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            // Render behind other children (strokes render via LineRenderer in world space,
+            // but this keeps fill behind any UI overlays)
+            fillObj.transform.SetAsFirstSibling();
+            fillDisplay.texture = fillTexture;
+            fillDisplay.raycastTarget = false;
+        }
+    }
+
+    private void ClearFillTexture()
+    {
+        if (fillPixels == null) return;
+        for (int i = 0; i < fillPixels.Length; i++)
+            fillPixels[i] = Color.clear;
+        if (fillTexture != null)
+        {
+            fillTexture.SetPixels(fillPixels);
+            fillTexture.Apply();
+        }
+    }
+
+    private void PerformFill(Vector2 screenPos)
+    {
+        Vector2Int texCoord = ScreenToTextureCoord(screenPos);
+        if (texCoord.x < 0) return; // outside bounds
+
+        // Build a snapshot: existing fills + rasterized strokes
+        Color[] snapshot = new Color[FillTexSize * FillTexSize];
+        System.Array.Copy(fillPixels, snapshot, fillPixels.Length);
+        RasterizeStrokesOnto(snapshot);
+
+        int startIdx = texCoord.y * FillTexSize + texCoord.x;
+        Color targetColor = snapshot[startIdx];
+
+        // Only fill transparent / empty regions
+        if (targetColor.a > 0.5f)
+        {
+            Debug.Log("Fill: clicked on an existing stroke or filled region, skipping.");
+            return;
+        }
+
+        Color fillColor = currentColor;
+        fillColor.a = 1f;
+
+        // BFS flood fill
+        bool[] visited = new bool[FillTexSize * FillTexSize];
+        Queue<int> queue = new Queue<int>();
+        queue.Enqueue(startIdx);
+        visited[startIdx] = true;
+
+        while (queue.Count > 0)
+        {
+            int idx = queue.Dequeue();
+            fillPixels[idx] = fillColor;
+
+            int x = idx % FillTexSize;
+            int y = idx / FillTexSize;
+
+            TryEnqueueFill(queue, visited, snapshot, x + 1, y);
+            TryEnqueueFill(queue, visited, snapshot, x - 1, y);
+            TryEnqueueFill(queue, visited, snapshot, x, y + 1);
+            TryEnqueueFill(queue, visited, snapshot, x, y - 1);
+        }
+
+        fillTexture.SetPixels(fillPixels);
+        fillTexture.Apply();
+        Debug.Log($"Fill performed at ({texCoord.x},{texCoord.y}) with color {fillColor}");
+    }
+
+    private void TryEnqueueFill(Queue<int> queue, bool[] visited, Color[] snapshot, int x, int y)
+    {
+        if (x < 0 || x >= FillTexSize || y < 0 || y >= FillTexSize) return;
+        int idx = y * FillTexSize + x;
+        if (visited[idx]) return;
+        if (snapshot[idx].a > 0.5f) return; // boundary (stroke or existing fill)
+        visited[idx] = true;
+        queue.Enqueue(idx);
+    }
+
+    // ── Stroke Rasterization (for fill boundaries) ─────────────
+
+    private void RasterizeStrokesOnto(Color[] pixels)
+    {
+        foreach (var stroke in allStrokes)
+        {
+            if (stroke == null) continue;
+            int count = stroke.positionCount;
+            if (count < 1) continue;
+
+            Vector3[] positions = new Vector3[count];
+            stroke.GetPositions(positions);
+            Color c = stroke.startColor;
+            c.a = 1f;
+
+            float worldWidth = stroke.startWidth;
+            int pixelRadius = Mathf.Max(1, WorldWidthToPixelRadius(worldWidth));
+
+            // Draw circles at each point and lines between consecutive points
+            Vector2Int prev = WorldToTextureCoord(positions[0]);
+            DrawCircleOnPixels(pixels, prev.x, prev.y, c, pixelRadius);
+
+            for (int i = 1; i < count; i++)
+            {
+                Vector2Int cur = WorldToTextureCoord(positions[i]);
+                DrawThickLine(pixels, prev.x, prev.y, cur.x, cur.y, c, pixelRadius);
+                prev = cur;
+            }
+        }
+    }
+
+    private Vector2Int ScreenToTextureCoord(Vector2 screenPos)
+    {
+        Vector3[] corners = new Vector3[4];
+        drawingArea.GetWorldCorners(corners);
+        Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
+        Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
+
+        float u = (screenPos.x - min.x) / (max.x - min.x);
+        float v = (screenPos.y - min.y) / (max.y - min.y);
+
+        if (u < 0 || u > 1 || v < 0 || v > 1)
+            return new Vector2Int(-1, -1);
+
+        return new Vector2Int(
+            Mathf.Clamp((int)(u * FillTexSize), 0, FillTexSize - 1),
+            Mathf.Clamp((int)(v * FillTexSize), 0, FillTexSize - 1)
+        );
+    }
+
+    private Vector2Int WorldToTextureCoord(Vector3 worldPos)
+    {
+        Vector2 screenPos = mainCamera.WorldToScreenPoint(worldPos);
+        return ScreenToTextureCoord(screenPos);
+    }
+
+    private int WorldWidthToPixelRadius(float worldWidth)
+    {
+        // Approximate: convert world-space line width to pixel radius on the fill texture
+        Vector3[] corners = new Vector3[4];
+        drawingArea.GetWorldCorners(corners);
+        Vector2 min = mainCamera.WorldToScreenPoint(corners[0]);
+        Vector2 max = mainCamera.WorldToScreenPoint(corners[2]);
+        float canvasScreenWidth = max.x - min.x;
+        if (canvasScreenWidth <= 0) return 1;
+
+        // World width in screen pixels (orthographic approximation)
+        float screenPx = worldWidth * (canvasScreenWidth /
+            (mainCamera.orthographicSize * 2f * ((float)Screen.width / Screen.height)));
+        float texPx = screenPx / canvasScreenWidth * FillTexSize;
+        return Mathf.Max(1, Mathf.RoundToInt(texPx * 0.5f));
+    }
+
+    private void DrawCircleOnPixels(Color[] pixels, int cx, int cy, Color color, int radius)
+    {
+        int r2 = radius * radius;
+        for (int oy = -radius; oy <= radius; oy++)
+        {
+            for (int ox = -radius; ox <= radius; ox++)
+            {
+                if (ox * ox + oy * oy > r2) continue;
+                int px = cx + ox, py = cy + oy;
+                if (px >= 0 && px < FillTexSize && py >= 0 && py < FillTexSize)
+                    pixels[py * FillTexSize + px] = color;
+            }
+        }
+    }
+
+    private void DrawThickLine(Color[] pixels, int x0, int y0, int x1, int y1, Color color, int radius)
+    {
+        int dx = Mathf.Abs(x1 - x0);
+        int dy = Mathf.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+            DrawCircleOnPixels(pixels, x0, y0, color, radius);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x0 += sx; }
+            if (e2 < dx) { err += dx; y0 += sy; }
+        }
     }
 
     /// <summary>
