@@ -188,11 +188,35 @@ namespace SketchBlossom.Battle
                 drawingTexture.Apply();
             }
 
+            // Destroy any temporary LineRenderer GameObjects created by GetAllLineRenderers().
+            // These are children of this transform named "TempLine". If they aren't
+            // cleaned up, CaptureDrawing() will render stale strokes from prior turns,
+            // causing CLIP to analyse a composite of old + new drawings.
+            DestroyTempLineRenderers();
+
             allStrokes.Clear();
             currentStrokePoints.Clear();
             isDrawing = false;
 
             Debug.Log("BattleDrawingCanvas: Canvas cleared");
+        }
+
+        /// <summary>
+        /// Destroy all temporary LineRenderer GameObjects that were created by
+        /// GetAllLineRenderers(). Must be called before the next capture to avoid
+        /// stale strokes leaking into the camera render.
+        /// </summary>
+        public void DestroyTempLineRenderers()
+        {
+            // Iterate children in reverse so we can safely destroy during iteration.
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.name == "TempLine")
+                {
+                    Destroy(child.gameObject);
+                }
+            }
         }
 
         /// <summary>

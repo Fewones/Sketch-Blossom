@@ -77,8 +77,9 @@ async def predict(file: UploadFile, item_id: str):
 
     # Ähnlichkeiten berechnen
     scores = {}
+    image_emb = get_image_embeddings(image).unsqueeze(dim=0)
     for label, emb in zip(labelMap.keys(), get_text_embeddings(list(labelMap.keys()))):
-        score = torch.cosine_similarity(get_image_embeddings(image).unsqueeze(dim=0), emb.unsqueeze(dim=0))
+        score = torch.cosine_similarity(image_emb, emb.unsqueeze(dim=0))
         scores[labelMap[label]] = float(score)
 
     # Bestes Label bestimmen

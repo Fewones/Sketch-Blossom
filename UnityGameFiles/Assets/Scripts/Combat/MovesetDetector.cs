@@ -43,6 +43,29 @@ public class MovesetDetector : MonoBehaviour
             { "spiral",           new[] { MoveData.DrawingShape.Spiral } },
         };
 
+    /// <summary>
+    /// Shapes that CLIP commonly confuses with each other due to visual similarity.
+    /// When CLIP returns a primary shape, secondary shapes receive a reduced boost
+    /// (secondaryBoostFactor) to handle misclassification gracefully.
+    /// </summary>
+    private static readonly Dictionary<MoveData.DrawingShape, MoveData.DrawingShape[]> shapeConfusionMap =
+        new Dictionary<MoveData.DrawingShape, MoveData.DrawingShape[]>
+        {
+            { MoveData.DrawingShape.Circle,          new[] { MoveData.DrawingShape.Spiral } },
+            { MoveData.DrawingShape.Spiral,          new[] { MoveData.DrawingShape.Circle } },
+            { MoveData.DrawingShape.Triangle,        new[] { MoveData.DrawingShape.Square } },
+            { MoveData.DrawingShape.Square,          new[] { MoveData.DrawingShape.Triangle } },
+            { MoveData.DrawingShape.Checkmark,       new[] { MoveData.DrawingShape.Arrow } },
+            { MoveData.DrawingShape.Arrow,           new[] { MoveData.DrawingShape.Checkmark } },
+            { MoveData.DrawingShape.MultipleCircles, new[] { MoveData.DrawingShape.Circle } },
+        };
+
+    /// <summary>
+    /// How much of the primary CLIP score to give to confused/secondary shapes.
+    /// 0.65 means a secondary match gets 65% of the normalized CLIP score.
+    /// </summary>
+    private const float secondaryBoostFactor = 0.65f;
+
     public class MoveDetectionResult
     {
         public MoveData.MoveType detectedMove;
@@ -115,12 +138,31 @@ public class MovesetDetector : MonoBehaviour
             // (e.g. 0.33 → 0.83) comfortably exceeds the confidence threshold,
             // while weak/random matches (e.g. 0.10 → 0.25) still fail.
             float normalizedClip = Mathf.Clamp01(clipHint.confidence * 2.5f);
+
+            // Collect secondary shapes: shapes commonly confused with the primary CLIP match.
+            // These get a reduced boost so near-misses still have a chance.
+            HashSet<MoveData.DrawingShape> secondaryShapes = new HashSet<MoveData.DrawingShape>();
+            foreach (var primaryShape in clipSupportedShapes)
+            {
+                if (shapeConfusionMap.TryGetValue(primaryShape, out var confused))
+                {
+                    foreach (var cs in confused)
+                        secondaryShapes.Add(cs);
+                }
+            }
+
             foreach (var moveData in availableMoves)
             {
                 float score;
                 if (System.Array.IndexOf(clipSupportedShapes, moveData.drawingShape) >= 0)
                 {
+                    // Primary match: full normalized score
                     score = normalizedClip;
+                }
+                else if (secondaryShapes.Contains(moveData.drawingShape))
+                {
+                    // Secondary match: reduced score for commonly confused shapes
+                    score = normalizedClip * secondaryBoostFactor;
                 }
                 else
                 {
@@ -420,12 +462,13 @@ public class MovesetDetector : MonoBehaviour
         else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed or open square — still recognizable
         else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
 
-        // Roughly square aspect ratio — key differentiator from zigzag (which is elongated)
+        // Squares have a near-equal aspect ratio (key differentiator from triangle)
         float ar = f.aspectRatio;
-        if (ar > 0.6f && ar < 1.6f) score += 0.15f;
+        if (ar > 0.7f && ar < 1.4f) score += 0.2f;    // Near-square ratio: strong bonus
+        else if (ar > 0.5f && ar < 2.0f) score += 0.05f;
 
         // Squares have straight edges — curved strokes strongly suggest circle, not square
-        if (f.curvedStrokes == 0) score += 0.2f;
+        if (f.curvedStrokes == 0) score += 0.15f;
         else score *= 0.5f;
 
         return Mathf.Clamp01(score);
@@ -438,6 +481,7 @@ public class MovesetDetector : MonoBehaviour
 
         // 1 stroke (continuous) or 3 (sides)
         if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f;
+        else if (f.strokeCount == 4) score += 0.05f;  // 4 strokes more likely square
         else return 0.05f;
 
         // Sharp corners are the key feature — even imperfectly closed triangles have corners
@@ -445,11 +489,14 @@ public class MovesetDetector : MonoBehaviour
         else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed — still recognizable
         else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
 
-        // Triangles are often pointy (taller)
-        if (f.aspectRatio > 0.7f) score += 0.15f;
+        // Triangles tend to be taller (pointed top) — key differentiator from square
+        float ar = f.aspectRatio;
+        if (ar > 1.0f && ar < 2.5f) score += 0.2f;      // Taller than wide: strong triangle signal
+        else if (ar > 0.7f && ar < 1.0f) score += 0.1f;  // Roughly square: mild bonus (equilateral triangle)
+        else if (ar <= 0.7f) score += 0.05f;              // Very wide: less likely triangle
 
         // Triangles have straight edges — curved strokes suggest circle
-        if (f.curvedStrokes == 0) score += 0.2f;
+        if (f.curvedStrokes == 0) score += 0.15f;
         else score *= 0.5f;
 
         return Mathf.Clamp01(score);
@@ -460,20 +507,21 @@ public class MovesetDetector : MonoBehaviour
     {
         float score = 0f;
 
-        // 1 stroke ideally
-        if (f.strokeCount == 1) score += 0.35f;
-        else if (f.strokeCount == 2) score += 0.15f;
+        // 1 stroke strongly preferred (checkmark is one continuous stroke)
+        // Arrow typically needs 2-3 strokes (shaft + head), so 1 stroke is a key differentiator
+        if (f.strokeCount == 1) score += 0.4f;
+        else if (f.strokeCount == 2) score += 0.1f;
         else return 0.05f;
 
         // Has at least one sharp turn (the V point)
-        if (f.spikyStrokes >= 1) score += 0.35f;
+        if (f.spikyStrokes >= 1) score += 0.3f;
 
         // Should NOT be closed
         if (f.circularStrokes == 0) score += 0.15f;
         else score *= 0.3f;
 
-        // V shape typically wider than tall
-        if (f.aspectRatio < 1.5f) score += 0.1f;
+        // Checkmarks are typically wider than tall or roughly square
+        if (f.aspectRatio < 1.3f) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
