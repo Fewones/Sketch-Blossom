@@ -130,6 +130,65 @@ public class PythonDownloader
             string sitePackages = GetSitePackagesPath(fullPath);
             Debug.Log("[PythonDownloader] Site-packages path: " + sitePackages);
 
+            // Bootstrap pip if it's missing or broken (common with embedded Python on Windows)
+            Debug.Log("[PythonDownloader] Checking pip...");
+            int pipCheck = await RunPipInstall(pythonExe, "-m pip --version");
+            if (pipCheck != 0)
+            {
+                Debug.LogWarning("[PythonDownloader] pip is missing or broken, bootstrapping with get-pip.py...");
+                string getPipPath = Path.Combine(Path.GetTempPath(), "get-pip.py");
+
+                // Remove broken pip files first so get-pip.py can install cleanly
+                if (!string.IsNullOrEmpty(sitePackages) && Directory.Exists(sitePackages))
+                {
+                    foreach (string pipDir in Directory.GetDirectories(sitePackages, "pip*"))
+                    {
+                        Directory.Delete(pipDir, true);
+                        Debug.Log("[PythonDownloader] Removed broken pip directory: " + pipDir);
+                    }
+                }
+
+                // Download get-pip.py
+                bool downloaded = false;
+                using (var client = new WebClient())
+                {
+                    try
+                    {
+                        client.DownloadFile("https://bootstrap.pypa.io/get-pip.py", getPipPath);
+                        downloaded = true;
+                        Debug.Log("[PythonDownloader] Downloaded get-pip.py");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("[PythonDownloader] Failed to download get-pip.py: " + e.Message);
+                    }
+                }
+
+                if (downloaded)
+                {
+                    int getPipExit = await RunPipInstall(pythonExe, "\"" + getPipPath + "\"");
+                    if (getPipExit != 0)
+                    {
+                        Debug.LogError("[PythonDownloader] get-pip.py failed (exit code " + getPipExit + ")");
+                    }
+                    else
+                    {
+                        Debug.Log("[PythonDownloader] pip bootstrapped successfully.");
+                    }
+                }
+
+                // Verify pip works after bootstrap
+                pipCheck = await RunPipInstall(pythonExe, "-m pip --version");
+                if (pipCheck != 0)
+                {
+                    Debug.LogError("[PythonDownloader] pip is still broken after bootstrap attempt. Cannot install dependencies.");
+                    downloadComplete = true;
+                    Debug.Log("[PythonDownloader] === Python environment setup complete ===");
+                    return;
+                }
+            }
+            Debug.Log("[PythonDownloader] pip is working.");
+
             // Delete stale package directories that lack RECORD files (Windows zip issue)
             if (!string.IsNullOrEmpty(sitePackages) && Directory.Exists(sitePackages))
             {
