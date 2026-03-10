@@ -39,6 +39,7 @@ namespace SketchBlossom.Battle
         [Header("Attack Animations")]
         [SerializeField] private AttackAnimationManager attackAnimationManager;
         [SerializeField] private MoveExecutor moveExecutor;
+        [SerializeField] private DrawingCaptureHandler moveDrawingCapture;
 
         [Header("UI Elements")]
         [SerializeField] private TextMeshProUGUI turnIndicatorText;
@@ -351,6 +352,18 @@ namespace SketchBlossom.Battle
         /// </summary>
         private void SetupAttackAnimationSystem()
         {
+            // Auto-find or create DrawingCaptureHandler (used for CLIP move recognition)
+            if (moveDrawingCapture == null)
+            {
+                moveDrawingCapture = FindFirstObjectByType<DrawingCaptureHandler>();
+                if (moveDrawingCapture == null)
+                {
+                    GameObject captureObj = new GameObject("MoveDrawingCapture");
+                    moveDrawingCapture = captureObj.AddComponent<DrawingCaptureHandler>();
+                    Debug.Log("DrawingBattleSceneManager: Created DrawingCaptureHandler for move recognition");
+                }
+            }
+
             // Auto-find or create AttackAnimationManager
             if (attackAnimationManager == null)
             {
