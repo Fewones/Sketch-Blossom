@@ -23,28 +23,22 @@ public class MovesetDetector : MonoBehaviour
         public float confidence;
     }
 
-    // Maps TinyCLIP shape labels to DrawingShapes for CLIP boost.
+    // Maps TinyCLIP shape labels (from labelMaps.json) to DrawingShapes for CLIP boost.
+    // Keys must exactly match the values in labelMaps.json "move_shapes".
     private static readonly Dictionary<string, MoveData.DrawingShape[]> shapeLabelToDrawingShapes =
         new Dictionary<string, MoveData.DrawingShape[]>
         {
             { "circle",           new[] { MoveData.DrawingShape.Circle } },
-            { "fireball",         new[] { MoveData.DrawingShape.Circle } },
-            { "square",           new[] { MoveData.DrawingShape.Square } },
-            { "shield",           new[] { MoveData.DrawingShape.Square, MoveData.DrawingShape.Triangle } },
-            { "triangle",         new[] { MoveData.DrawingShape.Triangle } },
             { "straight_line",    new[] { MoveData.DrawingShape.StraightLine } },
-            { "slash",            new[] { MoveData.DrawingShape.StraightLine } },
             { "zigzag",           new[] { MoveData.DrawingShape.Zigzag } },
             { "wavy_line",        new[] { MoveData.DrawingShape.WavyLine } },
-            { "wave",             new[] { MoveData.DrawingShape.WavyLine } },
             { "plus",             new[] { MoveData.DrawingShape.Plus } },
-            { "cross",            new[] { MoveData.DrawingShape.Plus, MoveData.DrawingShape.XCross } },
             { "x_cross",          new[] { MoveData.DrawingShape.XCross } },
             { "arrow",            new[] { MoveData.DrawingShape.Arrow } },
             { "multiple_circles", new[] { MoveData.DrawingShape.MultipleCircles } },
-            { "bubbles",          new[] { MoveData.DrawingShape.MultipleCircles } },
             { "star",             new[] { MoveData.DrawingShape.Star } },
-            { "scattered",        new[] { MoveData.DrawingShape.Star } },
+            { "square",           new[] { MoveData.DrawingShape.Square } },
+            { "triangle",         new[] { MoveData.DrawingShape.Triangle } },
             { "checkmark",        new[] { MoveData.DrawingShape.Checkmark } },
             { "spiral",           new[] { MoveData.DrawingShape.Spiral } },
         };
@@ -190,12 +184,15 @@ public class MovesetDetector : MonoBehaviour
         else if (f.strokeCount == 2) score += 0.1f;
         else return 0.05f;
 
-        if (f.circularStrokes >= 1) score += 0.45f;
-        if (f.spikyStrokes > 0) score *= 0.3f;    // Not spiky (that's square/triangle)
-        if (f.curvedStrokes >= 1) score += 0.1f;   // Bonus for smooth curves
+        if (f.circularStrokes >= 1) score += 0.4f;
+        if (f.curvedStrokes >= 1) score += 0.2f;   // Circles are curved — strong signal
+
+        // Hand-drawn circles often have minor sharp turns — only penalize heavily if very spiky
+        if (f.spikyStrokes == 0) score += 0.1f;
+        else score *= 0.7f;    // Mild penalty (hand-drawn imperfection is expected)
 
         float ar = f.aspectRatio;
-        if (ar > 0.6f && ar < 1.6f) score += 0.15f; // Roughly round
+        if (ar > 0.6f && ar < 1.6f) score += 0.1f; // Roughly round
 
         return Mathf.Clamp01(score);
     }
@@ -399,17 +396,18 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 4) score += 0.15f;
         else return 0.05f;
 
-        // Should be closed (like circular) AND have sharp corners (spiky)
-        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.45f;
-        else if (f.circularStrokes >= 1) score += 0.15f;
+        // Must be closed AND have sharp corners — both required
+        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;
         else if (f.spikyStrokes >= 1) score += 0.15f;
+        else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
 
         // Roughly square aspect ratio
         float ar = f.aspectRatio;
-        if (ar > 0.6f && ar < 1.6f) score += 0.2f;
+        if (ar > 0.6f && ar < 1.6f) score += 0.15f;
 
-        // Angular, not smooth curves
-        if (f.curvedStrokes == 0) score += 0.1f;
+        // Squares have straight edges — curved strokes strongly suggest circle, not square
+        if (f.curvedStrokes == 0) score += 0.2f;
+        else score *= 0.5f;    // Curved = probably a circle, not a square
 
         return Mathf.Clamp01(score);
     }
@@ -423,16 +421,17 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f;
         else return 0.05f;
 
-        // Closed + sharp corners
-        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.45f;
-        else if (f.circularStrokes >= 1) score += 0.15f;
+        // Closed + sharp corners — both required
+        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;
         else if (f.spikyStrokes >= 1) score += 0.15f;
+        else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
 
         // Triangles are often pointy (taller)
         if (f.aspectRatio > 0.7f) score += 0.15f;
 
-        // Angular, not smooth
-        if (f.curvedStrokes == 0) score += 0.1f;
+        // Triangles have straight edges — curved strokes suggest circle
+        if (f.curvedStrokes == 0) score += 0.2f;
+        else score *= 0.5f;    // Curved = probably a circle, not a triangle
 
         return Mathf.Clamp01(score);
     }
