@@ -327,10 +327,28 @@ public class PythonDownloader
                     Debug.Log("[PythonDownloader] Status: " + response.StatusCode
                         + ", Content-Length: " + (contentLength.HasValue ? (contentLength.Value / 1024 / 1024) + " MB" : "unknown"));
 
+                    long totalBytes = contentLength ?? 0;
                     using (var stream = await response.Content.ReadAsStreamAsync())
                     using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
-                        await stream.CopyToAsync(fileStream);
+                        byte[] buffer = new byte[81920];
+                        long totalRead = 0;
+                        int lastPercent = -1;
+                        int bytesRead;
+                        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        {
+                            await fileStream.WriteAsync(buffer, 0, bytesRead);
+                            totalRead += bytesRead;
+                            if (totalBytes > 0)
+                            {
+                                int percent = (int)(totalRead * 100 / totalBytes);
+                                if (percent / 10 > lastPercent / 10)
+                                {
+                                    lastPercent = percent;
+                                    Debug.Log("[PythonDownloader] Download progress: " + percent + "% (" + (totalRead / 1024 / 1024) + " / " + (totalBytes / 1024 / 1024) + " MB)");
+                                }
+                            }
+                        }
                     }
 
                     long fileSize = new FileInfo(tempZip).Length;
