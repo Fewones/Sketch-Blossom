@@ -15,7 +15,7 @@ namespace SketchBlossom.Battle
         [SerializeField] private RectTransform _drawingArea;
         [SerializeField] private Canvas canvas;
         [Range(1f, 200f)]
-        [SerializeField] private float lineWidth = 20f; // Very thick strokes for visible attack animations
+        [SerializeField] private float lineWidth = 8f; // Thick enough to see, thin enough for CLIP to distinguish shapes
         [SerializeField] private Color drawingColor = Color.black;
 
         [Header("UI Drawing")]

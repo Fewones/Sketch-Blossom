@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Detects which move the player drew during battle
-/// Analyzes drawing patterns to match type-specific moves.
+/// Detects which move the player drew during battle.
+/// Uses DrawingShape from MoveData to match geometric patterns, ensuring
+/// each plant's moves are drawn with distinct, non-confusable shapes.
 /// Supports an optional TinyCLIP shape hint to boost recognition accuracy.
 /// </summary>
 public class MovesetDetector : MonoBehaviour
@@ -15,8 +16,6 @@ public class MovesetDetector : MonoBehaviour
 
     /// <summary>
     /// Shape label returned by TinyCLIP for the player's drawn gesture.
-    /// shapeLabel must match a key in the move_shapes label map (e.g. "circle", "wave").
-    /// confidence is the cosine-similarity score from TinyCLIP (0-1).
     /// </summary>
     public struct CLIPMoveHint
     {
@@ -24,23 +23,24 @@ public class MovesetDetector : MonoBehaviour
         public float confidence;
     }
 
-    // Maps each TinyCLIP shape label to the move types it represents.
-    // When TinyCLIP recognises one of these shapes the matching moves get
-    // a large score bonus, making recognition far more robust than pure
-    // geometric heuristics alone.
-    private static readonly Dictionary<string, MoveData.MoveType[]> shapeToMoveTypes =
-        new Dictionary<string, MoveData.MoveType[]>
+    // Maps TinyCLIP shape labels (from labelMaps.json) to DrawingShapes for CLIP boost.
+    // Keys must exactly match the values in labelMaps.json "move_shapes".
+    private static readonly Dictionary<string, MoveData.DrawingShape[]> shapeLabelToDrawingShapes =
+        new Dictionary<string, MoveData.DrawingShape[]>
         {
-            { "fireball",      new[] { MoveData.MoveType.Fireball } },
-            { "flame_wave",    new[] { MoveData.MoveType.FlameWave } },
-            { "zigzag",        new[] { MoveData.MoveType.Burn } },
-            { "curved_line",   new[] { MoveData.MoveType.VineWhip } },
-            { "scattered",     new[] { MoveData.MoveType.LeafStorm } },
-            { "downward_lines",new[] { MoveData.MoveType.RootAttack } },
-            { "water_splash",  new[] { MoveData.MoveType.WaterSplash } },
-            { "bubbles",       new[] { MoveData.MoveType.Bubble } },
-            { "healing_wave",  new[] { MoveData.MoveType.HealingWave } },
-            { "shield",        new[] { MoveData.MoveType.Block } },
+            { "circle",           new[] { MoveData.DrawingShape.Circle } },
+            { "straight_line",    new[] { MoveData.DrawingShape.StraightLine } },
+            { "zigzag",           new[] { MoveData.DrawingShape.Zigzag } },
+            { "wavy_line",        new[] { MoveData.DrawingShape.WavyLine } },
+            { "plus",             new[] { MoveData.DrawingShape.Plus } },
+            { "x_cross",          new[] { MoveData.DrawingShape.XCross } },
+            { "arrow",            new[] { MoveData.DrawingShape.Arrow } },
+            { "multiple_circles", new[] { MoveData.DrawingShape.MultipleCircles } },
+            { "star",             new[] { MoveData.DrawingShape.Star } },
+            { "square",           new[] { MoveData.DrawingShape.Square } },
+            { "triangle",         new[] { MoveData.DrawingShape.Triangle } },
+            { "checkmark",        new[] { MoveData.DrawingShape.Checkmark } },
+            { "spiral",           new[] { MoveData.DrawingShape.Spiral } },
         };
 
     public class MoveDetectionResult
@@ -74,9 +74,8 @@ public class MovesetDetector : MonoBehaviour
     }
 
     /// <summary>
-    /// Detect which move was drawn, using a TinyCLIP shape hint to boost accuracy.
-    /// When clipHint.confidence is high the recognised shape strongly biases the
-    /// result; when it is low the system falls back to pure geometric heuristics.
+    /// Detect which move was drawn, using DrawingShape for per-move shape detection
+    /// and an optional TinyCLIP hint to boost accuracy.
     /// </summary>
     public MoveDetectionResult DetectMoveWithCLIP(
         List<LineRenderer> strokes,
@@ -89,10 +88,9 @@ public class MovesetDetector : MonoBehaviour
             return CreateFailedResult();
         }
 
-        Debug.Log($"=== CLIP-ASSISTED MOVE DETECTION for {plantType} ===");
+        Debug.Log($"=== CLIP-PRIMARY MOVE DETECTION for {plantType} ===");
         Debug.Log($"CLIP hint: shape='{clipHint.shapeLabel}' confidence={clipHint.confidence:F2}");
 
-        DrawingFeatures features = ExtractFeatures(strokes);
         MoveData[] availableMoves = MoveData.GetMovesForPlant(plantType);
         if (availableMoves.Length == 0)
         {
@@ -100,31 +98,51 @@ public class MovesetDetector : MonoBehaviour
             return CreateFailedResult();
         }
 
-        // Determine which move types the CLIP shape hint supports.
-        MoveData.MoveType[] clipSupportedTypes = null;
+        // Determine which DrawingShapes the CLIP hint supports.
+        MoveData.DrawingShape[] clipSupportedShapes = null;
         bool hasCLIPHint = !string.IsNullOrEmpty(clipHint.shapeLabel) &&
-                           shapeToMoveTypes.TryGetValue(clipHint.shapeLabel, out clipSupportedTypes);
+                           shapeLabelToDrawingShapes.TryGetValue(clipHint.shapeLabel, out clipSupportedShapes);
 
         MoveDetectionResult result = new MoveDetectionResult();
 
-        foreach (var moveData in availableMoves)
+        if (hasCLIPHint)
         {
-            // Base geometric score (same logic as before).
-            float geometricScore = CalculateMoveScore(moveData.moveType, features);
-
-            // CLIP boost: scale with confidence so a low-confidence hint has
-            // little influence while a high-confidence hit dominates.
-            float clipBoost = 0f;
-            if (hasCLIPHint && System.Array.IndexOf(clipSupportedTypes, moveData.moveType) >= 0)
+            // ── CLIP IS PRIMARY ──
+            // TinyCLIP compares the drawing against all 13 shape descriptions and
+            // returns the best match.  Because probability is spread across 13
+            // labels, even a correct match may only reach 25-40% raw confidence.
+            // We normalize by multiplying by 2.5 so that a strong CLIP signal
+            // (e.g. 0.33 → 0.83) comfortably exceeds the confidence threshold,
+            // while weak/random matches (e.g. 0.10 → 0.25) still fail.
+            float normalizedClip = Mathf.Clamp01(clipHint.confidence * 2.5f);
+            foreach (var moveData in availableMoves)
             {
-                // Max boost of 0.6 at full CLIP confidence.
-                clipBoost = clipHint.confidence * 0.6f;
+                float score;
+                if (System.Array.IndexOf(clipSupportedShapes, moveData.drawingShape) >= 0)
+                {
+                    score = normalizedClip;
+                }
+                else
+                {
+                    score = 0.1f;  // Non-matching moves get a low baseline
+                }
+                result.scores[moveData.moveType] = score;
+                Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): clip_raw={clipHint.confidence:F2} normalized={score:F2}");
             }
+        }
+        else
+        {
+            // ── GEOMETRIC FALLBACK ──
+            // Only used when TinyCLIP server is unavailable or returned no result.
+            Debug.Log("CLIP unavailable — falling back to geometric detection");
+            DrawingFeatures features = ExtractFeatures(strokes);
 
-            float combinedScore = Mathf.Clamp01(geometricScore + clipBoost);
-            result.scores[moveData.moveType] = combinedScore;
-
-            Debug.Log($"{moveData.moveType}: geometric={geometricScore:F2} clipBoost={clipBoost:F2} total={combinedScore:F2}");
+            foreach (var moveData in availableMoves)
+            {
+                float geometricScore = CalculateShapeScore(moveData.drawingShape, features);
+                result.scores[moveData.moveType] = geometricScore;
+                Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): geometric={geometricScore:F2}");
+            }
         }
 
         var bestMatch = result.scores.OrderByDescending(x => x.Value).First();
@@ -134,10 +152,12 @@ public class MovesetDetector : MonoBehaviour
         if (result.confidence >= confidenceThreshold)
         {
             result.wasRecognized = true;
-            result.quality = CalculateDrawingQuality(strokes, result.detectedMove);
+            // Use detection confidence as quality: better recognized = better attack
+            // Map confidence from [threshold..1] to [0..1] so barely-recognized moves start low
+            result.quality = Mathf.InverseLerp(confidenceThreshold, 1f, result.confidence);
             result.damageMultiplier = Mathf.Lerp(0.5f, 1.5f, result.quality);
             result.qualityRating = GetQualityRating(result.quality);
-            Debug.Log($"✅ CLIP-ASSISTED MOVE RECOGNIZED: {result}");
+            Debug.Log($"✅ MOVE RECOGNIZED: {result}");
         }
         else
         {
@@ -148,299 +168,349 @@ public class MovesetDetector : MonoBehaviour
         return result;
     }
 
-    /// <summary>
-    /// Calculate how well the drawing matches a specific move
-    /// </summary>
-    private float CalculateMoveScore(MoveData.MoveType moveType, DrawingFeatures features)
+    // ═══════════════════════════════════════════════════════════════════
+    // SHAPE DETECTION - One function per DrawingShape
+    // ═══════════════════════════════════════════════════════════════════
+
+    private float CalculateShapeScore(MoveData.DrawingShape shape, DrawingFeatures f)
     {
-        switch (moveType)
+        switch (shape)
         {
-            // UNIVERSAL MOVES
-            case MoveData.MoveType.Block:
-                return CalculateBlockScore(features);
-
-            // FIRE MOVES
-            case MoveData.MoveType.Fireball:
-                return CalculateFireballScore(features);
-            case MoveData.MoveType.FlameWave:
-                return CalculateFlameWaveScore(features);
-            case MoveData.MoveType.Burn:
-                return CalculateBurnScore(features);
-
-            // GRASS MOVES
-            case MoveData.MoveType.VineWhip:
-                return CalculateVineWhipScore(features);
-            case MoveData.MoveType.LeafStorm:
-                return CalculateLeafStormScore(features);
-            case MoveData.MoveType.RootAttack:
-                return CalculateRootAttackScore(features);
-
-            // WATER MOVES
-            case MoveData.MoveType.WaterSplash:
-                return CalculateWaterSplashScore(features);
-            case MoveData.MoveType.Bubble:
-                return CalculateBubbleScore(features);
-            case MoveData.MoveType.HealingWave:
-                return CalculateHealingWaveScore(features);
-
-            default:
-                return 0f;
+            case MoveData.DrawingShape.Circle:          return ScoreCircle(f);
+            case MoveData.DrawingShape.StraightLine:    return ScoreStraightLine(f);
+            case MoveData.DrawingShape.Zigzag:          return ScoreZigzag(f);
+            case MoveData.DrawingShape.WavyLine:        return ScoreWavyLine(f);
+            case MoveData.DrawingShape.Plus:             return ScorePlus(f);
+            case MoveData.DrawingShape.XCross:           return ScoreXCross(f);
+            case MoveData.DrawingShape.Arrow:            return ScoreArrow(f);
+            case MoveData.DrawingShape.MultipleCircles:  return ScoreMultipleCircles(f);
+            case MoveData.DrawingShape.Star:             return ScoreStar(f);
+            case MoveData.DrawingShape.Square:           return ScoreSquare(f);
+            case MoveData.DrawingShape.Triangle:         return ScoreTriangle(f);
+            case MoveData.DrawingShape.Checkmark:        return ScoreCheckmark(f);
+            case MoveData.DrawingShape.Spiral:           return ScoreSpiral(f);
+            default: return 0f;
         }
     }
 
-    // ===== UNIVERSAL MOVE DETECTION =====
-
-    /// <summary>
-    /// Block: Very easy - any simple closed shape (circle, square, etc.)
-    /// This is the easiest move to recognize!
-    /// </summary>
-    private float CalculateBlockScore(DrawingFeatures f)
+    /// <summary> Circle: single closed round stroke </summary>
+    private float ScoreCircle(DrawingFeatures f)
     {
         float score = 0f;
+        if (f.strokeCount == 1) score += 0.25f;
+        else if (f.strokeCount == 2) score += 0.1f;
+        else return 0.05f;
 
-        // Should be 1-3 strokes (simple shape)
-        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.3f;
-        else if (f.strokeCount <= 5) score += 0.15f;  // Still okay
+        if (f.circularStrokes >= 1) score += 0.4f;
+        if (f.curvedStrokes >= 1) score += 0.2f;   // Circles are curved — strong signal
 
-        // Prefer compact shapes
-        float avgSize = (f.width + f.height) / 2f;
-        if (avgSize < 4f) score += 0.2f;
+        // Hand-drawn circles often have minor sharp turns — only penalize heavily if very spiky
+        if (f.spikyStrokes == 0) score += 0.1f;
+        else score *= 0.7f;    // Mild penalty (hand-drawn imperfection is expected)
 
-        // Bonus for circular strokes (easiest to draw)
-        if (f.circularStrokes >= 1) score += 0.3f;
-
-        // Block is still forgiving but won't dominate other moves
-        // Reduced from 0.4f to 0.15f to act as a true fallback
-        score = Mathf.Max(score, 0.15f);
+        float ar = f.aspectRatio;
+        if (ar > 0.6f && ar < 1.6f) score += 0.1f; // Roughly round
 
         return Mathf.Clamp01(score);
     }
 
-    // ===== FIRE MOVE DETECTION =====
-
-    /// <summary>
-    /// Fireball: Single circular/oval shape
-    /// </summary>
-    private float CalculateFireballScore(DrawingFeatures f)
+    /// <summary> StraightLine: single straight open stroke </summary>
+    private float ScoreStraightLine(DrawingFeatures f)
     {
         float score = 0f;
+        if (f.strokeCount == 1) score += 0.4f;
+        else if (f.strokeCount == 2) score += 0.1f;
+        else return 0f;
 
-        // Should be 1-2 strokes (circle with optional tail)
-        if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
+        if (f.circularStrokes == 0) score += 0.2f;
+        else score *= 0.2f;
+        if (f.spikyStrokes == 0) score += 0.15f;
+        else score *= 0.3f;
+        if (f.curvedStrokes == 0) score += 0.2f;
+        else score *= 0.5f;
 
-        // Strong bonus for circular shape
-        if (f.circularStrokes >= 1) score += 0.5f;
-        else if (f.strokeCount <= 2) score += 0.1f; // Partial credit for simple strokes
-
-        // Should be compact (not too spread out)
         float size = Mathf.Max(f.width, f.height);
-        if (size < 3f) score += 0.2f;
+        if (size > 0.5f) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
 
-    /// <summary>
-    /// Flame Wave: Horizontal wavy pattern
-    /// </summary>
-    private float CalculateFlameWaveScore(DrawingFeatures f)
+    /// <summary> Zigzag: single stroke with many sharp turns, elongated and OPEN </summary>
+    private float ScoreZigzag(DrawingFeatures f)
+    {
+        float score = 0f;
+        if (f.spikyStrokes >= 1) score += 0.4f;
+        if (f.spikyStrokes >= 2) score += 0.15f;
+
+        // Zigzags are OPEN (not closed) — strongly penalize closed shapes (that's a square/triangle)
+        if (f.circularStrokes > 0) score *= 0.2f;
+
+        // 1-2 strokes preferred
+        if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.15f;
+        else if (f.strokeCount <= 4) score += 0.05f;
+
+        // Zigzags are elongated — wider OR taller than they are round
+        // Square-ish aspect ratio (0.7-1.4) suggests a closed shape, not a zigzag
+        if (f.aspectRatio < 0.5f || f.aspectRatio > 2.0f) score += 0.2f;
+        else if (f.aspectRatio < 0.7f || f.aspectRatio > 1.4f) score += 0.1f;
+
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary> WavyLine: single curved horizontal stroke </summary>
+    private float ScoreWavyLine(DrawingFeatures f)
     {
         float score = 0f;
 
-        // Should be horizontal (wide, not tall)
+        // Should be curved
+        if (f.curvedStrokes >= 1) score += 0.4f;
+
+        // Should be horizontal (wider than tall)
         if (f.aspectRatio < 0.7f) score += 0.3f;
+        else if (f.aspectRatio < 1.0f) score += 0.15f;
 
-        // Horizontal strokes
-        if (f.horizontalStrokes >= 1) score += 0.3f;
+        if (f.horizontalStrokes >= 1) score += 0.15f;
 
-        // Wavy/curved pattern
-        if (f.curvedStrokes >= 1) score += 0.3f;
+        // Should NOT be spiky or circular
+        if (f.spikyStrokes > 0) score *= 0.4f;
+        if (f.circularStrokes > 0) score *= 0.4f;
 
-        // Penalty for circular shapes
-        if (f.circularStrokes > 0) score *= 0.5f;
+        // 1-2 strokes
+        if (f.strokeCount <= 2) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
 
-    /// <summary>
-    /// Burn: Zigzag or angular pattern
-    /// </summary>
-    private float CalculateBurnScore(DrawingFeatures f)
+    /// <summary> Plus: two crossing strokes, one horizontal + one vertical </summary>
+    private float ScorePlus(DrawingFeatures f)
     {
         float score = 0f;
 
-        // Strong bonus for sharp turns (spiky)
-        if (f.spikyStrokes >= 1) score += 0.5f;
-        else if (f.strokeCount >= 2) score += 0.15f; // Partial credit for multiple strokes
+        // Must be exactly 2 strokes
+        if (f.strokeCount == 2) score += 0.35f;
+        else if (f.strokeCount == 3) score += 0.1f;
+        else return 0.05f;
 
-        // Can be vertical or diagonal
-        if (f.verticalStrokes >= 1 || f.spikyStrokes >= 2) score += 0.3f;
+        // One horizontal + one vertical
+        if (f.horizontalStrokes >= 1 && f.verticalStrokes >= 1) score += 0.4f;
+        else if (f.horizontalStrokes >= 1 || f.verticalStrokes >= 1) score += 0.15f;
 
-        // Penalty for circular shapes
+        // Roughly square proportions
+        float ar = f.aspectRatio;
+        if (ar > 0.5f && ar < 2.0f) score += 0.15f;
+
+        // Should NOT be circular
         if (f.circularStrokes > 0) score *= 0.3f;
 
-        // Bonus for multiple sharp strokes
-        if (f.spikyStrokes >= 2) score += 0.2f;
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary> XCross: two crossing diagonal strokes </summary>
+    private float ScoreXCross(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // Must be exactly 2 strokes
+        if (f.strokeCount == 2) score += 0.35f;
+        else if (f.strokeCount == 3) score += 0.1f;
+        else return 0.05f;
+
+        // X strokes are diagonal - neither purely H nor purely V
+        // If both are classified as neither, that's a good sign
+        bool hasDiagonal = (f.horizontalStrokes == 0 && f.verticalStrokes == 0);
+        if (hasDiagonal) score += 0.4f;
+        else if (f.horizontalStrokes + f.verticalStrokes <= 1) score += 0.2f;
+
+        // Roughly square proportions
+        float ar = f.aspectRatio;
+        if (ar > 0.5f && ar < 2.0f) score += 0.15f;
+
+        // Should NOT be circular
+        if (f.circularStrokes > 0) score *= 0.3f;
 
         return Mathf.Clamp01(score);
     }
 
-    // ===== GRASS MOVE DETECTION =====
-
-    /// <summary>
-    /// Vine Whip: Curved/spiral single line
-    /// </summary>
-    private float CalculateVineWhipScore(DrawingFeatures f)
+    /// <summary> Arrow: 2-3 strokes with a line + V tip (sharp pointed structure) </summary>
+    private float ScoreArrow(DrawingFeatures f)
     {
         float score = 0f;
 
-        // Should be 1-2 strokes
-        if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.3f;
+        // 2-3 strokes (shaft + head)
+        if (f.strokeCount >= 2 && f.strokeCount <= 3) score += 0.35f;
+        else if (f.strokeCount == 1 && f.spikyStrokes >= 1) score += 0.15f;
+        else return 0.05f;
 
-        // Strong bonus for curved strokes
-        if (f.curvedStrokes >= 1) score += 0.4f;
-        else if (f.strokeCount <= 3) score += 0.1f; // Partial credit for few strokes
+        // Arrow tip creates sharp angles
+        if (f.spikyStrokes >= 1) score += 0.3f;
 
-        // Should be elongated (not compact)
-        if (f.aspectRatio > 0.8f && f.aspectRatio < 2.0f) score += 0.2f;
+        // Should be directional (wider or taller than round)
+        if (f.aspectRatio < 0.7f || f.aspectRatio > 1.4f) score += 0.15f;
 
-        // Penalty for circular (vine whips don't close)
-        if (f.circularStrokes > 0) score *= 0.5f;
+        // Should NOT be circular
+        if (f.circularStrokes > 0) score *= 0.3f;
+
+        // Some size
+        float size = Mathf.Max(f.width, f.height);
+        if (size > 0.5f) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
 
-    /// <summary>
-    /// Leaf Storm: Multiple short strokes scattered
-    /// </summary>
-    private float CalculateLeafStormScore(DrawingFeatures f)
+    /// <summary> MultipleCircles: 3+ small circular strokes </summary>
+    private float ScoreMultipleCircles(DrawingFeatures f)
     {
         float score = 0f;
 
-        // Should have many strokes (3+)
-        if (f.strokeCount >= 5) score += 0.4f;
-        else if (f.strokeCount >= 3) score += 0.25f;
-        else if (f.strokeCount >= 2) score += 0.1f; // Partial credit for some strokes
+        if (f.circularStrokes >= 3) score += 0.5f;
+        else if (f.circularStrokes >= 2) score += 0.3f;
+        else if (f.circularStrokes >= 1) score += 0.1f;
 
-        // Strokes should be relatively short/scattered
-        if (f.strokeCount >= 4) score += 0.3f;
+        if (f.strokeCount >= 3) score += 0.3f;
+        else if (f.strokeCount >= 2) score += 0.1f;
 
-        // Mix of directions (not all same direction)
-        if (f.horizontalStrokes >= 1 && f.verticalStrokes >= 1) score += 0.2f;
-        else if (f.horizontalStrokes >= 1 || f.verticalStrokes >= 1) score += 0.1f;
-
-        // Penalty for circular shapes
-        if (f.circularStrokes > 0) score *= 0.6f;
-
-        return Mathf.Clamp01(score);
-    }
-
-    /// <summary>
-    /// Root Attack: Vertical downward lines
-    /// </summary>
-    private float CalculateRootAttackScore(DrawingFeatures f)
-    {
-        float score = 0f;
-
-        // Should be tall (high aspect ratio)
-        if (f.aspectRatio > 1.2f) score += 0.3f;
-        else if (f.aspectRatio > 0.9f) score += 0.1f; // Partial credit
-
-        // Strong bonus for vertical strokes
-        if (f.verticalStrokes >= 1) score += 0.4f;
-        else if (f.strokeCount >= 1) score += 0.1f; // Partial credit for any strokes
-
-        // Bonus for multiple vertical strokes
-        if (f.verticalStrokes >= 2) score += 0.2f;
-
-        // Penalty for horizontal dominance
-        if (f.horizontalStrokes > f.verticalStrokes) score *= 0.5f;
-
-        // Penalty for circular
-        if (f.circularStrokes > 0) score *= 0.5f;
-
-        return Mathf.Clamp01(score);
-    }
-
-    // ===== WATER MOVE DETECTION =====
-
-    /// <summary>
-    /// Water Splash: Upward wavy lines
-    /// </summary>
-    private float CalculateWaterSplashScore(DrawingFeatures f)
-    {
-        float score = 0f;
-
-        // Should have curved/wavy strokes
-        if (f.curvedStrokes >= 1) score += 0.4f;
-
-        // Can be vertical or mixed direction
-        if (f.verticalStrokes >= 1 || (f.horizontalStrokes >= 1 && f.curvedStrokes >= 1)) score += 0.3f;
-
-        // Multiple strokes for splash effect
-        if (f.strokeCount >= 2 && f.strokeCount <= 5) score += 0.2f;
-
-        // Penalty for being too horizontal
-        if (f.aspectRatio < 0.5f) score *= 0.6f;
-
-        return Mathf.Clamp01(score);
-    }
-
-    /// <summary>
-    /// Bubble: Small circular shapes
-    /// </summary>
-    private float CalculateBubbleScore(DrawingFeatures f)
-    {
-        float score = 0f;
-
-        // Strong bonus for circular strokes
-        if (f.circularStrokes >= 1) score += 0.5f;
-        else if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f; // Partial credit for simple strokes
-
-        // Bonus for multiple circles
-        if (f.circularStrokes >= 2) score += 0.3f;
-
-        // Should be relatively small/compact
+        // Spread out area suggests multiple shapes
         float avgSize = (f.width + f.height) / 2f;
-        if (avgSize < 4f) score += 0.2f;
+        if (avgSize > 1f) score += 0.15f;
 
-        return Mathf.Clamp01(score);
-    }
-
-    /// <summary>
-    /// Healing Wave: Smooth horizontal wave
-    /// </summary>
-    private float CalculateHealingWaveScore(DrawingFeatures f)
-    {
-        float score = 0f;
-
-        // Should be horizontal and wide
-        if (f.aspectRatio < 0.8f) score += 0.3f;
-        else if (f.aspectRatio < 1.2f) score += 0.1f; // Partial credit
-
-        // Strong bonus for horizontal strokes
-        if (f.horizontalStrokes >= 1) score += 0.3f;
-        else if (f.curvedStrokes >= 1) score += 0.15f; // Partial credit for curved
-
-        // Should be smooth/curved
-        if (f.curvedStrokes >= 1) score += 0.3f;
-
-        // Penalty for spiky (healing is smooth)
+        // Penalty for spiky (circles shouldn't be angular)
         if (f.spikyStrokes > 0) score *= 0.5f;
 
-        // Penalty for circular
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary> Star: 3+ strokes radiating outward from center </summary>
+    private float ScoreStar(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // Needs multiple strokes
+        if (f.strokeCount >= 4) score += 0.35f;
+        else if (f.strokeCount >= 3) score += 0.25f;
+        else return 0.05f;
+
+        // Mix of directions (radiating pattern)
+        if (f.horizontalStrokes >= 1 && f.verticalStrokes >= 1) score += 0.25f;
+        else if (f.horizontalStrokes >= 1 || f.verticalStrokes >= 1) score += 0.1f;
+
+        // Roughly equal width/height (radiating pattern)
+        float ar = f.aspectRatio;
+        if (ar > 0.5f && ar < 2.0f) score += 0.15f;
+
+        // Should NOT be circular (star arms are open)
         if (f.circularStrokes > 0) score *= 0.5f;
+
+        // Bonus for varied stroke types
+        if (f.spikyStrokes >= 1 || f.curvedStrokes >= 1) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
 
-    // ===== FEATURE EXTRACTION =====
+    /// <summary> Square: closed shape with sharp corners, roughly equal aspect </summary>
+    private float ScoreSquare(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // 1 stroke (continuous) or up to 4 (sides)
+        if (f.strokeCount >= 1 && f.strokeCount <= 4) score += 0.15f;
+        else return 0.05f;
+
+        // Sharp corners are the key feature — even imperfectly closed squares have corners
+        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;   // Perfect: closed + corners
+        else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed or open square — still recognizable
+        else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
+
+        // Roughly square aspect ratio — key differentiator from zigzag (which is elongated)
+        float ar = f.aspectRatio;
+        if (ar > 0.6f && ar < 1.6f) score += 0.15f;
+
+        // Squares have straight edges — curved strokes strongly suggest circle, not square
+        if (f.curvedStrokes == 0) score += 0.2f;
+        else score *= 0.5f;
+
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary> Triangle: closed shape with 3 sharp corners </summary>
+    private float ScoreTriangle(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // 1 stroke (continuous) or 3 (sides)
+        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f;
+        else return 0.05f;
+
+        // Sharp corners are the key feature — even imperfectly closed triangles have corners
+        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;   // Perfect: closed + corners
+        else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed — still recognizable
+        else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
+
+        // Triangles are often pointy (taller)
+        if (f.aspectRatio > 0.7f) score += 0.15f;
+
+        // Triangles have straight edges — curved strokes suggest circle
+        if (f.curvedStrokes == 0) score += 0.2f;
+        else score *= 0.5f;
+
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary> Checkmark: V-shaped single stroke with one sharp turn </summary>
+    private float ScoreCheckmark(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // 1 stroke ideally
+        if (f.strokeCount == 1) score += 0.35f;
+        else if (f.strokeCount == 2) score += 0.15f;
+        else return 0.05f;
+
+        // Has at least one sharp turn (the V point)
+        if (f.spikyStrokes >= 1) score += 0.35f;
+
+        // Should NOT be closed
+        if (f.circularStrokes == 0) score += 0.15f;
+        else score *= 0.3f;
+
+        // V shape typically wider than tall
+        if (f.aspectRatio < 1.5f) score += 0.1f;
+
+        return Mathf.Clamp01(score);
+    }
+
+    /// <summary> Spiral: single curved stroke (open or closed) </summary>
+    private float ScoreSpiral(DrawingFeatures f)
+    {
+        float score = 0f;
+
+        // Should be 1 stroke
+        if (f.strokeCount == 1) score += 0.3f;
+        else if (f.strokeCount == 2) score += 0.1f;
+        else return 0.05f;
+
+        // Must be curved — this is the defining feature
+        if (f.curvedStrokes >= 1) score += 0.45f;
+
+        // Spirals can be open or closed — accept both, slight bonus for open
+        if (f.circularStrokes == 0 && f.curvedStrokes >= 1) score += 0.15f;
+        else if (f.circularStrokes >= 1 && f.curvedStrokes >= 1) score += 0.1f;
+
+        // Should NOT be spiky
+        if (f.spikyStrokes == 0) score += 0.1f;
+        else score *= 0.5f;
+
+        return Mathf.Clamp01(score);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FEATURE EXTRACTION
+    // ═══════════════════════════════════════════════════════════════════
 
     private DrawingFeatures ExtractFeatures(List<LineRenderer> strokes)
     {
         DrawingFeatures features = new DrawingFeatures();
         List<Vector3> allPoints = new List<Vector3>();
 
-        // Collect all points
         foreach (var stroke in strokes)
         {
             if (stroke == null) continue;
@@ -451,7 +521,6 @@ public class MovesetDetector : MonoBehaviour
 
         if (allPoints.Count == 0) return features;
 
-        // Calculate bounding box
         float minX = allPoints.Min(p => p.x);
         float maxX = allPoints.Max(p => p.x);
         float minY = allPoints.Min(p => p.y);
@@ -462,7 +531,6 @@ public class MovesetDetector : MonoBehaviour
         features.aspectRatio = features.height / Mathf.Max(features.width, 0.001f);
         features.strokeCount = strokes.Count;
 
-        // Analyze stroke patterns
         features.circularStrokes = CountCircularStrokes(strokes);
         features.verticalStrokes = CountVerticalStrokes(strokes);
         features.horizontalStrokes = CountHorizontalStrokes(strokes);
@@ -475,7 +543,9 @@ public class MovesetDetector : MonoBehaviour
         return features;
     }
 
-    // ===== FEATURE DETECTION HELPERS =====
+    // ═══════════════════════════════════════════════════════════════════
+    // FEATURE DETECTION HELPERS
+    // ═══════════════════════════════════════════════════════════════════
 
     private int CountCircularStrokes(List<LineRenderer> strokes)
     {
@@ -483,7 +553,6 @@ public class MovesetDetector : MonoBehaviour
         foreach (var stroke in strokes)
         {
             if (stroke == null || stroke.positionCount < 8) continue;
-
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
@@ -491,9 +560,7 @@ public class MovesetDetector : MonoBehaviour
             float totalLength = CalculateStrokeLength(positions);
 
             if (startEndDist < totalLength * 0.35f && totalLength > 0.5f)
-            {
                 count++;
-            }
         }
         return count;
     }
@@ -504,18 +571,14 @@ public class MovesetDetector : MonoBehaviour
         foreach (var stroke in strokes)
         {
             if (stroke == null || stroke.positionCount < 3) continue;
-
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
             float verticalExtent = Mathf.Abs(positions[positions.Length - 1].y - positions[0].y);
             float horizontalExtent = Mathf.Abs(positions[positions.Length - 1].x - positions[0].x);
 
-            // Relaxed from 1.3x to 1.1x to be more forgiving
             if (verticalExtent > horizontalExtent * 1.1f)
-            {
                 count++;
-            }
         }
         return count;
     }
@@ -526,18 +589,14 @@ public class MovesetDetector : MonoBehaviour
         foreach (var stroke in strokes)
         {
             if (stroke == null || stroke.positionCount < 3) continue;
-
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
             float verticalExtent = Mathf.Abs(positions[positions.Length - 1].y - positions[0].y);
             float horizontalExtent = Mathf.Abs(positions[positions.Length - 1].x - positions[0].x);
 
-            // Relaxed from 1.3x to 1.1x to be more forgiving
             if (horizontalExtent > verticalExtent * 1.1f)
-            {
                 count++;
-            }
         }
         return count;
     }
@@ -548,7 +607,6 @@ public class MovesetDetector : MonoBehaviour
         foreach (var stroke in strokes)
         {
             if (stroke == null || stroke.positionCount < 4) continue;
-
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
@@ -558,8 +616,6 @@ public class MovesetDetector : MonoBehaviour
                 Vector3 dir1 = (positions[i] - positions[i - 1]).normalized;
                 Vector3 dir2 = (positions[i + 1] - positions[i]).normalized;
                 float angle = Vector3.Angle(dir1, dir2);
-
-                // Relaxed from 80° to 60° to be more forgiving
                 if (angle > 60f) sharpTurns++;
             }
 
@@ -574,7 +630,6 @@ public class MovesetDetector : MonoBehaviour
         foreach (var stroke in strokes)
         {
             if (stroke == null || stroke.positionCount < 5) continue;
-
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
@@ -586,17 +641,14 @@ public class MovesetDetector : MonoBehaviour
                 Vector3 dir1 = (positions[i] - positions[i - 1]).normalized;
                 Vector3 dir2 = (positions[i + 1] - positions[i]).normalized;
                 float angle = Vector3.Angle(dir1, dir2);
-
                 totalAngleChange += angle;
                 angleCount++;
             }
 
             float avgAngle = angleCount > 0 ? totalAngleChange / angleCount : 0f;
-
-            if (avgAngle > 5f && avgAngle < 45f)
-            {
+            // Accept smooth curves and tighter curves like spirals (up to 60)
+            if (avgAngle > 5f && avgAngle < 60f)
                 count++;
-            }
         }
         return count;
     }
@@ -605,59 +657,55 @@ public class MovesetDetector : MonoBehaviour
     {
         float length = 0f;
         for (int i = 1; i < positions.Length; i++)
-        {
             length += Vector3.Distance(positions[i - 1], positions[i]);
-        }
         return length;
     }
 
-    // ── Quality Scoring ───────────────────────────────────────────────────────
-    // Inlined from the former MoveRecognitionSystem component so that all move
-    // logic lives in one place.
+    // ═══════════════════════════════════════════════════════════════════
+    // QUALITY SCORING
+    // ═══════════════════════════════════════════════════════════════════
 
-    private float CalculateDrawingQuality(List<LineRenderer> strokes, MoveData.MoveType moveType)
+    private float CalculateDrawingQuality(List<LineRenderer> strokes, MoveData.DrawingShape shape)
     {
         if (strokes == null || strokes.Count == 0) return 0f;
         ShapeFeatures sf = AnalyzeShapeFeatures(strokes);
-        float quality = CalculateMoveQuality(moveType, sf);
+        float quality = CalculateShapeQuality(shape, sf);
         return Mathf.Clamp01(quality);
     }
 
-    private float CalculateMoveQuality(MoveData.MoveType moveType, ShapeFeatures f)
+    private float CalculateShapeQuality(MoveData.DrawingShape shape, ShapeFeatures f)
     {
-        switch (moveType)
+        switch (shape)
         {
-            case MoveData.MoveType.Block:
-                return QualityBlock(f);
-            case MoveData.MoveType.Fireball:
-            case MoveData.MoveType.Bubble:
-                return QualityBall(f);
-            case MoveData.MoveType.FlameWave:
-            case MoveData.MoveType.VineWhip:
-                return QualityWave(f);
-            case MoveData.MoveType.Burn:
-                return QualityFire(f);
-            case MoveData.MoveType.RootAttack:
-            case MoveData.MoveType.LeafStorm:
-                return QualityPlantGrowth(f);
-            case MoveData.MoveType.WaterSplash:
-            case MoveData.MoveType.HealingWave:
-                return QualityWater(f);
+            case MoveData.DrawingShape.Circle:
+                return QualityClosedRound(f);
+            case MoveData.DrawingShape.Square:
+            case MoveData.DrawingShape.Triangle:
+                return QualityClosedAngular(f);
+            case MoveData.DrawingShape.StraightLine:
+                return QualityStraightLine(f);
+            case MoveData.DrawingShape.Zigzag:
+                return QualityZigzag(f);
+            case MoveData.DrawingShape.WavyLine:
+            case MoveData.DrawingShape.Spiral:
+                return QualityCurvedLine(f);
+            case MoveData.DrawingShape.Plus:
+            case MoveData.DrawingShape.XCross:
+                return QualityCrossing(f);
+            case MoveData.DrawingShape.Arrow:
+            case MoveData.DrawingShape.Checkmark:
+                return QualityPointed(f);
+            case MoveData.DrawingShape.MultipleCircles:
+                return QualityMultiCircle(f);
+            case MoveData.DrawingShape.Star:
+                return QualityRadial(f);
             default:
                 return QualityGeneric(f);
         }
     }
 
-    private float QualityBlock(ShapeFeatures f)
-    {
-        float s = 0f;
-        s += Mathf.Clamp01(f.compactness * 2f) * 0.4f;
-        s += (1f - Mathf.Clamp01((f.strokeCount - 2) / 5f)) * 0.3f;
-        s += (1f - Mathf.Abs(f.curviness - 0.5f) * 2f) * 0.3f;
-        return Mathf.Clamp01(s);
-    }
-
-    private float QualityBall(ShapeFeatures f)
+    // Closed round shapes (circle) - reward closedness + roundness
+    private float QualityClosedRound(ShapeFeatures f)
     {
         float s = 0f;
         s += (1f - Mathf.Abs(1f - f.aspectRatio)) * 0.4f;
@@ -666,43 +714,93 @@ public class MovesetDetector : MonoBehaviour
         return Mathf.Clamp01(s);
     }
 
-    private float QualityWave(ShapeFeatures f)
+    // Closed angular shapes (square, triangle) - reward closedness + sharpness
+    private float QualityClosedAngular(ShapeFeatures f)
     {
         float s = 0f;
-        s += Mathf.Clamp01(f.aspectRatio - 1f) * 0.4f;
-        s += (1f - f.compactness) * 0.3f;
-        s += f.curviness * 0.3f;
+        s += f.compactness * 0.35f;
+        s += (1f - f.curviness) * 0.3f;   // Reward angular lines
+        s += (1f - Mathf.Clamp01((f.strokeCount - 1) / 4f)) * 0.2f;
+        s += (1f - Mathf.Abs(1f - f.aspectRatio)) * 0.15f;
         return Mathf.Clamp01(s);
     }
 
-    private float QualityFire(ShapeFeatures f)
+    // Straight line - reward straightness + length
+    private float QualityStraightLine(ShapeFeatures f)
     {
         float s = 0f;
-        s += Mathf.Clamp01((1f / Mathf.Max(f.aspectRatio, 0.01f)) - 0.5f) * 0.3f;
-        s += Mathf.Clamp01(f.strokeCount / 5f) * 0.3f;
-        s += Mathf.Clamp01(1f - f.curviness) * 0.2f;
-        s += f.radialness * 0.2f;
+        s += (1f - f.curviness) * 0.4f;
+        s += (1f - Mathf.Clamp01((f.strokeCount - 1) / 3f)) * 0.3f;
+        s += Mathf.Clamp01(f.totalLength / 3f) * 0.3f;
         return Mathf.Clamp01(s);
     }
 
-    private float QualityPlantGrowth(ShapeFeatures f)
+    // Zigzag - reward sharp turns + length
+    private float QualityZigzag(ShapeFeatures f)
     {
         float s = 0f;
-        s += f.branchiness * 0.4f;
-        s += Mathf.Clamp01(f.strokeCount / 4f) * 0.3f;
-        s += f.curviness * 0.3f;
+        s += (1f - f.curviness) * 0.3f;   // Angular
+        s += Mathf.Clamp01(f.strokeCount / 3f) * 0.2f;
+        s += Mathf.Clamp01(f.totalLength / 3f) * 0.3f;
+        s += f.branchiness * 0.2f;
         return Mathf.Clamp01(s);
     }
 
-    private float QualityWater(ShapeFeatures f)
+    // Curved lines (wavy, spiral) - reward smooth curves
+    private float QualityCurvedLine(ShapeFeatures f)
     {
         float s = 0f;
         s += f.curviness * 0.4f;
-        s += (1f - Mathf.Abs(1.5f - f.aspectRatio) / 2f) * 0.3f;
-        s += Mathf.Clamp01(f.strokeCount / 4f) * 0.3f;
+        s += Mathf.Clamp01(f.totalLength / 3f) * 0.3f;
+        s += (1f - Mathf.Clamp01((f.strokeCount - 1) / 3f)) * 0.3f;
         return Mathf.Clamp01(s);
     }
 
+    // Crossing patterns (plus, X) - reward 2 strokes + intersection
+    private float QualityCrossing(ShapeFeatures f)
+    {
+        float s = 0f;
+        // Ideal is 2 strokes
+        s += (f.strokeCount == 2) ? 0.4f : Mathf.Max(0f, 0.3f - Mathf.Abs(f.strokeCount - 2) * 0.1f);
+        s += Mathf.Clamp01(f.totalLength / 3f) * 0.3f;
+        s += (1f - Mathf.Abs(1f - f.aspectRatio)) * 0.3f; // Roughly square proportions
+        return Mathf.Clamp01(s);
+    }
+
+    // Pointed shapes (arrow, checkmark) - reward clean sharp angle
+    private float QualityPointed(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += (1f - f.curviness) * 0.3f;
+        s += Mathf.Clamp01(f.totalLength / 3f) * 0.3f;
+        s += (1f - Mathf.Clamp01((f.strokeCount - 2) / 3f)) * 0.2f;
+        s += f.branchiness * 0.2f;
+        return Mathf.Clamp01(s);
+    }
+
+    // Multiple circles - reward circle count + spread
+    private float QualityMultiCircle(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += Mathf.Clamp01(f.strokeCount / 3f) * 0.35f;
+        s += f.curviness * 0.3f;
+        s += f.compactness * 0.2f;
+        s += (1f - Mathf.Abs(1f - f.aspectRatio)) * 0.15f;
+        return Mathf.Clamp01(s);
+    }
+
+    // Radial patterns (star) - reward many strokes from center
+    private float QualityRadial(ShapeFeatures f)
+    {
+        float s = 0f;
+        s += Mathf.Clamp01(f.strokeCount / 4f) * 0.3f;
+        s += f.radialness * 0.35f;
+        s += f.branchiness * 0.2f;
+        s += Mathf.Clamp01(f.totalLength / 4f) * 0.15f;
+        return Mathf.Clamp01(s);
+    }
+
+    // Generic fallback
     private float QualityGeneric(ShapeFeatures f)
     {
         float s = 0f;
@@ -723,8 +821,9 @@ public class MovesetDetector : MonoBehaviour
         return "Very Poor";
     }
 
-    // ── ShapeFeatures analysis (different from DrawingFeatures; measures
-    //    compactness/curviness/radialness/branchiness rather than stroke counts)
+    // ═══════════════════════════════════════════════════════════════════
+    // SHAPE FEATURES ANALYSIS (for quality scoring)
+    // ═══════════════════════════════════════════════════════════════════
 
     private class ShapeFeatures
     {
@@ -853,7 +952,9 @@ public class MovesetDetector : MonoBehaviour
         };
     }
 
-    // ===== FEATURE DATA STRUCTURE =====
+    // ═══════════════════════════════════════════════════════════════════
+    // FEATURE DATA STRUCTURE
+    // ═══════════════════════════════════════════════════════════════════
 
     private class DrawingFeatures
     {

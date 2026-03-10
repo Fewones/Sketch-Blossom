@@ -176,15 +176,15 @@ namespace SketchBlossom.Battle
             pageList.Add(new MoveGuidePageData
             {
                 title = "⚡ Combat Master Tips",
-                description = "<b>✏️ Drawing Patterns:</b>\n" +
-                             "• <b>Block:</b> 1-3 simple circles\n" +
-                             "• <b>Fireball/Bubble:</b> Perfect circles\n" +
-                             "• <b>Burn:</b> Sharp zigzags (lightning)\n" +
-                             "• <b>VineWhip:</b> Single smooth curve\n" +
-                             "• <b>LeafStorm:</b> 5+ scattered strokes\n" +
-                             "• <b>RootAttack:</b> Vertical lines downward\n" +
-                             "• <b>WaterSplash:</b> Wavy flowing curves\n" +
-                             "• <b>HealingWave:</b> Gentle horizontal waves\n\n" +
+                description = "<b>✏️ Drawing Shape Tips:</b>\n" +
+                             "• <b>Circle:</b> One closed round stroke\n" +
+                             "• <b>Square:</b> Closed box with corners\n" +
+                             "• <b>Triangle:</b> Closed 3-corner shape\n" +
+                             "• <b>Zigzag:</b> Sharp back-and-forth\n" +
+                             "• <b>Spiral:</b> Curved inward/outward swirl\n" +
+                             "• <b>Star:</b> Lines from center outward\n" +
+                             "• <b>Arrow:</b> Line with V-shaped tip\n" +
+                             "• <b>Plus/X:</b> Two crossing lines\n\n" +
                              "<b>⚔️ Type Advantages:</b>\n" +
                              "💧 Water > 🔥 Fire (1.5× damage)\n" +
                              "🔥 Fire > 🌿 Grass (1.5× damage)\n" +
@@ -498,7 +498,7 @@ namespace SketchBlossom.Battle
                     Color previewColor = move.primaryColor;
                     previewColor.a = 1f;
 
-                    Texture2D tex = MoveShapePreview.GeneratePreview(move.moveType, 80, 80, previewColor);
+                    Texture2D tex = MoveShapePreview.GeneratePreview(move.drawingShape, 80, 80, previewColor);
                     activePreviewTextures[i] = tex;
                     moveShapePreviews[i].texture = tex;
                     moveShapePreviews[i].gameObject.SetActive(true);

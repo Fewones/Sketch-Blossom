@@ -62,12 +62,14 @@ namespace SketchBlossom.Battle
         /// <param name="wasRecognized">True if confidence exceeded the acceptance threshold.</param>
         /// <param name="qualityRating">Human-readable quality label (e.g. "Excellent").</param>
         /// <param name="damageMultiplier">Damage multiplier derived from drawing quality.</param>
+        /// <param name="moveNames">Optional map of move type → plant-specific display name.</param>
         public void ShowScores(
             Dictionary<MoveData.MoveType, float> scores,
             MoveData.MoveType detectedMove,
             bool wasRecognized,
             string qualityRating,
-            float damageMultiplier)
+            float damageMultiplier,
+            Dictionary<MoveData.MoveType, string> moveNames = null)
         {
             if (panelRoot == null || contentText == null) return;
 
@@ -89,7 +91,9 @@ namespace SketchBlossom.Battle
                 bool   isMatch = isBest && wasRecognized;
                 float  pct     = Mathf.Clamp01(kv.Value);
                 string bar     = BuildBar(pct);
-                string name    = FriendlyName(kv.Key);
+                string name    = (moveNames != null && moveNames.ContainsKey(kv.Key))
+                                     ? moveNames[kv.Key]
+                                     : FriendlyName(kv.Key);
                 int    pctInt  = Mathf.RoundToInt(pct * 100f);
 
                 string prefix = isMatch ? "✓" : (isBest ? "?" : " ");
@@ -135,6 +139,9 @@ namespace SketchBlossom.Battle
             switch (moveType)
             {
                 case MoveData.MoveType.Block:       return "Block";
+                case MoveData.MoveType.Sting:       return "Sting";
+                case MoveData.MoveType.Cut:         return "Cut";
+                case MoveData.MoveType.Bump:        return "Bump";
                 case MoveData.MoveType.Fireball:    return "Fireball";
                 case MoveData.MoveType.FlameWave:   return "Flame Wave";
                 case MoveData.MoveType.Burn:        return "Burn";

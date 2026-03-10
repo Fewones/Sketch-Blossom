@@ -101,6 +101,10 @@ namespace SketchBlossom.Battle
         private bool playerIsBlocking = false;
         private bool enemyIsBlocking = false;
 
+        // Cooldown tracking: MoveType -> remaining cooldown turns
+        private Dictionary<MoveData.MoveType, int> playerCooldowns = new Dictionary<MoveData.MoveType, int>();
+        private Dictionary<MoveData.MoveType, int> enemyCooldowns = new Dictionary<MoveData.MoveType, int>();
+
         // Multi-plant encounter tracking
         private int enemyArtVariant = 0;
 
@@ -338,9 +342,9 @@ namespace SketchBlossom.Battle
                 drawingCanvas.OnDrawingCompleted += OnDrawingCompleted;
                 drawingCanvas.DisableDrawing();
 
-                // Force thick line width for battle moves
-                drawingCanvas.SetLineWidth(20f);
-                Debug.Log("DrawingBattleSceneManager: Set battle canvas line width to 80 pixels");
+                // Use thin lines so CLIP can distinguish shape details (thick strokes merge into blobs)
+                drawingCanvas.SetLineWidth(8f);
+                Debug.Log("DrawingBattleSceneManager: Set battle canvas line width to 8 pixels for CLIP clarity");
             }
         }
 
@@ -473,6 +477,9 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator PlayerTurn()
         {
+            // Tick down player cooldowns at start of turn
+            TickCooldowns(playerCooldowns);
+
             // Ensure both units are visible at the start of player's turn
             if (playerUnit != null) playerUnit.EnsureVisible();
             if (enemyUnit != null) enemyUnit.EnsureVisible();
@@ -481,6 +488,9 @@ namespace SketchBlossom.Battle
             UpdateActionText("Draw your move!");
             ShowPlayerTurnUI(true);
             if (moveConfidenceDisplay != null) moveConfidenceDisplay.Hide();
+
+            // Update available moves display with cooldown info
+            UpdateAvailableMovesText();
 
             // Enable drawing
             currentState = BattleState.PlayerDrawing;
@@ -525,6 +535,9 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator EnemyTurn()
         {
+            // Tick down enemy cooldowns at start of turn
+            TickCooldowns(enemyCooldowns);
+
             // Ensure both units are visible at the start of enemy's turn
             if (playerUnit != null) playerUnit.EnsureVisible();
             if (enemyUnit != null) enemyUnit.EnsureVisible();
@@ -541,25 +554,8 @@ namespace SketchBlossom.Battle
                 yield break;
             }
 
-            // Simple AI: Pick a random non-defensive move
-            MoveData selectedMove = null;
-            List<MoveData> offensiveMoves = new List<MoveData>();
-            foreach (var move in enemyMoves)
-            {
-                if (!move.isDefensiveMove && !move.isHealingMove)
-                {
-                    offensiveMoves.Add(move);
-                }
-            }
-
-            if (offensiveMoves.Count > 0)
-            {
-                selectedMove = offensiveMoves[Random.Range(0, offensiveMoves.Count)];
-            }
-            else
-            {
-                selectedMove = enemyMoves[0]; // Fallback to first move
-            }
+            // Smart AI: Choose move based on situation and cooldowns
+            MoveData selectedMove = ChooseEnemyMove(enemyMoves);
 
             // Show enemy move name with unique color
             string colorHex = ColorUtility.ToHtmlStringRGB(selectedMove.primaryColor);
@@ -568,6 +564,9 @@ namespace SketchBlossom.Battle
             // Execute enemy move
             yield return StartCoroutine(ExecuteEnemyMove(selectedMove));
 
+            // Set cooldown for the enemy's move
+            SetCooldown(enemyCooldowns, selectedMove);
+
             yield return new WaitForSeconds(actionTextDelay);
 
             // Ensure both units are still visible after enemy attack
@@ -575,6 +574,59 @@ namespace SketchBlossom.Battle
             if (enemyUnit != null) enemyUnit.EnsureVisible();
 
             ShowEnemyTurnUI(false);
+        }
+
+        /// <summary>
+        /// Smart enemy AI: choose move based on HP, cooldowns, and available options
+        /// </summary>
+        private MoveData ChooseEnemyMove(MoveData[] moves)
+        {
+            float enemyHPPercent = (float)enemyHPBar.GetCurrentHP() / enemyHPBar.GetMaxHP();
+
+            // Categorize available (off-cooldown) moves
+            List<MoveData> availableAttacks = new List<MoveData>();
+            List<MoveData> availableHeals = new List<MoveData>();
+            MoveData blockMove = null;
+
+            foreach (var move in moves)
+            {
+                if (IsOnCooldown(enemyCooldowns, move.moveType))
+                    continue;
+
+                if (move.isDefensiveMove)
+                    blockMove = move;
+                else if (move.isHealingMove)
+                    availableHeals.Add(move);
+                else
+                    availableAttacks.Add(move);
+            }
+
+            // Priority 1: Heal when HP < 40% and healing is available
+            if (enemyHPPercent < 0.4f && availableHeals.Count > 0)
+            {
+                return availableHeals[Random.Range(0, availableHeals.Count)];
+            }
+
+            // Priority 2: Block when HP < 25% and no heals available
+            if (enemyHPPercent < 0.25f && blockMove != null && Random.value < 0.6f)
+            {
+                return blockMove;
+            }
+
+            // Priority 3: Attack if attacks are available
+            if (availableAttacks.Count > 0)
+            {
+                return availableAttacks[Random.Range(0, availableAttacks.Count)];
+            }
+
+            // Priority 4: Block as fallback when attacks are on cooldown
+            if (blockMove != null)
+            {
+                return blockMove;
+            }
+
+            // Final fallback: use any move (shouldn't happen normally)
+            return moves[0];
         }
 
         /// <summary>
@@ -634,6 +686,10 @@ namespace SketchBlossom.Battle
                         !clipTask.Result.StartsWith("error"))
                     {
                         PredictionResponse response = JsonUtility.FromJson<PredictionResponse>(clipTask.Result);
+
+                        // Log all CLIP scores for debugging (all_scores is a dict in JSON)
+                        Debug.Log($"[CLIP] Raw response: {clipTask.Result}");
+
                         if (response != null && response.score >= clipConfidenceThreshold)
                         {
                             clipHint = new MovesetDetector.CLIPMoveHint
@@ -645,7 +701,7 @@ namespace SketchBlossom.Battle
                         }
                         else
                         {
-                            Debug.Log("[CLIP] Confidence too low – using geometric detection only.");
+                            Debug.Log($"[CLIP] Confidence too low (best={response?.label} @ {response?.score:F4}) – falling back to geometric.");
                         }
                     }
                     else
@@ -662,6 +718,13 @@ namespace SketchBlossom.Battle
             // --- Detect move (geometric + optional CLIP boost) ---
             var result = movesetDetector.DetectMoveWithCLIP(lineRenderers, playerPlantType, clipHint);
 
+            // Build a lookup of MoveType → plant-specific display name so the
+            // confidence panel shows "Passion Burst" instead of generic "Fireball".
+            MoveData[] playerMoves = MoveData.GetMovesForPlant(playerPlantType);
+            var moveNames = new Dictionary<MoveData.MoveType, string>();
+            foreach (var m in playerMoves)
+                moveNames[m.moveType] = m.moveName;
+
             // Always show the confidence breakdown so the player can see why a move
             // was (or was not) recognised before the next turn begins.
             if (moveConfidenceDisplay != null)
@@ -671,13 +734,29 @@ namespace SketchBlossom.Battle
                     result.detectedMove,
                     result.wasRecognized,
                     result.qualityRating,
-                    result.damageMultiplier);
+                    result.damageMultiplier,
+                    moveNames);
             }
 
             if (result.wasRecognized)
             {
-                CaptureMoveDrawing(lineRenderers);
-                StartCoroutine(ExecutePlayerMove(result));
+                // Check if the detected move is on cooldown
+                if (IsOnCooldown(playerCooldowns, result.detectedMove))
+                {
+                    string moveName = result.detectedMove.ToString();
+                    // Reuse playerMoves from above to get the actual move name
+                    MoveData cooldownMove = System.Array.Find(playerMoves, m => m.moveType == result.detectedMove);
+                    if (cooldownMove != null) moveName = cooldownMove.moveName;
+
+                    UpdateActionText($"{moveName} is recharging! Draw a different move.");
+                    drawingCanvas.ClearCanvas();
+                    currentState = BattleState.PlayerDrawing;
+                }
+                else
+                {
+                    CaptureMoveDrawing(lineRenderers);
+                    StartCoroutine(ExecutePlayerMove(result));
+                }
             }
             else
             {
@@ -895,6 +974,9 @@ namespace SketchBlossom.Battle
             // Reset blocking state
             enemyIsBlocking = false;
 
+            // Set cooldown for the move just used
+            SetCooldown(playerCooldowns, moveData);
+
             Debug.Log("[BATTLE] Player move execution complete, transitioning to enemy turn");
 
             // Ensure both units are visible before state change
@@ -1012,6 +1094,39 @@ namespace SketchBlossom.Battle
             }
 
             return Mathf.Max(1, Mathf.RoundToInt(damage));
+        }
+
+        /// <summary>
+        /// Tick down all cooldowns for a given cooldown dictionary (called at start of each turn)
+        /// </summary>
+        private void TickCooldowns(Dictionary<MoveData.MoveType, int> cooldowns)
+        {
+            var keys = new List<MoveData.MoveType>(cooldowns.Keys);
+            foreach (var key in keys)
+            {
+                cooldowns[key] = Mathf.Max(0, cooldowns[key] - 1);
+                if (cooldowns[key] <= 0)
+                    cooldowns.Remove(key);
+            }
+        }
+
+        /// <summary>
+        /// Set cooldown for a move after it's been used
+        /// </summary>
+        private void SetCooldown(Dictionary<MoveData.MoveType, int> cooldowns, MoveData move)
+        {
+            if (move.cooldownTurns > 0)
+            {
+                cooldowns[move.moveType] = move.cooldownTurns;
+            }
+        }
+
+        /// <summary>
+        /// Check if a move is currently on cooldown
+        /// </summary>
+        private bool IsOnCooldown(Dictionary<MoveData.MoveType, int> cooldowns, MoveData.MoveType moveType)
+        {
+            return cooldowns.ContainsKey(moveType) && cooldowns[moveType] > 0;
         }
 
         /// <summary>
@@ -1292,7 +1407,18 @@ namespace SketchBlossom.Battle
             string movesText = "Available Moves:\n";
             foreach (var move in moves)
             {
-                movesText += $"- {move.moveName}\n";
+                bool onCooldown = IsOnCooldown(playerCooldowns, move.moveType);
+                if (onCooldown)
+                {
+                    movesText += $"- <color=#888888>{move.moveName} (Recharging)</color>\n";
+                }
+                else
+                {
+                    string powerLabel = move.isDefensiveMove ? "DEF" :
+                                        move.isHealingMove ? $"Heal {move.basePower}" :
+                                        $"PWR {move.basePower}";
+                    movesText += $"- {move.moveName} ({powerLabel})\n";
+                }
             }
 
             availableMovesText.text = movesText;

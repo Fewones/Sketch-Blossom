@@ -1,71 +1,39 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace SketchBlossom.Battle
 {
     /// <summary>
-    /// Generates small reference-drawing textures for each battle move.
-    /// Each texture shows the gesture the player needs to draw to trigger that move.
-    /// All drawing is procedural (no external assets required).
-    ///
-    /// Shape labels (one per move type, matching labelMaps.json "move_shapes"):
-    ///   fireball      – Fireball          single large circle
-    ///   flame_wave    – FlameWave         sharp wave with tall peaks
-    ///   zigzag        – Burn              jagged lightning bolt
-    ///   curved_line   – VineWhip          single long sweeping arc
-    ///   scattered     – LeafStorm         scattered short strokes
-    ///   downward_lines– RootAttack        three parallel vertical lines
-    ///   water_splash  – WaterSplash       upward-angled wave
-    ///   bubbles       – Bubble            three small circles clustered
-    ///   healing_wave  – HealingWave       gentle low-amplitude wave
-    ///   shield        – Block             triangular shield outline
+    /// Generates small reference-drawing textures for battle moves.
+    /// Each texture shows the gesture the player needs to draw.
+    /// Uses DrawingShape (not MoveType) so the same move type can show
+    /// different shapes depending on which plant uses it.
     /// </summary>
     public static class MoveShapePreview
     {
-        // Maps every move type to its canonical gesture shape label.
-        // Labels must match the keys used in MovesetDetector.shapeToMoveTypes
-        // and in labelMaps.json "move_shapes".
-        private static readonly Dictionary<MoveData.MoveType, string> moveToShape =
-            new Dictionary<MoveData.MoveType, string>
-            {
-                { MoveData.MoveType.Block,         "shield"         },
-                { MoveData.MoveType.Fireball,      "fireball"       },
-                { MoveData.MoveType.FlameWave,     "flame_wave"     },
-                { MoveData.MoveType.Burn,          "zigzag"         },
-                { MoveData.MoveType.VineWhip,      "curved_line"    },
-                { MoveData.MoveType.LeafStorm,     "scattered"      },
-                { MoveData.MoveType.RootAttack,    "downward_lines" },
-                { MoveData.MoveType.WaterSplash,   "water_splash"   },
-                { MoveData.MoveType.Bubble,        "bubbles"        },
-                { MoveData.MoveType.HealingWave,   "healing_wave"   },
-            };
-
         /// <summary>
-        /// Generate a reference-drawing preview texture for the given move.
-        /// The shape is drawn in <paramref name="drawColor"/> on a transparent background.
-        /// Returns null for unrecognised move types.
+        /// Generate a reference-drawing preview for the given DrawingShape.
         /// </summary>
-        public static Texture2D GeneratePreview(MoveData.MoveType moveType,
+        public static Texture2D GeneratePreview(MoveData.DrawingShape shape,
                                                 int width, int height,
                                                 Color drawColor)
         {
-            Color[] pixels = new Color[width * height]; // all transparent by default
+            Color[] pixels = new Color[width * height];
 
-            if (moveToShape.TryGetValue(moveType, out string shape))
+            switch (shape)
             {
-                switch (shape)
-                {
-                    case "fireball":       DrawFireball(pixels, width, height, drawColor);      break;
-                    case "flame_wave":     DrawFlameWave(pixels, width, height, drawColor);     break;
-                    case "zigzag":         DrawZigzag(pixels, width, height, drawColor);        break;
-                    case "curved_line":    DrawCurvedLine(pixels, width, height, drawColor);    break;
-                    case "scattered":      DrawScattered(pixels, width, height, drawColor);     break;
-                    case "downward_lines": DrawDownwardLines(pixels, width, height, drawColor); break;
-                    case "water_splash":   DrawWaterSplash(pixels, width, height, drawColor);   break;
-                    case "bubbles":        DrawBubbles(pixels, width, height, drawColor);       break;
-                    case "healing_wave":   DrawHealingWave(pixels, width, height, drawColor);   break;
-                    case "shield":         DrawShield(pixels, width, height, drawColor);        break;
-                }
+                case MoveData.DrawingShape.Circle:          DrawCircle(pixels, width, height, drawColor);          break;
+                case MoveData.DrawingShape.StraightLine:    DrawStraightLine(pixels, width, height, drawColor);    break;
+                case MoveData.DrawingShape.Zigzag:          DrawZigzag(pixels, width, height, drawColor);          break;
+                case MoveData.DrawingShape.WavyLine:        DrawWavyLine(pixels, width, height, drawColor);        break;
+                case MoveData.DrawingShape.Plus:             DrawPlus(pixels, width, height, drawColor);            break;
+                case MoveData.DrawingShape.XCross:           DrawXCross(pixels, width, height, drawColor);          break;
+                case MoveData.DrawingShape.Arrow:            DrawArrow(pixels, width, height, drawColor);           break;
+                case MoveData.DrawingShape.MultipleCircles:  DrawMultipleCircles(pixels, width, height, drawColor); break;
+                case MoveData.DrawingShape.Star:             DrawStar(pixels, width, height, drawColor);            break;
+                case MoveData.DrawingShape.Square:           DrawSquare(pixels, width, height, drawColor);          break;
+                case MoveData.DrawingShape.Triangle:         DrawTriangle(pixels, width, height, drawColor);        break;
+                case MoveData.DrawingShape.Checkmark:        DrawCheckmark(pixels, width, height, drawColor);       break;
+                case MoveData.DrawingShape.Spiral:           DrawSpiral(pixels, width, height, drawColor);          break;
             }
 
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -75,18 +43,34 @@ namespace SketchBlossom.Battle
             return tex;
         }
 
+        /// <summary>
+        /// Legacy overload: accepts MoveType + plant type, looks up the DrawingShape.
+        /// </summary>
+        public static Texture2D GeneratePreview(MoveData.MoveType moveType,
+                                                int width, int height,
+                                                Color drawColor,
+                                                PlantRecognitionSystem.PlantType plantType)
+        {
+            MoveData[] moves = MoveData.GetMovesForPlant(plantType);
+            foreach (var move in moves)
+            {
+                if (move.moveType == moveType)
+                    return GeneratePreview(move.drawingShape, width, height, drawColor);
+            }
+            // Fallback: return a circle
+            return GeneratePreview(MoveData.DrawingShape.Circle, width, height, drawColor);
+        }
+
         // ─────────────────────────────────────────────────────
-        //  Shape drawing routines — one per move label
+        //  Shape drawing routines — one per DrawingShape
         // ─────────────────────────────────────────────────────
 
-        /// <summary>Fireball — single large circle.</summary>
-        private static void DrawFireball(Color[] pixels, int w, int h, Color color)
+        private static void DrawCircle(Color[] pixels, int w, int h, Color color)
         {
             float cx = w * 0.5f, cy = h * 0.5f;
             float radius = Mathf.Min(w, h) * 0.38f;
             int steps = 120;
             Vector2 prev = new Vector2(cx + radius, cy);
-
             for (int i = 1; i <= steps; i++)
             {
                 float angle = (float)i / steps * Mathf.PI * 2f;
@@ -97,22 +81,14 @@ namespace SketchBlossom.Battle
             }
         }
 
-        /// <summary>FlameWave — sharp horizontal wave with tall aggressive peaks.</summary>
-        private static void DrawFlameWave(Color[] pixels, int w, int h, Color color)
+        private static void DrawStraightLine(Color[] pixels, int w, int h, Color color)
         {
-            float amplitude = h * 0.38f;          // tall peaks
-            float frequency = 2f * Mathf.PI / w * 2.2f; // slightly more than 2 cycles
-            Vector2 prev = new Vector2(0, h * 0.5f + amplitude * Mathf.Sin(0));
-
-            for (int x = 1; x <= w; x++)
-            {
-                float y = h * 0.5f + amplitude * Mathf.Sin(x * frequency);
-                PaintLine(pixels, w, h, prev, new Vector2(x, y), color, 3f);
-                prev = new Vector2(x, y);
-            }
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.15f, h * 0.5f),
+                new Vector2(w * 0.85f, h * 0.5f),
+                color, 3f);
         }
 
-        /// <summary>Burn — jagged lightning-bolt zigzag.</summary>
         private static void DrawZigzag(Color[] pixels, int w, int h, Color color)
         {
             Vector2[] pts =
@@ -128,87 +104,72 @@ namespace SketchBlossom.Battle
                 PaintLine(pixels, w, h, pts[i], pts[i + 1], color, 3f);
         }
 
-        /// <summary>VineWhip — single long curved Bézier arc.</summary>
-        private static void DrawCurvedLine(Color[] pixels, int w, int h, Color color)
+        private static void DrawWavyLine(Color[] pixels, int w, int h, Color color)
         {
-            Vector2 p0 = new Vector2(w * 0.10f, h * 0.82f);
-            Vector2 p1 = new Vector2(w * 0.15f, h * 0.15f); // control point
-            Vector2 p2 = new Vector2(w * 0.90f, h * 0.20f);
-
-            int steps = 80;
-            Vector2 prev = p0;
-            for (int i = 1; i <= steps; i++)
+            float amplitude = h * 0.2f;
+            float frequency = 2f * Mathf.PI / w * 1.8f;
+            Vector2 prev = new Vector2(0, h * 0.5f);
+            for (int x = 1; x <= w; x++)
             {
-                float t = (float)i / steps;
-                Vector2 next = (1 - t) * (1 - t) * p0
-                             + 2f * (1 - t) * t * p1
-                             + t * t * p2;
-                PaintLine(pixels, w, h, prev, next, color, 3f);
-                prev = next;
-            }
-        }
-
-        /// <summary>LeafStorm — six scattered short strokes at varied angles.</summary>
-        private static void DrawScattered(Color[] pixels, int w, int h, Color color)
-        {
-            (Vector2 center, float angleDeg, float halfLen)[] strokes =
-            {
-                (new Vector2(w * 0.20f, h * 0.28f),  40f,  w * 0.13f),
-                (new Vector2(w * 0.55f, h * 0.18f), -25f,  w * 0.13f),
-                (new Vector2(w * 0.80f, h * 0.38f),  75f,  w * 0.13f),
-                (new Vector2(w * 0.30f, h * 0.68f), -55f,  w * 0.13f),
-                (new Vector2(w * 0.68f, h * 0.72f),  15f,  w * 0.13f),
-                (new Vector2(w * 0.10f, h * 0.55f), -80f,  w * 0.10f),
-            };
-
-            foreach (var (center, angleDeg, halfLen) in strokes)
-            {
-                float rad = angleDeg * Mathf.Deg2Rad;
-                Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * halfLen;
-                PaintLine(pixels, w, h, center - dir, center + dir, color, 2.5f);
-            }
-        }
-
-        /// <summary>RootAttack — three parallel vertical lines going downward.</summary>
-        private static void DrawDownwardLines(Color[] pixels, int w, int h, Color color)
-        {
-            float[] xs = { w * 0.25f, w * 0.50f, w * 0.75f };
-            foreach (float x in xs)
-                PaintLine(pixels, w, h,
-                    new Vector2(x, h * 0.10f),
-                    new Vector2(x, h * 0.90f),
-                    color, 3f);
-        }
-
-        /// <summary>WaterSplash — smooth wave oriented upward (more vertical sweep).</summary>
-        private static void DrawWaterSplash(Color[] pixels, int w, int h, Color color)
-        {
-            // Draw a wave that rises from bottom-left, crests near the top, and
-            // falls back down — giving an upward-splash silhouette.
-            float cx = w * 0.5f;
-            float amplitude = w * 0.30f;
-            float frequency = Mathf.PI / h; // one half-cycle vertically
-
-            Vector2 prev = new Vector2(cx + amplitude * Mathf.Sin(0), 0);
-            for (int y = 1; y <= h; y++)
-            {
-                float x = cx + amplitude * Mathf.Sin(y * frequency * 2f);
+                float y = h * 0.5f + amplitude * Mathf.Sin(x * frequency);
                 PaintLine(pixels, w, h, prev, new Vector2(x, y), color, 3f);
                 prev = new Vector2(x, y);
             }
         }
 
-        /// <summary>Bubble — three small circles of different sizes clustered together.</summary>
-        private static void DrawBubbles(Color[] pixels, int w, int h, Color color)
+        private static void DrawPlus(Color[] pixels, int w, int h, Color color)
         {
-            (Vector2 center, float radius)[] bubbles =
-            {
-                (new Vector2(w * 0.35f, h * 0.55f), Mathf.Min(w, h) * 0.22f), // large, left
-                (new Vector2(w * 0.68f, h * 0.42f), Mathf.Min(w, h) * 0.15f), // medium, right
-                (new Vector2(w * 0.55f, h * 0.72f), Mathf.Min(w, h) * 0.10f), // small, bottom
-            };
+            // Horizontal bar
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.15f, h * 0.5f),
+                new Vector2(w * 0.85f, h * 0.5f),
+                color, 3f);
+            // Vertical bar
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.5f, h * 0.15f),
+                new Vector2(w * 0.5f, h * 0.85f),
+                color, 3f);
+        }
 
-            foreach (var (center, radius) in bubbles)
+        private static void DrawXCross(Color[] pixels, int w, int h, Color color)
+        {
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.15f, h * 0.15f),
+                new Vector2(w * 0.85f, h * 0.85f),
+                color, 3f);
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.85f, h * 0.15f),
+                new Vector2(w * 0.15f, h * 0.85f),
+                color, 3f);
+        }
+
+        private static void DrawArrow(Color[] pixels, int w, int h, Color color)
+        {
+            // Shaft
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.15f, h * 0.5f),
+                new Vector2(w * 0.85f, h * 0.5f),
+                color, 3f);
+            // Arrowhead
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.85f, h * 0.5f),
+                new Vector2(w * 0.65f, h * 0.25f),
+                color, 3f);
+            PaintLine(pixels, w, h,
+                new Vector2(w * 0.85f, h * 0.5f),
+                new Vector2(w * 0.65f, h * 0.75f),
+                color, 3f);
+        }
+
+        private static void DrawMultipleCircles(Color[] pixels, int w, int h, Color color)
+        {
+            (Vector2 center, float radius)[] circles =
+            {
+                (new Vector2(w * 0.35f, h * 0.55f), Mathf.Min(w, h) * 0.20f),
+                (new Vector2(w * 0.68f, h * 0.42f), Mathf.Min(w, h) * 0.15f),
+                (new Vector2(w * 0.55f, h * 0.75f), Mathf.Min(w, h) * 0.12f),
+            };
+            foreach (var (center, radius) in circles)
             {
                 int steps = 60;
                 Vector2 prev = new Vector2(center.x + radius, center.y);
@@ -223,31 +184,69 @@ namespace SketchBlossom.Battle
             }
         }
 
-        /// <summary>HealingWave — gentle smooth horizontal wave with low amplitude.</summary>
-        private static void DrawHealingWave(Color[] pixels, int w, int h, Color color)
+        private static void DrawStar(Color[] pixels, int w, int h, Color color)
         {
-            float amplitude = h * 0.16f;           // low, gentle
-            float frequency = 2f * Mathf.PI / w * 1.5f; // ~1.5 cycles
-            Vector2 prev = new Vector2(0, h * 0.5f + amplitude * Mathf.Sin(0));
-
-            for (int x = 1; x <= w; x++)
+            float cx = w * 0.5f, cy = h * 0.5f;
+            float armLen = Mathf.Min(w, h) * 0.38f;
+            int arms = 5;
+            for (int i = 0; i < arms; i++)
             {
-                float y = h * 0.5f + amplitude * Mathf.Sin(x * frequency);
-                PaintLine(pixels, w, h, prev, new Vector2(x, y), color, 3f);
-                prev = new Vector2(x, y);
+                float angle = (float)i / arms * Mathf.PI * 2f - Mathf.PI * 0.5f;
+                Vector2 tip = new Vector2(cx + Mathf.Cos(angle) * armLen,
+                                          cy + Mathf.Sin(angle) * armLen);
+                PaintLine(pixels, w, h, new Vector2(cx, cy), tip, color, 3f);
             }
         }
 
-        /// <summary>Block — triangular shield outline (flat top + two angled sides to a bottom point).</summary>
-        private static void DrawShield(Color[] pixels, int w, int h, Color color)
+        private static void DrawSquare(Color[] pixels, int w, int h, Color color)
         {
-            Vector2 topL = new Vector2(w * 0.20f, h * 0.22f);
-            Vector2 topR = new Vector2(w * 0.80f, h * 0.22f);
-            Vector2 bot  = new Vector2(w * 0.50f, h * 0.85f);
+            float m = 0.2f; // margin
+            Vector2 tl = new Vector2(w * m, h * (1 - m));
+            Vector2 tr = new Vector2(w * (1 - m), h * (1 - m));
+            Vector2 br = new Vector2(w * (1 - m), h * m);
+            Vector2 bl = new Vector2(w * m, h * m);
+            PaintLine(pixels, w, h, tl, tr, color, 3f);
+            PaintLine(pixels, w, h, tr, br, color, 3f);
+            PaintLine(pixels, w, h, br, bl, color, 3f);
+            PaintLine(pixels, w, h, bl, tl, color, 3f);
+        }
 
-            PaintLine(pixels, w, h, topL, topR, color, 3f); // top bar
-            PaintLine(pixels, w, h, topL, bot,  color, 3f); // left side
-            PaintLine(pixels, w, h, topR, bot,  color, 3f); // right side
+        private static void DrawTriangle(Color[] pixels, int w, int h, Color color)
+        {
+            Vector2 top = new Vector2(w * 0.5f, h * 0.85f);
+            Vector2 bl  = new Vector2(w * 0.15f, h * 0.15f);
+            Vector2 br  = new Vector2(w * 0.85f, h * 0.15f);
+            PaintLine(pixels, w, h, top, bl, color, 3f);
+            PaintLine(pixels, w, h, bl, br, color, 3f);
+            PaintLine(pixels, w, h, br, top, color, 3f);
+        }
+
+        private static void DrawCheckmark(Color[] pixels, int w, int h, Color color)
+        {
+            Vector2 start = new Vector2(w * 0.15f, h * 0.55f);
+            Vector2 bottom = new Vector2(w * 0.4f, h * 0.2f);
+            Vector2 end = new Vector2(w * 0.85f, h * 0.8f);
+            PaintLine(pixels, w, h, start, bottom, color, 3f);
+            PaintLine(pixels, w, h, bottom, end, color, 3f);
+        }
+
+        private static void DrawSpiral(Color[] pixels, int w, int h, Color color)
+        {
+            float cx = w * 0.5f, cy = h * 0.5f;
+            float maxRadius = Mathf.Min(w, h) * 0.4f;
+            int steps = 180;
+            float totalRevolutions = 2.5f;
+            Vector2 prev = new Vector2(cx, cy);
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = (float)i / steps;
+                float angle = t * totalRevolutions * Mathf.PI * 2f;
+                float radius = t * maxRadius;
+                Vector2 next = new Vector2(cx + Mathf.Cos(angle) * radius,
+                                           cy + Mathf.Sin(angle) * radius);
+                PaintLine(pixels, w, h, prev, next, color, 2.5f);
+                prev = next;
+            }
         }
 
         // ─────────────────────────────────────────────────────

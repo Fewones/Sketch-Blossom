@@ -9,9 +9,9 @@ public class DrawnUnitData : MonoBehaviour
     public static DrawnUnitData Instance { get; private set; }
 
     [Header("Unit Stats (Generated from Drawing)")]
-    public int attack = 10;
-    public int defense = 10;
-    public int health = 30;
+    public int attack = 12;
+    public int defense = 12;
+    public int health = 90;
 
     [Header("Plant Type")]
     public PlantRecognitionSystem.PlantType plantType;
@@ -80,9 +80,9 @@ public class DrawnUnitData : MonoBehaviour
     /// </summary>
     public void ClearData()
     {
-        attack = 10;
-        defense = 10;
-        health = 30;
+        attack = 12;
+        defense = 12;
+        health = 90;
         strokeCount = 0;
         totalDrawingLength = 0f;
         totalPoints = 0;
