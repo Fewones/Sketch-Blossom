@@ -2,82 +2,47 @@ name: Build Python
 
 on:
   workflow_dispatch:
-  
+
 permissions:
   contents: write
   packages: write
   id-token: write
-      
+
 jobs:
   build-py:
-    strategy:
-      matrix:
-        os: [windows-latest]
-      max-parallel: 1
-    runs-on: ${{ matrix.os }}
-
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install portable python (Windows)
-        if: matrix.os == 'windows-latest'
-        run: | 
+      - name: Install portable python
+        run: |
           curl -L -o python.zip https://www.python.org/ftp/python/3.11.7/python-3.11.7-embed-amd64.zip
           mkdir portable
           powershell Expand-Archive -Path python.zip -DestinationPath portable
-      - name: Install portable python (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-            curl -L -o python.pkg https://www.python.org/ftp/python/3.11.7/python-3.11.7-macos11.pkg
-            pkgutil --expand-full python.pkg pre
-            pkgutil --expand-full pre/Python_Framework.pkg pythonpkg
-            ls -l pythonpkg/
-            cp -R pythonpkg/Payload/Library/Frameworks/Python.framework/Versions/3.11/* portable/
 
-      - name: Install pip (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Install pip
         run: |
           curl -O https://bootstrap.pypa.io/get-pip.py
           portable\python.exe get-pip.py
-      - name: Install pip (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          portable/bin/python3 -m ensurepip --upgrade
-          portable/bin/python3 -m pip install --upgrade pip
 
       - name: Fix ._pth file for embeddable Python
-        if: runner.os == 'Windows'
         run: (Get-Content portable\python311._pth) -replace '#import site', 'import site' | Set-Content portable\python311._pth
-          
-      # Dependencies installieren
-      - name: Install dependencies (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          portable\python.exe -m pip install --target portable\Lib\site-packages torch torchvision
-          portable\python.exe -m pip install --target portable\Lib\site-packages -r requirements.txt
-      - name: Install dependencies (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          ls -l portable/
-          portable/bin/python3 -m pip install --target portable/lib/python3.11/site-packages torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          portable/bin/python3 -m pip install --target portable/lib/python3.11/site-packages -r requirements.txt
 
-      - name: Zip portable Python (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Install dependencies
+        run: |
+          portable\python.exe -m pip install --target portable\Lib\site-packages torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          portable\python.exe -m pip install --target portable\Lib\site-packages -r requirements.txt
+
+      - name: Zip portable Python
         shell: pwsh
         run: Compress-Archive -Path (Get-ChildItem -Path portable) -DestinationPath windows-latest.zip -Force
-      - name: Zip portable Python (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-            zipName=${{ matrix.os }}.zip
-            zip -r $zipName portable
 
       - name: Upload as Release Asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: sketchblossom-python-win
-          files: ${{ matrix.os }}.zip
+          files: windows-latest.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
