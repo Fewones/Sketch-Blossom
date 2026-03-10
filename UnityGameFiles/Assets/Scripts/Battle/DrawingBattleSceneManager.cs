@@ -718,6 +718,13 @@ namespace SketchBlossom.Battle
             // --- Detect move (geometric + optional CLIP boost) ---
             var result = movesetDetector.DetectMoveWithCLIP(lineRenderers, playerPlantType, clipHint);
 
+            // Build a lookup of MoveType → plant-specific display name so the
+            // confidence panel shows "Passion Burst" instead of generic "Fireball".
+            MoveData[] playerMoves = MoveData.GetMovesForPlant(playerPlantType);
+            var moveNames = new Dictionary<MoveData.MoveType, string>();
+            foreach (var m in playerMoves)
+                moveNames[m.moveType] = m.moveName;
+
             // Always show the confidence breakdown so the player can see why a move
             // was (or was not) recognised before the next turn begins.
             if (moveConfidenceDisplay != null)
@@ -727,7 +734,8 @@ namespace SketchBlossom.Battle
                     result.detectedMove,
                     result.wasRecognized,
                     result.qualityRating,
-                    result.damageMultiplier);
+                    result.damageMultiplier,
+                    moveNames);
             }
 
             if (result.wasRecognized)
