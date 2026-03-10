@@ -272,13 +272,20 @@ namespace SketchBlossom.Drawing
 
         private void OnFillButtonClicked()
         {
-            Debug.Log("Fill button clicked");
+            if (drawingCanvas == null) return;
 
-            if (drawingCanvas != null)
-            {
-                drawingCanvas.FillBackground();
-                UpdateHint("Background color changed!");
-            }
+            drawingCanvas.ToggleFillMode();
+            bool fillOn = drawingCanvas.IsFillMode;
+            Debug.Log($"Fill button clicked - fill mode {(fillOn ? "ON" : "OFF")}");
+
+            // Visual feedback: tint the button to show active state
+            ColorBlock cb = fillButton.colors;
+            cb.normalColor = fillOn ? new Color(0.7f, 0.9f, 1f) : Color.white;
+            fillButton.colors = cb;
+
+            UpdateHint(fillOn
+                ? "Fill mode ON - click an empty area to fill it."
+                : "Draw mode - draw strokes on the canvas.");
         }
 
         #endregion

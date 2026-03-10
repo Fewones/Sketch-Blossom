@@ -15,10 +15,12 @@ public class DrawingCaptureHandler : MonoBehaviour
     [SerializeField] private bool useScreenCapture = false; // Alternative capture method
 
     /// <summary>
-    /// Capture all LineRenderers and convert them to a Texture2D
-    /// Uses screen capture method for reliability
+    /// Capture all LineRenderers and convert them to a Texture2D.
+    /// When forceTransparent is true the background is fully transparent (for battle sprites).
+    /// When false (default) the drawing area's background colour is used (white for CLIP).
+    /// If fillTexture is provided it is composited behind the strokes.
     /// </summary>
-    public Texture2D CaptureDrawing(List<LineRenderer> strokes, Camera sourceCamera, RectTransform drawingArea = null)
+    public Texture2D CaptureDrawing(List<LineRenderer> strokes, Camera sourceCamera, RectTransform drawingArea = null, bool forceTransparent = false, Texture2D fillTexture = null)
     {
         if (strokes == null || strokes.Count == 0)
         {
@@ -78,10 +80,17 @@ public class DrawingCaptureHandler : MonoBehaviour
 
         // Configure camera
         captureCamera.orthographic = true;
-        if ((drawingArea == null) || (drawingArea.GetComponent<Image> () == null)){
+        if (forceTransparent)
+        {
+            captureCamera.backgroundColor = new Color(0, 0, 0, 0);
+        }
+        else if ((drawingArea == null) || (drawingArea.GetComponent<Image> () == null))
+        {
             captureCamera.backgroundColor = backgroundColor;
-        } else {
-            captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;  
+        }
+        else
+        {
+            captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;
         }
         captureCamera.clearFlags = CameraClearFlags.SolidColor;
         captureCamera.cullingMask = 1 + 2 + 4 + 16 + 32; // Render all layers except background layer (layer 3)
@@ -99,8 +108,22 @@ public class DrawingCaptureHandler : MonoBehaviour
         renderTexture.format = RenderTextureFormat.ARGB32;
         captureCamera.targetTexture = renderTexture;
 
+        // If a fill texture is provided, create a temporary world-space quad behind strokes
+        // so the capture camera picks it up automatically.
+        GameObject tempFillQuad = null;
+        if (fillTexture != null && drawingArea != null)
+        {
+            tempFillQuad = CreateFillQuad(fillTexture, drawingArea, sourceCamera);
+        }
+
         // Render the scene
         captureCamera.Render();
+
+        // Destroy the temp fill quad immediately
+        if (tempFillQuad != null)
+        {
+            DestroyImmediate(tempFillQuad);
+        }
 
         // Read pixels from RenderTexture into Texture2D
         RenderTexture.active = renderTexture;
@@ -278,5 +301,44 @@ public class DrawingCaptureHandler : MonoBehaviour
                Mathf.Abs(a.g - b.g) < threshold &&
                Mathf.Abs(a.b - b.b) < threshold &&
                Mathf.Abs(a.a - b.a) < threshold;
+    }
+
+    /// <summary>
+    /// Creates a temporary world-space quad textured with the fill layer.
+    /// Positioned behind all strokes so the capture camera renders it in the background.
+    /// </summary>
+    private GameObject CreateFillQuad(Texture2D fillTex, RectTransform drawArea, Camera srcCamera)
+    {
+        // Get the drawing area bounds in screen space, then project into world space
+        // at a depth behind all strokes (strokes start at distance 10 from camera).
+        Vector3[] corners = new Vector3[4];
+        drawArea.GetWorldCorners(corners);
+        Vector2 minScreen = srcCamera.WorldToScreenPoint(corners[0]);
+        Vector2 maxScreen = srcCamera.WorldToScreenPoint(corners[2]);
+
+        float behindZ = 10.5f; // strokes are at 10 → 9.8; this sits behind them
+        Vector3 bl = srcCamera.ScreenToWorldPoint(new Vector3(minScreen.x, minScreen.y, behindZ));
+        Vector3 br = srcCamera.ScreenToWorldPoint(new Vector3(maxScreen.x, minScreen.y, behindZ));
+        Vector3 tl = srcCamera.ScreenToWorldPoint(new Vector3(minScreen.x, maxScreen.y, behindZ));
+        Vector3 tr = srcCamera.ScreenToWorldPoint(new Vector3(maxScreen.x, maxScreen.y, behindZ));
+
+        GameObject obj = new GameObject("_TempFillQuad");
+        MeshFilter mf = obj.AddComponent<MeshFilter>();
+        MeshRenderer mr = obj.AddComponent<MeshRenderer>();
+
+        Mesh mesh = new Mesh();
+        mesh.vertices = new Vector3[] { bl, br, tl, tr };
+        mesh.uv = new Vector2[] {
+            new Vector2(0, 0), new Vector2(1, 0),
+            new Vector2(0, 1), new Vector2(1, 1)
+        };
+        mesh.triangles = new int[] { 0, 2, 1, 2, 3, 1 };
+        mf.mesh = mesh;
+
+        Material mat = new Material(Shader.Find("Sprites/Default"));
+        mat.mainTexture = fillTex;
+        mr.material = mat;
+
+        return obj;
     }
 }

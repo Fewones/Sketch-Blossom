@@ -354,11 +354,14 @@ namespace SketchBlossom.Drawing
 
             Debug.Log("========== CAPTURING PLANT DRAWING ==========");
 
-            // Capture the drawing as a texture (pass drawing area for screen capture option)
+            // Capture with transparent background so the sprite composites cleanly in battle.
+            // CLIP analysis uses a separate capture with the default white background.
             Texture2D drawingTexture = captureHandler.CaptureDrawing(
                 drawingCanvas.allStrokes,
                 mainCamera,
-                drawingCanvas.drawingArea
+                drawingCanvas.drawingArea,
+                forceTransparent: true,
+                fillTexture: drawingCanvas.GetFillTexture()
             );
 
             if (drawingTexture != null)
@@ -404,7 +407,8 @@ namespace SketchBlossom.Drawing
             Texture2D drawingTexture = captureHandler.CaptureDrawing(
                 drawingCanvas.allStrokes,
                 drawingCanvas.mainCamera,
-                drawingCanvas.drawingArea
+                drawingCanvas.drawingArea,
+                fillTexture: drawingCanvas.GetFillTexture()
             );
 
 

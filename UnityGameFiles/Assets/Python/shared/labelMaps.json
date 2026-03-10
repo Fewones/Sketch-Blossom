@@ -15,15 +15,15 @@
         "a black spiral on white paper, a curved line winding around itself inward in a coil like a snail shell": "spiral"
     },
     "plant_labels": {
-        "a red tulip emitting flames": "flame tulip", 
-        "a red rose on fire":"fire rose", 
-        "a shining sunflower": "sunflower", 
-        "a cactus with many spines": "cactus", 
-        "a jungle vine sprouting many flowers":"vine flower", 
-        "a small patch of grass":"grass sprout", 
-        "a blooming lilypad floating on water": "water lily", 
-        "underwater corals": "coral bloom", 
-        "a flower with round bubbles for petals": "bubble flower" 
+        "a red tulip with orange flames and fire": "flame tulip",
+        "a red rose with fiery red petals and thorns on fire": "fire rose",
+        "a bright yellow sunflower with golden petals radiating light": "sunflower",
+        "a green cactus with many sharp spines": "cactus",
+        "a green jungle vine sprouting many small flowers": "vine flower",
+        "a small patch of green grass blades": "grass sprout",
+        "a blue lilypad blooming on water": "water lily",
+        "blue and purple underwater corals branching out": "coral bloom",
+        "a blue flower with round translucent bubbles for petals": "bubble flower"
     },
     "Flame Tulip upgrade_labels":{
         "a weapon thematically matching flames": "power",
