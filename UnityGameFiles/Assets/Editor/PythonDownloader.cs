@@ -328,6 +328,8 @@ public class PythonDownloader
                         + ", Content-Length: " + (contentLength.HasValue ? (contentLength.Value / 1024 / 1024) + " MB" : "unknown"));
 
                     long totalBytes = contentLength ?? 0;
+                    string totalMBStr = totalBytes > 0 ? (totalBytes / 1024 / 1024) + " MB" : "unknown size";
+
                     using (var stream = await response.Content.ReadAsStreamAsync())
                     using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
@@ -342,20 +344,24 @@ public class PythonDownloader
                             if (totalBytes > 0)
                             {
                                 int percent = (int)(totalRead * 100 / totalBytes);
-                                if (percent / 10 > lastPercent / 10)
+                                float progress = totalRead / (float)totalBytes;
+                                if (percent != lastPercent)
                                 {
                                     lastPercent = percent;
-                                    Debug.Log("[PythonDownloader] Download progress: " + percent + "% (" + (totalRead / 1024 / 1024) + " / " + (totalBytes / 1024 / 1024) + " MB)");
+                                    string info = "Downloading Python... " + percent + "% (" + (totalRead / 1024 / 1024) + " / " + totalMBStr + ")";
+                                    EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
                                 }
                             }
                         }
                     }
 
+                    EditorUtility.ClearProgressBar();
                     long fileSize = new FileInfo(tempZip).Length;
                     Debug.Log("[PythonDownloader] Download complete, file size: " + (fileSize / 1024 / 1024) + " MB");
                     break;
                 }
                 catch (Exception ex) {
+                    EditorUtility.ClearProgressBar();
                     if (attempt == maxRetries)
                     {
                         Debug.LogError("[PythonDownloader] Download failed after " + maxRetries + " attempts: " + ex);
@@ -369,12 +375,14 @@ public class PythonDownloader
         }
 
         Debug.Log("[PythonDownloader] Extracting zip to: " + targetPath);
+        EditorUtility.DisplayProgressBar("[PythonDownloader] Extracting", "Extracting Python environment...", 0.5f);
 
         if (Directory.Exists(targetPath))
             Directory.Delete(targetPath, true);
 
         ZipFile.ExtractToDirectory(tempZip, targetPath);
         File.Delete(tempZip);
+        EditorUtility.ClearProgressBar();
 
         Debug.Log("[PythonDownloader] Python downloaded and extracted to: " + targetPath);
     }
