@@ -375,81 +375,10 @@ public class SetupResultPanelLayout : EditorWindow
                     }
                 }
             }
-
-            // Resize color buttons
-            if (colorSelector.redButton != null)
-            {
-                Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Resize Red Button");
-                RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(80f, 80f); // Larger button size
-                EditorUtility.SetDirty(colorSelector.redButton.gameObject);
-                Debug.Log("✓ Resized Red button to 80x80");
-            }
-
-            if (colorSelector.greenButton != null)
-            {
-                Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Resize Green Button");
-                RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(80f, 80f);
-                EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
-                Debug.Log("✓ Resized Green button to 80x80");
-            }
-
-            if (colorSelector.blueButton != null)
-            {
-                Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Resize Blue Button");
-                RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(80f, 80f);
-                EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
-                Debug.Log("✓ Resized Blue button to 80x80");
-            }
-
-            // If stroke counter found, reposition buttons next to it
-            if (strokeCounter != null)
-            {
-                RectTransform counterRect = strokeCounter.GetComponent<RectTransform>();
-
-                // Position color buttons horizontally next to stroke counter
-                if (colorSelector.redButton != null)
-                {
-                    Undo.RecordObject(colorSelector.redButton.GetComponent<RectTransform>(), "Reposition Red Button");
-                    RectTransform rect = colorSelector.redButton.GetComponent<RectTransform>();
-                    rect.anchorMin = counterRect.anchorMin;
-                    rect.anchorMax = counterRect.anchorMax;
-                    rect.pivot = new Vector2(0f, 0.5f);
-                    rect.anchoredPosition = new Vector2(counterRect.anchoredPosition.x + 150f, counterRect.anchoredPosition.y);
-                    EditorUtility.SetDirty(colorSelector.redButton.gameObject);
-                    Debug.Log("✓ Repositioned Red button next to stroke counter");
-                }
-
-                if (colorSelector.greenButton != null)
-                {
-                    Undo.RecordObject(colorSelector.greenButton.GetComponent<RectTransform>(), "Reposition Green Button");
-                    RectTransform rect = colorSelector.greenButton.GetComponent<RectTransform>();
-                    rect.anchorMin = counterRect.anchorMin;
-                    rect.anchorMax = counterRect.anchorMax;
-                    rect.pivot = new Vector2(0f, 0.5f);
-                    rect.anchoredPosition = new Vector2(counterRect.anchoredPosition.x + 240f, counterRect.anchoredPosition.y);
-                    EditorUtility.SetDirty(colorSelector.greenButton.gameObject);
-                    Debug.Log("✓ Repositioned Green button next to stroke counter");
-                }
-
-                if (colorSelector.blueButton != null)
-                {
-                    Undo.RecordObject(colorSelector.blueButton.GetComponent<RectTransform>(), "Reposition Blue Button");
-                    RectTransform rect = colorSelector.blueButton.GetComponent<RectTransform>();
-                    rect.anchorMin = counterRect.anchorMin;
-                    rect.anchorMax = counterRect.anchorMax;
-                    rect.pivot = new Vector2(0f, 0.5f);
-                    rect.anchoredPosition = new Vector2(counterRect.anchoredPosition.x + 330f, counterRect.anchoredPosition.y);
-                    EditorUtility.SetDirty(colorSelector.blueButton.gameObject);
-                    Debug.Log("✓ Repositioned Blue button next to stroke counter");
-                }
-            }
         }
         else
         {
-            Debug.LogWarning("⚠️ DrawingColorSelector not found - color buttons not formatted");
+            Debug.LogWarning("⚠️ DrawingColorSelector not found");
         }
 
         // Mark scene as dirty
@@ -460,7 +389,6 @@ public class SetupResultPanelLayout : EditorWindow
         EditorUtility.DisplayDialog("Success",
             "PlantResultPanel and Drawing UI formatted successfully!\n\n" +
             "✓ Result Frame: Matches drawing area (" + drawingWidth + "x" + drawingHeight + ")\n" +
-            "✓ Color Buttons: Resized to 80x80 and repositioned\n" +
             "✓ Result Panel: Dark backgrounds for readability\n" +
             "✓ Title/Type: Above frame (white text)\n" +
             "✓ Stats: Left of frame (white text on dark bg)\n" +

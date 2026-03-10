@@ -144,12 +144,15 @@ namespace SketchBlossom.Drawing
 
         private void SetupInstructions()
         {
-            if (instructionTitle != null)
+            // Optional: keep a default title ONLY if empty
+            if (instructionTitle != null && string.IsNullOrWhiteSpace(instructionTitle.text))
             {
                 instructionTitle.text = "Draw Your Plant Companion";
             }
 
-            if (instructionText != null)
+            // IMPORTANT: Do not overwrite text set in the Inspector.
+            // Only apply fallback if the TMP field is empty.
+            if (instructionText != null && string.IsNullOrWhiteSpace(instructionText.text))
             {
                 instructionText.text =
                     "Welcome to Sketch Blossom!\n\n" +
