@@ -16,10 +16,10 @@ MonoBehaviour:
   - visualEffect: 3
     projectileFrames: []
     impactFrames: []
-    framesPerSecond: 0
-    scaleMultiplier: 0
+    framesPerSecond: 12
+    scaleMultiplier: 1
     rotateWhileFlying: 0
-    rotationSpeed: 0
+    rotationSpeed: 180
     loopImpact: 0
   defaultImpactFrames: []
   defaultProjectileFrames:

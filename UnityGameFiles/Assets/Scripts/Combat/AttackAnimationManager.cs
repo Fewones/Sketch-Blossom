@@ -6,27 +6,21 @@ namespace SketchBlossom.Battle
 {
     /// <summary>
     /// Manages attack animations using sprite sheet assets mapped to each attack's VisualEffect.
-    /// Falls back to player-drawn textures when no sprite asset is assigned.
+    /// Sprite frames are configured in the AttackSpriteDatabase ScriptableObject.
     /// </summary>
     public class AttackAnimationManager : MonoBehaviour
     {
         [Header("Sprite Database")]
-        [Tooltip("Assign the AttackSpriteDatabase ScriptableObject with sprite sheets for each effect")]
+        [Tooltip("Assign the AttackSpriteDatabase ScriptableObject (or place it in Resources/)")]
         [SerializeField] private AttackSpriteDatabase spriteDatabase;
 
         [Header("Projectile Settings")]
-        [SerializeField] private GameObject projectilePrefab;
-        [SerializeField] private Transform playerAttackSpawnPoint;
-        [SerializeField] private Transform enemyTargetPoint;
         [SerializeField] private float projectileDuration = 0.8f;
         [SerializeField] private float projectileScale = 300f;
-        [SerializeField] private Vector3 projectileRotation = Vector3.zero;
 
         [Header("Animation Settings")]
         [SerializeField] private float fadeInDuration = 0.1f;
         [SerializeField] private float fadeOutDuration = 0.1f;
-        [SerializeField] private bool rotateProjectile = false;
-        [SerializeField] private float rotationSpeed = 360f;
 
         [Header("Impact Settings")]
         [SerializeField] private float impactDuration = 0.4f;
@@ -38,29 +32,20 @@ namespace SketchBlossom.Battle
         [SerializeField] private float maxScale = 1.2f;
 
         [Header("References")]
-        [SerializeField] private DrawnMoveStorage moveStorage;
         [SerializeField] private Canvas battleCanvas;
 
-        [Header("Debug")]
-        [SerializeField] private bool useDebugSquare = false;
+        // Cached attack points
+        private Transform playerAttackSpawnPoint;
+        private Transform enemyTargetPoint;
 
         private void Awake()
         {
-            if (moveStorage == null)
-            {
-                moveStorage = DrawnMoveStorage.Instance;
-                if (moveStorage == null)
-                {
-                    Debug.LogWarning("AttackAnimationManager: DrawnMoveStorage not found!");
-                }
-            }
-
             if (battleCanvas == null)
             {
                 battleCanvas = FindFirstObjectByType<Canvas>();
                 if (battleCanvas != null)
                 {
-                    Debug.Log($"AttackAnimationManager: Found canvas '{battleCanvas.name}' with renderMode: {battleCanvas.renderMode}");
+                    Debug.Log($"AttackAnimationManager: Found canvas '{battleCanvas.name}'");
                 }
                 else
                 {
@@ -68,7 +53,6 @@ namespace SketchBlossom.Battle
                 }
             }
 
-            // Try to load sprite database from Resources if not assigned
             if (spriteDatabase == null)
             {
                 spriteDatabase = Resources.Load<AttackSpriteDatabase>("AttackSpriteDatabase");
@@ -76,163 +60,183 @@ namespace SketchBlossom.Battle
                 {
                     Debug.Log("AttackAnimationManager: Loaded AttackSpriteDatabase from Resources");
                 }
+                else
+                {
+                    Debug.LogWarning("AttackAnimationManager: No AttackSpriteDatabase found! Assign one in the inspector or place in Resources/.");
+                }
             }
 
             Debug.Log("AttackAnimationManager: Initialized");
         }
 
         /// <summary>
-        /// Play an attack animation. Uses sprite assets if available, otherwise falls back to drawn textures.
+        /// Play an attack animation for the given move.
+        /// Uses effect-specific sprites if available, otherwise falls back to default sprites.
         /// </summary>
         public IEnumerator PlayAttackAnimation(Transform source, Transform target, MoveData moveData)
         {
-            Debug.Log($"AttackAnimationManager: PlayAttackAnimation called - Move: {moveData.moveName}, Effect: {moveData.visualEffect}");
+            Debug.Log($"AttackAnimationManager: Playing animation for '{moveData.moveName}' (Effect: {moveData.visualEffect})");
 
             if (source == null || target == null)
             {
                 Debug.LogError("AttackAnimationManager: Source or target transform is null!");
-                yield return new WaitForSeconds(0.5f);
                 yield break;
             }
 
-            // Check if we have sprite assets for this move's visual effect
+            if (battleCanvas == null)
+            {
+                Debug.LogError("AttackAnimationManager: No battle canvas!");
+                yield break;
+            }
+
+            // Try to find effect-specific sprites first
             AttackSpriteDatabase.AttackSpriteEntry spriteEntry = null;
+            Sprite[] projectileFrames = null;
+            Sprite[] impactFrames = null;
+            float fps = 12f;
+            float entryScaleMultiplier = 1f;
+            bool rotateWhileFlying = false;
+            float rotationSpeed = 180f;
+            bool loopImpact = false;
+
             if (spriteDatabase != null)
             {
                 spriteEntry = spriteDatabase.GetEntryForEffect(moveData.visualEffect);
+
+                if (spriteEntry != null)
+                {
+                    // Use effect-specific sprites
+                    projectileFrames = spriteEntry.projectileFrames;
+                    impactFrames = spriteEntry.impactFrames;
+                    fps = spriteEntry.framesPerSecond;
+                    entryScaleMultiplier = spriteEntry.scaleMultiplier;
+                    rotateWhileFlying = spriteEntry.rotateWhileFlying;
+                    rotationSpeed = spriteEntry.rotationSpeed;
+                    loopImpact = spriteEntry.loopImpact;
+                    Debug.Log($"AttackAnimationManager: Using effect-specific sprites for {moveData.visualEffect} ({projectileFrames.Length} frames)");
+                }
+                else
+                {
+                    // Fall back to default sprites from the database
+                    if (spriteDatabase.defaultProjectileFrames != null && spriteDatabase.defaultProjectileFrames.Length > 0)
+                    {
+                        projectileFrames = spriteDatabase.defaultProjectileFrames;
+                        Debug.Log($"AttackAnimationManager: Using default projectile sprites ({projectileFrames.Length} frames)");
+                    }
+
+                    if (spriteDatabase.defaultImpactFrames != null && spriteDatabase.defaultImpactFrames.Length > 0)
+                    {
+                        impactFrames = spriteDatabase.defaultImpactFrames;
+                    }
+                }
             }
 
-            if (spriteEntry != null)
+            // If we have no sprites at all, just wait briefly
+            if (projectileFrames == null || projectileFrames.Length == 0)
             {
-                // Use sprite-based animation
-                Debug.Log($"AttackAnimationManager: Using sprite animation for {moveData.visualEffect}");
-                yield return StartCoroutine(PlaySpriteAttackAnimation(source, target, moveData, spriteEntry));
+                Debug.LogWarning($"AttackAnimationManager: No sprites available for {moveData.visualEffect} and no defaults configured. Skipping animation.");
+                yield return new WaitForSeconds(0.3f);
+                yield break;
             }
-            else
+
+            // Play projectile animation
+            yield return StartCoroutine(PlayProjectileAnimation(
+                source.position, target.position, moveData,
+                projectileFrames, fps, entryScaleMultiplier, rotateWhileFlying, rotationSpeed
+            ));
+
+            // Play impact animation at target
+            if (impactFrames != null && impactFrames.Length > 0)
             {
-                // Fall back to drawn texture animation
-                Debug.Log($"AttackAnimationManager: No sprite entry for {moveData.visualEffect}, using drawn texture fallback");
-                yield return StartCoroutine(PlayDrawnTextureAnimation(source, target, moveData));
+                yield return StartCoroutine(PlayImpactAnimation(
+                    target.position, moveData, impactFrames, fps, entryScaleMultiplier, loopImpact
+                ));
             }
         }
 
         /// <summary>
-        /// Play attack animation using sprite sheet frames from the database.
-        /// Animates a projectile from source to target, then plays an impact animation.
+        /// Animate a sprite-based projectile flying from source to target.
         /// </summary>
-        private IEnumerator PlaySpriteAttackAnimation(Transform source, Transform target, MoveData moveData, AttackSpriteDatabase.AttackSpriteEntry entry)
+        private IEnumerator PlayProjectileAnimation(
+            Vector3 startPos, Vector3 endPos, MoveData moveData,
+            Sprite[] frames, float fps, float scaleMultiplier,
+            bool rotate, float rotSpeed)
         {
-            if (battleCanvas == null)
-            {
-                Debug.LogError("AttackAnimationManager: No battle canvas for sprite animation!");
-                yield break;
-            }
-
-            // Create projectile UI element
-            GameObject projectile = CreateSpriteUIElement("AttackProjectile_Sprite", source.position, projectileScale * entry.scaleMultiplier);
+            GameObject projectile = CreateSpriteUIElement("AttackProjectile", startPos, projectileScale * scaleMultiplier);
             if (projectile == null) yield break;
 
-            Image projectileImage = projectile.GetComponent<Image>();
-            RectTransform projectileRect = projectile.GetComponent<RectTransform>();
+            Image image = projectile.GetComponent<Image>();
+            RectTransform rect = projectile.GetComponent<RectTransform>();
 
-            // Set tint to the move's primary color for visual variety
-            projectileImage.color = new Color(moveData.primaryColor.r, moveData.primaryColor.g, moveData.primaryColor.b, 0f);
+            // Start with move's primary color, fully transparent
+            image.color = new Color(moveData.primaryColor.r, moveData.primaryColor.g, moveData.primaryColor.b, 0f);
+            image.sprite = frames[0];
 
             // Fade in
-            yield return StartCoroutine(FadeUIImage(projectileImage, 0f, 1f, fadeInDuration));
+            yield return StartCoroutine(FadeImage(image, 0f, 1f, fadeInDuration));
 
-            // Animate projectile flight with sprite sheet frames
+            // Fly from source to target while cycling frames
             float elapsed = 0f;
-            float frameDuration = 1f / entry.framesPerSecond;
+            float frameDuration = 1f / Mathf.Max(fps, 1f);
             int frameIndex = 0;
             float frameTimer = 0f;
-            Vector3 startPos = source.position;
-            Vector3 endPos = target.position;
-            Vector3 initialScale = projectileRect.localScale;
-
-            Sprite[] frames = entry.projectileFrames;
-
-            // Set first frame
-            if (frames.Length > 0)
-            {
-                projectileImage.sprite = frames[0];
-            }
+            Vector3 initialScale = rect.localScale;
 
             while (elapsed < projectileDuration)
             {
                 float t = elapsed / projectileDuration;
 
-                // Update position
-                projectileRect.position = Vector3.Lerp(startPos, endPos, t);
+                rect.position = Vector3.Lerp(startPos, endPos, t);
 
-                // Advance sprite frame
+                // Advance frame
                 frameTimer += Time.deltaTime;
                 if (frameTimer >= frameDuration)
                 {
                     frameTimer -= frameDuration;
                     frameIndex = (frameIndex + 1) % frames.Length;
-                    projectileImage.sprite = frames[frameIndex];
+                    image.sprite = frames[frameIndex];
                 }
 
-                // Rotation
-                if (entry.rotateWhileFlying)
+                if (rotate)
                 {
-                    projectileRect.Rotate(Vector3.forward, entry.rotationSpeed * Time.deltaTime);
+                    rect.Rotate(Vector3.forward, rotSpeed * Time.deltaTime);
                 }
 
-                // Scale animation
                 if (scaleAnimation)
                 {
-                    float scaleMultiplier = Mathf.Lerp(1f, maxScale, scaleCurve.Evaluate(t));
-                    projectileRect.localScale = initialScale * scaleMultiplier;
+                    float s = Mathf.Lerp(1f, maxScale, scaleCurve.Evaluate(t));
+                    rect.localScale = initialScale * s;
                 }
 
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
-            // Ensure final position
-            projectileRect.position = endPos;
+            rect.position = endPos;
 
-            // Fade out projectile
-            yield return StartCoroutine(FadeUIImage(projectileImage, 1f, 0f, fadeOutDuration));
+            // Fade out
+            yield return StartCoroutine(FadeImage(image, 1f, 0f, fadeOutDuration));
             Destroy(projectile);
-
-            // Play impact animation at target if we have impact frames
-            Sprite[] impactFrames = entry.impactFrames;
-            if (impactFrames == null || impactFrames.Length == 0)
-            {
-                // Try default impact frames
-                if (spriteDatabase != null && spriteDatabase.defaultImpactFrames != null && spriteDatabase.defaultImpactFrames.Length > 0)
-                {
-                    impactFrames = spriteDatabase.defaultImpactFrames;
-                }
-            }
-
-            if (impactFrames != null && impactFrames.Length > 0)
-            {
-                yield return StartCoroutine(PlayImpactAnimation(target.position, impactFrames, entry, moveData));
-            }
         }
 
         /// <summary>
-        /// Play an impact animation at a given position using sprite frames.
+        /// Play an impact animation at the target position.
         /// </summary>
-        private IEnumerator PlayImpactAnimation(Vector3 position, Sprite[] frames, AttackSpriteDatabase.AttackSpriteEntry entry, MoveData moveData)
+        private IEnumerator PlayImpactAnimation(
+            Vector3 position, MoveData moveData,
+            Sprite[] frames, float fps, float scaleMultiplier, bool loop)
         {
-            GameObject impact = CreateSpriteUIElement("ImpactEffect", position, impactScale * entry.scaleMultiplier);
+            GameObject impact = CreateSpriteUIElement("ImpactEffect", position, impactScale * scaleMultiplier);
             if (impact == null) yield break;
 
-            Image impactImage = impact.GetComponent<Image>();
-            // Tint with secondary color for impact
-            impactImage.color = new Color(moveData.secondaryColor.r, moveData.secondaryColor.g, moveData.secondaryColor.b, 1f);
+            Image image = impact.GetComponent<Image>();
+            image.color = new Color(moveData.secondaryColor.r, moveData.secondaryColor.g, moveData.secondaryColor.b, 1f);
+            image.sprite = frames[0];
 
-            float frameDuration = 1f / entry.framesPerSecond;
+            float frameDuration = 1f / Mathf.Max(fps, 1f);
             float elapsed = 0f;
             int frameIndex = 0;
             float frameTimer = 0f;
-
-            impactImage.sprite = frames[0];
 
             while (elapsed < impactDuration)
             {
@@ -241,25 +245,25 @@ namespace SketchBlossom.Battle
                 {
                     frameTimer -= frameDuration;
                     frameIndex++;
-                    if (entry.loopImpact)
+                    if (loop)
                     {
                         frameIndex = frameIndex % frames.Length;
                     }
                     else if (frameIndex >= frames.Length)
                     {
-                        frameIndex = frames.Length - 1; // Hold last frame
+                        frameIndex = frames.Length - 1;
                     }
-                    impactImage.sprite = frames[frameIndex];
+                    image.sprite = frames[frameIndex];
                 }
 
-                // Fade out over the last third of the impact
+                // Fade out over the last third
                 float fadeStart = impactDuration * 0.66f;
                 if (elapsed > fadeStart)
                 {
                     float fadeT = (elapsed - fadeStart) / (impactDuration - fadeStart);
-                    Color c = impactImage.color;
+                    Color c = image.color;
                     c.a = Mathf.Lerp(1f, 0f, fadeT);
-                    impactImage.color = c;
+                    image.color = c;
                 }
 
                 elapsed += Time.deltaTime;
@@ -270,16 +274,10 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Create a UI element with an Image component for sprite display.
+        /// Create a UI element for displaying a sprite animation.
         /// </summary>
         private GameObject CreateSpriteUIElement(string name, Vector3 position, float scale)
         {
-            if (battleCanvas == null)
-            {
-                Debug.LogError("AttackAnimationManager: No battle canvas!");
-                return null;
-            }
-
             GameObject obj = new GameObject(name);
             obj.transform.SetParent(battleCanvas.transform, false);
 
@@ -297,152 +295,7 @@ namespace SketchBlossom.Battle
             return obj;
         }
 
-        // =====================================================================
-        // DRAWN TEXTURE FALLBACK (original behavior)
-        // =====================================================================
-
-        /// <summary>
-        /// Fallback: Play attack animation using the player's drawn move texture.
-        /// Used when no sprite asset is configured for the move's visual effect.
-        /// </summary>
-        private IEnumerator PlayDrawnTextureAnimation(Transform source, Transform target, MoveData moveData)
-        {
-            if (moveStorage == null || !moveStorage.HasDrawings())
-            {
-                Debug.LogWarning("AttackAnimationManager: No move drawings available for animation!");
-                yield return PlayFallbackAnimation(source, target, moveData);
-                yield break;
-            }
-
-            Texture2D moveTexture = moveStorage.GetNextMoveDrawing();
-            if (moveTexture == null)
-            {
-                Debug.LogWarning("AttackAnimationManager: Failed to get move drawing!");
-                yield return PlayFallbackAnimation(source, target, moveData);
-                yield break;
-            }
-
-            Texture2D projectileTexture = moveTexture;
-            if (useDebugSquare)
-            {
-                projectileTexture = CreateDebugSquareTexture();
-            }
-
-            GameObject projectile = CreateUIProjectile(projectileTexture, source.position);
-            if (projectile == null)
-            {
-                yield return PlayFallbackAnimation(source, target, moveData);
-                yield break;
-            }
-
-            yield return StartCoroutine(AnimateUIProjectile(projectile, source, target));
-
-            if (projectile != null)
-            {
-                Destroy(projectile);
-            }
-        }
-
-        /// <summary>
-        /// Create a projectile GameObject as a UI Image element (drawn texture version)
-        /// </summary>
-        private GameObject CreateUIProjectile(Texture2D moveTexture, Vector3 spawnPosition)
-        {
-            try
-            {
-                if (battleCanvas == null)
-                {
-                    Debug.LogError("AttackAnimationManager: No battle canvas available!");
-                    return null;
-                }
-
-                GameObject projectile = new GameObject("AttackProjectile");
-                projectile.transform.SetParent(battleCanvas.transform, false);
-
-                RectTransform rectTransform = projectile.AddComponent<RectTransform>();
-                rectTransform.sizeDelta = new Vector2(projectileScale, projectileScale);
-                rectTransform.anchorMin = new Vector2(0, 0);
-                rectTransform.anchorMax = new Vector2(0, 0);
-                rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                rectTransform.position = spawnPosition;
-
-                Image image = projectile.AddComponent<Image>();
-
-                Sprite moveSprite = Texture2DToSprite(moveTexture);
-                if (moveSprite != null)
-                {
-                    image.sprite = moveSprite;
-                    image.preserveAspect = true;
-                }
-                else
-                {
-                    Destroy(projectile);
-                    return null;
-                }
-
-                Color color = image.color;
-                color.a = 0f;
-                image.color = color;
-
-                return projectile;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"AttackAnimationManager: Exception creating UI projectile: {e.Message}\n{e.StackTrace}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Animate the UI projectile from source to target (drawn texture version)
-        /// </summary>
-        private IEnumerator AnimateUIProjectile(GameObject projectile, Transform source, Transform target)
-        {
-            RectTransform rectTransform = projectile.GetComponent<RectTransform>();
-            Image image = projectile.GetComponent<Image>();
-
-            if (rectTransform == null || image == null) yield break;
-
-            Vector3 startPos = source.position;
-            Vector3 endPos = target.position;
-            Vector3 initialScale = rectTransform.localScale;
-
-            // Fade in
-            yield return StartCoroutine(FadeUIImage(image, 0f, 1f, fadeInDuration));
-
-            // Move from start to end
-            float elapsed = 0f;
-            while (elapsed < projectileDuration)
-            {
-                float t = elapsed / projectileDuration;
-                rectTransform.position = Vector3.Lerp(startPos, endPos, t);
-
-                if (rotateProjectile)
-                {
-                    rectTransform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime);
-                }
-
-                if (scaleAnimation)
-                {
-                    float scaleMultiplier = Mathf.Lerp(1f, maxScale, scaleCurve.Evaluate(t));
-                    rectTransform.localScale = initialScale * scaleMultiplier;
-                }
-
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            rectTransform.position = endPos;
-
-            // Fade out
-            yield return StartCoroutine(FadeUIImage(image, 1f, 0f, fadeOutDuration));
-        }
-
-        // =====================================================================
-        // SHARED UTILITIES
-        // =====================================================================
-
-        private IEnumerator FadeUIImage(Image image, float startAlpha, float endAlpha, float duration)
+        private IEnumerator FadeImage(Image image, float startAlpha, float endAlpha, float duration)
         {
             if (image == null) yield break;
 
@@ -451,8 +304,7 @@ namespace SketchBlossom.Battle
 
             while (elapsed < duration)
             {
-                float t = elapsed / duration;
-                color.a = Mathf.Lerp(startAlpha, endAlpha, t);
+                color.a = Mathf.Lerp(startAlpha, endAlpha, elapsed / duration);
                 image.color = color;
                 elapsed += Time.deltaTime;
                 yield return null;
@@ -460,46 +312,6 @@ namespace SketchBlossom.Battle
 
             color.a = endAlpha;
             image.color = color;
-        }
-
-        private IEnumerator PlayFallbackAnimation(Transform source, Transform target, MoveData moveData)
-        {
-            Debug.Log("AttackAnimationManager: Playing fallback animation (no drawing or sprite available)");
-            yield return new WaitForSeconds(0.5f);
-        }
-
-        private Texture2D CreateDebugSquareTexture()
-        {
-            int size = 256;
-            Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            Color[] pixels = new Color[size * size];
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                pixels[i] = Color.white;
-            }
-            texture.SetPixels(pixels);
-            texture.Apply();
-            return texture;
-        }
-
-        private Sprite Texture2DToSprite(Texture2D texture)
-        {
-            if (texture == null) return null;
-
-            try
-            {
-                return Sprite.Create(
-                    texture,
-                    new Rect(0, 0, texture.width, texture.height),
-                    new Vector2(0.5f, 0.5f),
-                    100f
-                );
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"AttackAnimationManager: Exception creating sprite: {e.Message}");
-                return null;
-            }
         }
 
         public void SetAttackPoints(Transform spawnPoint, Transform targetPoint)
