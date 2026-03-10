@@ -15,10 +15,11 @@ public class DrawingCaptureHandler : MonoBehaviour
     [SerializeField] private bool useScreenCapture = false; // Alternative capture method
 
     /// <summary>
-    /// Capture all LineRenderers and convert them to a Texture2D
-    /// Uses screen capture method for reliability
+    /// Capture all LineRenderers and convert them to a Texture2D.
+    /// When forceTransparent is true the background is fully transparent (for battle sprites).
+    /// When false (default) the drawing area's background colour is used (white for CLIP).
     /// </summary>
-    public Texture2D CaptureDrawing(List<LineRenderer> strokes, Camera sourceCamera, RectTransform drawingArea = null)
+    public Texture2D CaptureDrawing(List<LineRenderer> strokes, Camera sourceCamera, RectTransform drawingArea = null, bool forceTransparent = false)
     {
         if (strokes == null || strokes.Count == 0)
         {
@@ -78,10 +79,17 @@ public class DrawingCaptureHandler : MonoBehaviour
 
         // Configure camera
         captureCamera.orthographic = true;
-        if ((drawingArea == null) || (drawingArea.GetComponent<Image> () == null)){
+        if (forceTransparent)
+        {
+            captureCamera.backgroundColor = new Color(0, 0, 0, 0);
+        }
+        else if ((drawingArea == null) || (drawingArea.GetComponent<Image> () == null))
+        {
             captureCamera.backgroundColor = backgroundColor;
-        } else {
-            captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;  
+        }
+        else
+        {
+            captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;
         }
         captureCamera.clearFlags = CameraClearFlags.SolidColor;
         captureCamera.cullingMask = 1 + 2 + 4 + 16 + 32; // Render all layers except background layer (layer 3)
