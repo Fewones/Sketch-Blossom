@@ -267,17 +267,33 @@ public class PythonDownloader
         string tempZip = Path.Combine(Path.GetTempPath(), zipName);
 
         using (var http = new System.Net.Http.HttpClient()) {
-            try {
-                var response = await http.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
-                Debug.Log("Status Code: " + response.StatusCode);
-                Debug.Log("Redirect Location: " + response.Headers.Location);
-                var bytes = await http.GetByteArrayAsync(url);
-                File.WriteAllBytes(tempZip, bytes);
-            }
-            catch (Exception ex) {
-                Debug.LogError(ex);
-                return;
+            http.Timeout = TimeSpan.FromMinutes(10);
+            int maxRetries = 3;
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try {
+                    Debug.Log("Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
+                    var response = await http.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                    response.EnsureSuccessStatusCode();
+                    Debug.Log("Status Code: " + response.StatusCode);
+                    using (var stream = await response.Content.ReadAsStreamAsync())
+                    using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await stream.CopyToAsync(fileStream);
+                    }
+                    break;
                 }
+                catch (Exception ex) {
+                    if (attempt == maxRetries)
+                    {
+                        Debug.LogError("Download failed after " + maxRetries + " attempts: " + ex);
+                        return;
+                    }
+                    int delaySeconds = (int)Math.Pow(2, attempt);
+                    Debug.LogWarning("Download attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + ex.Message);
+                    await Task.Delay(delaySeconds * 1000);
+                }
+            }
         }
 
         if (Directory.Exists(targetPath))
