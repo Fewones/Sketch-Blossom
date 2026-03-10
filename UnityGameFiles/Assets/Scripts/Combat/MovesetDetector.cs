@@ -218,22 +218,24 @@ public class MovesetDetector : MonoBehaviour
         return Mathf.Clamp01(score);
     }
 
-    /// <summary> Zigzag: single stroke with many sharp turns </summary>
+    /// <summary> Zigzag: single stroke with many sharp turns, elongated and OPEN </summary>
     private float ScoreZigzag(DrawingFeatures f)
     {
         float score = 0f;
-        if (f.spikyStrokes >= 1) score += 0.5f;
+        if (f.spikyStrokes >= 1) score += 0.4f;
         if (f.spikyStrokes >= 2) score += 0.15f;
 
-        // Should NOT be closed (zigzag is open)
-        if (f.circularStrokes > 0) score *= 0.3f;
+        // Zigzags are OPEN (not closed) — strongly penalize closed shapes (that's a square/triangle)
+        if (f.circularStrokes > 0) score *= 0.2f;
 
         // 1-2 strokes preferred
-        if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.2f;
-        else if (f.strokeCount <= 4) score += 0.1f;
+        if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.15f;
+        else if (f.strokeCount <= 4) score += 0.05f;
 
-        // Some directionality
-        if (f.verticalStrokes >= 1 || f.horizontalStrokes >= 1) score += 0.1f;
+        // Zigzags are elongated — wider OR taller than they are round
+        // Square-ish aspect ratio (0.7-1.4) suggests a closed shape, not a zigzag
+        if (f.aspectRatio < 0.5f || f.aspectRatio > 2.0f) score += 0.2f;
+        else if (f.aspectRatio < 0.7f || f.aspectRatio > 1.4f) score += 0.1f;
 
         return Mathf.Clamp01(score);
     }
@@ -396,18 +398,18 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 4) score += 0.15f;
         else return 0.05f;
 
-        // Must be closed AND have sharp corners — both required
-        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;
-        else if (f.spikyStrokes >= 1) score += 0.15f;
+        // Sharp corners are the key feature — even imperfectly closed squares have corners
+        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;   // Perfect: closed + corners
+        else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed or open square — still recognizable
         else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
 
-        // Roughly square aspect ratio
+        // Roughly square aspect ratio — key differentiator from zigzag (which is elongated)
         float ar = f.aspectRatio;
         if (ar > 0.6f && ar < 1.6f) score += 0.15f;
 
         // Squares have straight edges — curved strokes strongly suggest circle, not square
         if (f.curvedStrokes == 0) score += 0.2f;
-        else score *= 0.5f;    // Curved = probably a circle, not a square
+        else score *= 0.5f;
 
         return Mathf.Clamp01(score);
     }
@@ -421,9 +423,9 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f;
         else return 0.05f;
 
-        // Closed + sharp corners — both required
-        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;
-        else if (f.spikyStrokes >= 1) score += 0.15f;
+        // Sharp corners are the key feature — even imperfectly closed triangles have corners
+        if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;   // Perfect: closed + corners
+        else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed — still recognizable
         else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
 
         // Triangles are often pointy (taller)
@@ -431,7 +433,7 @@ public class MovesetDetector : MonoBehaviour
 
         // Triangles have straight edges — curved strokes suggest circle
         if (f.curvedStrokes == 0) score += 0.2f;
-        else score *= 0.5f;    // Curved = probably a circle, not a triangle
+        else score *= 0.5f;
 
         return Mathf.Clamp01(score);
     }
