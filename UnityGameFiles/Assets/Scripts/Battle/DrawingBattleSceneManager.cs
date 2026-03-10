@@ -682,6 +682,9 @@ namespace SketchBlossom.Battle
                     Task<string> clipTask = clipModelManager.SendImage(moveTexture, "move_shapes");
                     yield return new WaitUntil(() => clipTask.IsCompleted);
 
+                    // CLIP analysis is done — destroy the texture to prevent memory leaks.
+                    Destroy(moveTexture);
+
                     if (!clipTask.IsFaulted && !string.IsNullOrEmpty(clipTask.Result) &&
                         !clipTask.Result.StartsWith("error"))
                     {
@@ -755,6 +758,11 @@ namespace SketchBlossom.Battle
                 else
                 {
                     CaptureMoveDrawing(lineRenderers);
+                    // Destroy temp LineRenderers now that both CLIP capture and
+                    // move-drawing capture are done. If these aren't cleaned up,
+                    // the next turn's CaptureDrawing() camera will render stale
+                    // strokes from this turn on top of the new drawing.
+                    drawingCanvas.DestroyTempLineRenderers();
                     StartCoroutine(ExecutePlayerMove(result));
                 }
             }
