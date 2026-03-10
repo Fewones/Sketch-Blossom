@@ -88,10 +88,9 @@ public class MovesetDetector : MonoBehaviour
             return CreateFailedResult();
         }
 
-        Debug.Log($"=== SHAPE-BASED MOVE DETECTION for {plantType} ===");
+        Debug.Log($"=== CLIP-PRIMARY MOVE DETECTION for {plantType} ===");
         Debug.Log($"CLIP hint: shape='{clipHint.shapeLabel}' confidence={clipHint.confidence:F2}");
 
-        DrawingFeatures features = ExtractFeatures(strokes);
         MoveData[] availableMoves = MoveData.GetMovesForPlant(plantType);
         if (availableMoves.Length == 0)
         {
@@ -106,22 +105,42 @@ public class MovesetDetector : MonoBehaviour
 
         MoveDetectionResult result = new MoveDetectionResult();
 
-        foreach (var moveData in availableMoves)
+        if (hasCLIPHint)
         {
-            // Geometric score based on the move's specific DrawingShape
-            float geometricScore = CalculateShapeScore(moveData.drawingShape, features);
-
-            // CLIP boost: if the CLIP-detected shape matches this move's DrawingShape
-            float clipBoost = 0f;
-            if (hasCLIPHint && System.Array.IndexOf(clipSupportedShapes, moveData.drawingShape) >= 0)
+            // ── CLIP IS PRIMARY ──
+            // TinyCLIP compares the drawing against all 13 shape descriptions and
+            // returns the best match.  We trust that label and use its confidence
+            // directly as the score for any move whose DrawingShape matches.
+            // Non-matching moves get a small base score so the confidence display
+            // still shows them, but they can never win.
+            foreach (var moveData in availableMoves)
             {
-                clipBoost = clipHint.confidence * 0.6f;
+                float score;
+                if (System.Array.IndexOf(clipSupportedShapes, moveData.drawingShape) >= 0)
+                {
+                    score = clipHint.confidence;  // CLIP confidence IS the score
+                }
+                else
+                {
+                    score = 0.1f;  // Non-matching moves get a low baseline
+                }
+                result.scores[moveData.moveType] = score;
+                Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): clip={score:F2}");
             }
+        }
+        else
+        {
+            // ── GEOMETRIC FALLBACK ──
+            // Only used when TinyCLIP server is unavailable or returned no result.
+            Debug.Log("CLIP unavailable — falling back to geometric detection");
+            DrawingFeatures features = ExtractFeatures(strokes);
 
-            float combinedScore = Mathf.Clamp01(geometricScore + clipBoost);
-            result.scores[moveData.moveType] = combinedScore;
-
-            Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): geometric={geometricScore:F2} clipBoost={clipBoost:F2} total={combinedScore:F2}");
+            foreach (var moveData in availableMoves)
+            {
+                float geometricScore = CalculateShapeScore(moveData.drawingShape, features);
+                result.scores[moveData.moveType] = geometricScore;
+                Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): geometric={geometricScore:F2}");
+            }
         }
 
         var bestMatch = result.scores.OrderByDescending(x => x.Value).First();
