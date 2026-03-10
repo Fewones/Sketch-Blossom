@@ -287,6 +287,11 @@ public class SimpleDrawingCanvas : MonoBehaviour
 
     // ── Fill Tool Public API ───────────────────────────────────
 
+    public void FillBackground()
+    {
+        drawingArea.GetComponent<Image>().color = currentColor;
+    }
+
     public void ToggleFillMode()
     {
         isFillMode = !isFillMode;
