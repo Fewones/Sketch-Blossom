@@ -34,6 +34,19 @@ public class PythonDownloader
     static async void CheckAndDownloadPython() {
         EditorApplication.update -= CheckAndDownloadPython;
 
+        // Clean up old Assets/Python/ location to prevent Unity plugin collisions
+        string oldPythonFolder = Path.GetFullPath("Assets/Python/");
+        if (Directory.Exists(oldPythonFolder))
+        {
+            Debug.Log("Removing old Python folder at Assets/Python/ to fix plugin collisions...");
+            try { Directory.Delete(oldPythonFolder, true); }
+            catch (Exception ex) { Debug.LogWarning("Could not fully remove old Python folder: " + ex.Message); }
+            // Remove leftover .meta file too
+            string oldMeta = oldPythonFolder.TrimEnd('/', '\\') + ".meta";
+            if (File.Exists(oldMeta)) File.Delete(oldMeta);
+            AssetDatabase.Refresh();
+        }
+
         string platformFolder = "";
 
         #if UNITY_EDITOR_WIN
