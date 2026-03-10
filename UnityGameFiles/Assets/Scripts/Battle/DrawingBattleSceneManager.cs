@@ -39,7 +39,6 @@ namespace SketchBlossom.Battle
         [Header("Attack Animations")]
         [SerializeField] private AttackAnimationManager attackAnimationManager;
         [SerializeField] private MoveExecutor moveExecutor;
-        [SerializeField] private DrawnMoveStorage drawnMoveStorage;
         [SerializeField] private DrawingCaptureHandler moveDrawingCapture;
 
         [Header("UI Elements")]
@@ -353,15 +352,15 @@ namespace SketchBlossom.Battle
         /// </summary>
         private void SetupAttackAnimationSystem()
         {
-            // Auto-find or create DrawnMoveStorage
-            if (drawnMoveStorage == null)
+            // Auto-find or create DrawingCaptureHandler (used for CLIP move recognition)
+            if (moveDrawingCapture == null)
             {
-                drawnMoveStorage = FindFirstObjectByType<DrawnMoveStorage>();
-                if (drawnMoveStorage == null)
+                moveDrawingCapture = FindFirstObjectByType<DrawingCaptureHandler>();
+                if (moveDrawingCapture == null)
                 {
-                    GameObject storageObj = new GameObject("DrawnMoveStorage");
-                    drawnMoveStorage = storageObj.AddComponent<DrawnMoveStorage>();
-                    Debug.Log("DrawingBattleSceneManager: Created DrawnMoveStorage");
+                    GameObject captureObj = new GameObject("MoveDrawingCapture");
+                    moveDrawingCapture = captureObj.AddComponent<DrawingCaptureHandler>();
+                    Debug.Log("DrawingBattleSceneManager: Created DrawingCaptureHandler for move recognition");
                 }
             }
 
@@ -374,18 +373,6 @@ namespace SketchBlossom.Battle
                     GameObject animManagerObj = new GameObject("AttackAnimationManager");
                     attackAnimationManager = animManagerObj.AddComponent<AttackAnimationManager>();
                     Debug.Log("DrawingBattleSceneManager: Created AttackAnimationManager");
-                }
-            }
-
-            // Auto-find or create DrawingCaptureHandler for moves
-            if (moveDrawingCapture == null)
-            {
-                moveDrawingCapture = FindFirstObjectByType<DrawingCaptureHandler>();
-                if (moveDrawingCapture == null)
-                {
-                    GameObject captureObj = new GameObject("MoveDrawingCapture");
-                    moveDrawingCapture = captureObj.AddComponent<DrawingCaptureHandler>();
-                    Debug.Log("DrawingBattleSceneManager: Created DrawingCaptureHandler for moves");
                 }
             }
 
@@ -757,11 +744,9 @@ namespace SketchBlossom.Battle
                 }
                 else
                 {
-                    CaptureMoveDrawing(lineRenderers);
-                    // Destroy temp LineRenderers now that both CLIP capture and
-                    // move-drawing capture are done. If these aren't cleaned up,
-                    // the next turn's CaptureDrawing() camera will render stale
-                    // strokes from this turn on top of the new drawing.
+                    // Destroy temp LineRenderers now that CLIP capture is done.
+                    // If these aren't cleaned up, the next turn's CaptureDrawing()
+                    // camera will render stale strokes from this turn on top of the new drawing.
                     drawingCanvas.DestroyTempLineRenderers();
                     StartCoroutine(ExecutePlayerMove(result));
                 }
@@ -784,55 +769,6 @@ namespace SketchBlossom.Battle
                 drawingCanvas.ClearCanvas();
                 if (moveConfidenceDisplay != null) moveConfidenceDisplay.Hide();
             }
-        }
-
-        /// <summary>
-        /// Capture the current move drawing and store it for use in attack animations
-        /// </summary>
-        private void CaptureMoveDrawing(List<LineRenderer> strokes)
-        {
-            if (moveDrawingCapture == null || drawnMoveStorage == null)
-            {
-                Debug.LogWarning("DrawingBattleSceneManager: Move drawing capture system not initialized!");
-                return;
-            }
-
-            if (strokes == null || strokes.Count == 0)
-            {
-                Debug.LogWarning("DrawingBattleSceneManager: No strokes to capture!");
-                return;
-            }
-
-            Debug.Log("========== CAPTURING MOVE DRAWING ==========");
-
-            // Get the camera for rendering
-            Camera mainCamera = Camera.main;
-            if (mainCamera == null)
-            {
-                Debug.LogError("DrawingBattleSceneManager: No main camera found for move capture!");
-                return;
-            }
-
-            // Capture the move drawing as a texture
-            Texture2D moveTexture = moveDrawingCapture.CaptureDrawing(
-                strokes,
-                mainCamera,
-                drawingCanvas.drawingArea
-            );
-
-            if (moveTexture != null)
-            {
-                // Store the captured move drawing
-                drawnMoveStorage.AddMoveDrawing(moveTexture);
-                Debug.Log($"✓ Move drawing captured! Texture size: {moveTexture.width}x{moveTexture.height}");
-                Debug.Log($"   Total stored move drawings: {drawnMoveStorage.GetDrawingCount()}");
-            }
-            else
-            {
-                Debug.LogError("Failed to capture move drawing texture!");
-            }
-
-            Debug.Log("============================================");
         }
 
         /// <summary>
@@ -1026,6 +962,21 @@ namespace SketchBlossom.Battle
             {
                 // ENHANCED VISUAL EFFECTS for enemy attack
                 Debug.Log($"[BATTLE] Enemy playing enhanced visual effects - Colors: {moveData.primaryColor} -> {moveData.secondaryColor}");
+
+                // Play sprite-based attack animation for enemy (enemy -> player)
+                if (attackAnimationManager != null && enemyUnit != null && playerUnit != null)
+                {
+                    Transform enemyTransform = enemyUnit.GetTransform();
+                    Transform playerTransform = playerUnit.GetTransform();
+                    if (enemyTransform != null && playerTransform != null)
+                    {
+                        yield return StartCoroutine(attackAnimationManager.PlayAttackAnimation(
+                            enemyTransform,
+                            playerTransform,
+                            moveData
+                        ));
+                    }
+                }
 
                 // Play the gradient color flash on the player
                 if (playerUnit != null)
