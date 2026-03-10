@@ -1,18 +1,18 @@
 {
     "move_shapes": {
-        "a black circle drawn on white paper, a closed round loop": "circle",
+        "a single black circle drawn on white paper, one closed round loop forming a ring": "circle",
         "a single black straight line on white paper, one stroke going in one direction": "straight_line",
-        "a black zigzag line on white paper, sharp angular turns like a lightning bolt": "zigzag",
-        "a black wavy curved line on white paper, smooth S-shaped curves": "wavy_line",
-        "a black plus sign on white paper, two straight lines crossing at right angles": "plus",
-        "a black X on white paper, two diagonal lines crossing in the middle": "x_cross",
-        "a black arrow on white paper, a straight line with a V-shaped pointed tip": "arrow",
-        "multiple small black circles on white paper, several separate round dots or bubbles": "multiple_circles",
-        "a black star shape on white paper, lines radiating outward from a center point": "star",
-        "a black square on white paper, four straight sides forming a closed rectangular box": "square",
-        "a black triangle on white paper, three straight sides forming a closed shape with three corners": "triangle",
-        "a black checkmark on white paper, a V-shaped tick mark": "checkmark",
-        "a black spiral on white paper, a line curving inward in a coil shape": "spiral"
+        "a black zigzag line on white paper, sharp angular back-and-forth turns like a lightning bolt": "zigzag",
+        "a black wavy curved line on white paper, smooth S-shaped curves flowing horizontally": "wavy_line",
+        "a black plus sign on white paper, two straight lines crossing at right angles forming a cross": "plus",
+        "a black X drawn on white paper, two diagonal lines crossing in the middle": "x_cross",
+        "a black arrow on white paper, a long straight line with a small pointed arrowhead at one end": "arrow",
+        "multiple separate black circles on white paper, three or more small round closed loops spread apart like bubbles": "multiple_circles",
+        "a black star shape on white paper, several lines radiating outward from a center point": "star",
+        "a black square on white paper, four straight sides meeting at four right-angle corners forming a closed box": "square",
+        "a black triangle on white paper, exactly three straight lines meeting at three sharp points forming a closed pyramid shape": "triangle",
+        "a black checkmark on white paper, a short line angled down to the left then a longer line angled up to the right forming a tick mark": "checkmark",
+        "a black spiral on white paper, a curved line winding around itself inward in a coil like a snail shell": "spiral"
     },
     "plant_labels": {
         "a red tulip emitting flames": "flame tulip", 
