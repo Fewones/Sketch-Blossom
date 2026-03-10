@@ -152,13 +152,9 @@ public class MovesetDetector : MonoBehaviour
         if (result.confidence >= confidenceThreshold)
         {
             result.wasRecognized = true;
-            // Find the DrawingShape for quality scoring
-            MoveData.DrawingShape bestShape = MoveData.DrawingShape.Circle;
-            foreach (var m in availableMoves)
-            {
-                if (m.moveType == result.detectedMove) { bestShape = m.drawingShape; break; }
-            }
-            result.quality = CalculateDrawingQuality(strokes, bestShape);
+            // Use detection confidence as quality: better recognized = better attack
+            // Map confidence from [threshold..1] to [0..1] so barely-recognized moves start low
+            result.quality = Mathf.InverseLerp(confidenceThreshold, 1f, result.confidence);
             result.damageMultiplier = Mathf.Lerp(0.5f, 1.5f, result.quality);
             result.qualityRating = GetQualityRating(result.quality);
             Debug.Log($"✅ MOVE RECOGNIZED: {result}");
