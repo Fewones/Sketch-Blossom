@@ -330,27 +330,26 @@ public class PythonDownloader
                     long totalBytes = contentLength ?? 0;
                     string totalMBStr = totalBytes > 0 ? (totalBytes / 1024 / 1024) + " MB" : "unknown size";
 
-                    using (var stream = await response.Content.ReadAsStreamAsync())
-                    using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
+                    using (var stream = new System.IO.BufferedStream(await response.Content.ReadAsStreamAsync(), 1024 * 1024))
+                    using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024))
                     {
-                        byte[] buffer = new byte[81920];
+                        byte[] buffer = new byte[1024 * 1024]; // 1 MB buffer
                         long totalRead = 0;
-                        int lastPercent = -1;
+                        int lastReportedMB = -1;
                         int bytesRead;
                         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                         {
                             await fileStream.WriteAsync(buffer, 0, bytesRead);
                             totalRead += bytesRead;
-                            if (totalBytes > 0)
+                            int currentMB = (int)(totalRead / 1024 / 1024);
+                            // Update progress bar every 5 MB to avoid UI overhead
+                            if (totalBytes > 0 && currentMB / 5 > lastReportedMB / 5)
                             {
+                                lastReportedMB = currentMB;
                                 int percent = (int)(totalRead * 100 / totalBytes);
                                 float progress = totalRead / (float)totalBytes;
-                                if (percent != lastPercent)
-                                {
-                                    lastPercent = percent;
-                                    string info = "Downloading Python... " + percent + "% (" + (totalRead / 1024 / 1024) + " / " + totalMBStr + ")";
-                                    EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
-                                }
+                                string info = "Downloading Python... " + percent + "% (" + currentMB + " / " + totalMBStr + ")";
+                                EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
                             }
                         }
                     }
