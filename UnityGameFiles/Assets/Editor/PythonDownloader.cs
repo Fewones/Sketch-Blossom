@@ -34,6 +34,8 @@ public class PythonDownloader
     static async void CheckAndDownloadPython() {
         EditorApplication.update -= CheckAndDownloadPython;
 
+        Debug.Log("[PythonDownloader] === Starting Python environment setup ===");
+
         string platformFolder = "";
 
         #if UNITY_EDITOR_WIN
@@ -44,15 +46,27 @@ public class PythonDownloader
             platformFolder = "ubuntu-latest";
         #endif
 
+        Debug.Log("[PythonDownloader] Detected platform: " + platformFolder);
+
         string fullPath = Path.Combine(pythonFolder, platformFolder);
         fullPath = Path.GetFullPath(fullPath);
 
+        Debug.Log("[PythonDownloader] Python environment path: " + fullPath);
+
         string pythonExe = GetPythonExePath(fullPath);
+
+        Debug.Log("[PythonDownloader] Expected Python executable: " + pythonExe);
+        Debug.Log("[PythonDownloader] Directory exists: " + Directory.Exists(fullPath));
+        Debug.Log("[PythonDownloader] Python exe exists: " + File.Exists(pythonExe));
 
         if (!Directory.Exists(fullPath) || !File.Exists(pythonExe))
         {
-            Debug.Log("Python not found, downloading...");
+            Debug.Log("[PythonDownloader] Python not found, starting download...");
             await DownloadAndExtractPython(platformFolder, fullPath);
+        }
+        else
+        {
+            Debug.Log("[PythonDownloader] Python already installed, skipping download.");
         }
 
         // If download failed or zip didn't contain a working Python,
@@ -61,7 +75,7 @@ public class PythonDownloader
         pythonExe = GetPythonExePath(fullPath);
         if (!File.Exists(pythonExe))
         {
-            Debug.Log("Download failed or incomplete. Creating Python venv from system python3...");
+            Debug.Log("[PythonDownloader] Download failed or incomplete. Creating Python venv from system python3...");
             // Remove any partial download to avoid duplicate native libraries
             if (Directory.Exists(fullPath))
                 Directory.Delete(fullPath, true);
@@ -72,6 +86,7 @@ public class PythonDownloader
         // Ensure python binary is executable (zip extraction doesn't preserve Unix permissions)
         if (File.Exists(pythonExe))
         {
+            Debug.Log("[PythonDownloader] Setting executable permission on: " + pythonExe);
             await RunProcess("chmod", "+x \"" + pythonExe + "\"");
         }
         #endif
@@ -82,7 +97,7 @@ public class PythonDownloader
         if (File.Exists(bad_dll))
         {
             File.Delete(bad_dll);
-            Debug.Log("Datei gelöscht: " + bad_dll);
+            Debug.Log("[PythonDownloader] Removed conflicting DLL: " + bad_dll);
         }
         #endif
 
@@ -90,18 +105,29 @@ public class PythonDownloader
         string requirementsPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "requirements.txt"));
         // Use versioned marker so old markers from failed attempts don't block us
         string depsMarker = Path.Combine(fullPath, ".deps_v6");
+
+        Debug.Log("[PythonDownloader] Requirements file: " + requirementsPath + " (exists: " + File.Exists(requirementsPath) + ")");
+        Debug.Log("[PythonDownloader] Deps marker: " + depsMarker + " (exists: " + File.Exists(depsMarker) + ")");
+
         // Clean up old markers
         foreach (string old in new[] { ".deps_installed", ".deps_v3", ".deps_v4", ".deps_v5" })
         {
             string oldPath = Path.Combine(fullPath, old);
-            if (File.Exists(oldPath)) File.Delete(oldPath);
+            if (File.Exists(oldPath))
+            {
+                File.Delete(oldPath);
+                Debug.Log("[PythonDownloader] Cleaned up old marker: " + old);
+            }
         }
 
         pythonExe = GetPythonExePath(fullPath);
 
         if (File.Exists(pythonExe) && !File.Exists(depsMarker))
         {
+            Debug.Log("[PythonDownloader] Python found but deps not installed yet, setting up packages...");
+
             string sitePackages = GetSitePackagesPath(fullPath);
+            Debug.Log("[PythonDownloader] Site-packages path: " + sitePackages);
 
             // Delete stale package directories that lack RECORD files (Windows zip issue)
             if (!string.IsNullOrEmpty(sitePackages) && Directory.Exists(sitePackages))
@@ -113,43 +139,61 @@ public class PythonDownloader
                     if (Directory.Exists(pkgDir))
                     {
                         Directory.Delete(pkgDir, true);
-                        Debug.Log("Removed stale package: " + pkgDir);
+                        Debug.Log("[PythonDownloader] Removed stale package: " + pkgDir);
                     }
                     foreach (string distInfo in Directory.GetDirectories(sitePackages, pkg + "*dist-info"))
                     {
                         Directory.Delete(distInfo, true);
-                        Debug.Log("Removed stale dist-info: " + distInfo);
+                        Debug.Log("[PythonDownloader] Removed stale dist-info: " + distInfo);
                     }
                 }
             }
 
             // Upgrade pip first (old pip versions can't find newer packages)
-            Debug.Log("Upgrading pip...");
+            Debug.Log("[PythonDownloader] Upgrading pip...");
             await RunPipInstall(pythonExe, "-m pip install --upgrade pip");
 
             // Install packages from requirements.txt
             // On fresh venvs (macOS/Linux) this installs everything;
             // on Windows zips this fixes stale/missing packages
-            Debug.Log("Installing Python packages...");
+            Debug.Log("[PythonDownloader] Installing Python packages from requirements.txt...");
             int exitCode = -1;
 
             if (File.Exists(requirementsPath))
                 exitCode = await RunPipInstall(pythonExe, "-m pip install -r \"" + requirementsPath + "\"");
+            else
+                Debug.LogWarning("[PythonDownloader] requirements.txt not found at: " + requirementsPath);
 
             // If requirements.txt failed (e.g. version pins incompatible with this
             // Python version), fall back to installing core packages without pins
             if (exitCode != 0)
             {
-                Debug.LogWarning("requirements.txt install failed. Installing core packages without version pins...");
+                Debug.LogWarning("[PythonDownloader] requirements.txt install failed (exit code " + exitCode + "). Installing core packages without version pins...");
                 exitCode = await RunPipInstall(pythonExe,
                     "-m pip install torch torchvision transformers huggingface-hub fastapi uvicorn pillow");
             }
 
             if (exitCode == 0)
+            {
                 File.WriteAllText(depsMarker, DateTime.UtcNow.ToString());
+                Debug.Log("[PythonDownloader] Dependencies installed successfully, marker written.");
+            }
+            else
+            {
+                Debug.LogError("[PythonDownloader] Failed to install dependencies (exit code " + exitCode + ")");
+            }
+        }
+        else if (!File.Exists(pythonExe))
+        {
+            Debug.LogError("[PythonDownloader] Python executable not found after all setup attempts: " + pythonExe);
+        }
+        else
+        {
+            Debug.Log("[PythonDownloader] Dependencies already installed (marker exists), skipping pip install.");
         }
 
         downloadComplete = true;
+        Debug.Log("[PythonDownloader] === Python environment setup complete ===");
     }
 
     static string GetPythonExePath(string envPath)
@@ -266,35 +310,47 @@ public class PythonDownloader
         string url = baseUrl + zipName;
         string tempZip = Path.Combine(Path.GetTempPath(), zipName);
 
+        Debug.Log("[PythonDownloader] Download URL: " + url);
+        Debug.Log("[PythonDownloader] Temp zip path: " + tempZip);
+
         using (var http = new System.Net.Http.HttpClient()) {
             http.Timeout = TimeSpan.FromMinutes(10);
             int maxRetries = 3;
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
                 try {
-                    Debug.Log("Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
+                    Debug.Log("[PythonDownloader] Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
                     var response = await http.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
                     response.EnsureSuccessStatusCode();
-                    Debug.Log("Status Code: " + response.StatusCode);
+
+                    long? contentLength = response.Content.Headers.ContentLength;
+                    Debug.Log("[PythonDownloader] Status: " + response.StatusCode
+                        + ", Content-Length: " + (contentLength.HasValue ? (contentLength.Value / 1024 / 1024) + " MB" : "unknown"));
+
                     using (var stream = await response.Content.ReadAsStreamAsync())
                     using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
                         await stream.CopyToAsync(fileStream);
                     }
+
+                    long fileSize = new FileInfo(tempZip).Length;
+                    Debug.Log("[PythonDownloader] Download complete, file size: " + (fileSize / 1024 / 1024) + " MB");
                     break;
                 }
                 catch (Exception ex) {
                     if (attempt == maxRetries)
                     {
-                        Debug.LogError("Download failed after " + maxRetries + " attempts: " + ex);
+                        Debug.LogError("[PythonDownloader] Download failed after " + maxRetries + " attempts: " + ex);
                         return;
                     }
                     int delaySeconds = (int)Math.Pow(2, attempt);
-                    Debug.LogWarning("Download attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + ex.Message);
+                    Debug.LogWarning("[PythonDownloader] Attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + ex.Message);
                     await Task.Delay(delaySeconds * 1000);
                 }
             }
         }
+
+        Debug.Log("[PythonDownloader] Extracting zip to: " + targetPath);
 
         if (Directory.Exists(targetPath))
             Directory.Delete(targetPath, true);
@@ -302,6 +358,6 @@ public class PythonDownloader
         ZipFile.ExtractToDirectory(tempZip, targetPath);
         File.Delete(tempZip);
 
-        Debug.Log("Python downloaded and extracted to: " + targetPath);
+        Debug.Log("[PythonDownloader] Python downloaded and extracted to: " + targetPath);
     }
 }
