@@ -15,6 +15,8 @@ public class SimpleDrawingCanvas : MonoBehaviour
     public RectTransform drawingArea;
 
     [Header("Drawing Settings")]
+    [SerializeField] private Slider brushSlider;
+    [SerializeField] private RectTransform brushSliderHandle;
     public float lineWidth = 0.1f;
     public int maxStrokes = 20;
     public float minPointDistance = 0.05f;
@@ -435,6 +437,13 @@ public class SimpleDrawingCanvas : MonoBehaviour
         stats.canvasArea = canvasArea;
 
         return stats;
+    }
+
+    // Change the brush width
+    public void ChangeBrushWidth()
+    {
+        lineWidth = brushSlider.value;
+        brushSliderHandle.sizeDelta= new Vector2(1 + brushSlider.value*50, 1 + brushSlider.value*50);
     }
 
     /// <summary>
