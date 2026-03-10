@@ -197,7 +197,7 @@ public class WorldMapEnemy : MonoBehaviour
         if (spriteRenderer != null)
         {
             highlightColor = GetDifficultyColor();
-            spriteRenderer.sprite = GetEnemySprite(enemyDisplayName);
+            spriteRenderer.sprite = GetEnemySprite(enemyPlantType);
         }
     }
 
@@ -300,28 +300,29 @@ public class WorldMapEnemy : MonoBehaviour
         }
     }
 
-    private Sprite GetEnemySprite(string enemyDisplayName)
+    private Sprite GetEnemySprite(PlantRecognitionSystem.PlantType enemyPlantType)
     {
+        Debug.Log(enemyPlantType);
         int spriteNumber = 0;
-        switch (enemyDisplayName)
+        switch (enemyPlantType)
         {
-            case "Sunflower": spriteNumber = 0;
+            case PlantRecognitionSystem.PlantType.Sunflower: spriteNumber = 0;
             break;
-            case "Flame Tulip": spriteNumber = 1;
+            case PlantRecognitionSystem.PlantType.FlameTulip: spriteNumber = 1;
             break;
-            case "Fire Rose": spriteNumber = 2;
+            case PlantRecognitionSystem.PlantType.FireRose: spriteNumber = 2;
             break;
-            case "Bubble Flower": spriteNumber = 3;
+            case PlantRecognitionSystem.PlantType.BubbleFlower: spriteNumber = 3;
             break;
-            case "Water Lily": spriteNumber = 4;
+            case PlantRecognitionSystem.PlantType.WaterLily: spriteNumber = 4;
             break;
-            case "Coral Bloom": spriteNumber = 5;
+            case PlantRecognitionSystem.PlantType.CoralBloom: spriteNumber = 5;
             break;
-            case "Cactus": spriteNumber = 6;
+            case PlantRecognitionSystem.PlantType.Cactus: spriteNumber = 6;
             break;
-            case "Grass Sprout": spriteNumber = 7;
+            case PlantRecognitionSystem.PlantType.GrassSprout: spriteNumber = 7;
             break;
-            case "Vine Flower": spriteNumber = 8;
+            case PlantRecognitionSystem.PlantType.VineFlower: spriteNumber = 8;
             break;
         }
         return enemySprites[spriteNumber];
@@ -356,6 +357,7 @@ public class WorldMapEnemy : MonoBehaviour
         if (spriteRenderer != null)
         {
             highlightColor = GetDifficultyColor();
+            spriteRenderer.sprite = GetEnemySprite(enemyPlantType);
         }
     }
 
@@ -389,7 +391,7 @@ public class WorldMapEnemy : MonoBehaviour
         if (spriteRenderer != null)
         {
             highlightColor = GetDifficultyColor();
-            spriteRenderer.sprite = GetEnemySprite(enemyDisplayName);
+            spriteRenderer.sprite = GetEnemySprite(enemyPlantType);
         }
     }
 
