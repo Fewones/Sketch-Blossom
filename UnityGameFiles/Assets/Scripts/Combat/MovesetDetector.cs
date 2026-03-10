@@ -109,23 +109,25 @@ public class MovesetDetector : MonoBehaviour
         {
             // ── CLIP IS PRIMARY ──
             // TinyCLIP compares the drawing against all 13 shape descriptions and
-            // returns the best match.  We trust that label and use its confidence
-            // directly as the score for any move whose DrawingShape matches.
-            // Non-matching moves get a small base score so the confidence display
-            // still shows them, but they can never win.
+            // returns the best match.  Because probability is spread across 13
+            // labels, even a correct match may only reach 25-40% raw confidence.
+            // We normalize by multiplying by 2.5 so that a strong CLIP signal
+            // (e.g. 0.33 → 0.83) comfortably exceeds the confidence threshold,
+            // while weak/random matches (e.g. 0.10 → 0.25) still fail.
+            float normalizedClip = Mathf.Clamp01(clipHint.confidence * 2.5f);
             foreach (var moveData in availableMoves)
             {
                 float score;
                 if (System.Array.IndexOf(clipSupportedShapes, moveData.drawingShape) >= 0)
                 {
-                    score = clipHint.confidence;  // CLIP confidence IS the score
+                    score = normalizedClip;
                 }
                 else
                 {
                     score = 0.1f;  // Non-matching moves get a low baseline
                 }
                 result.scores[moveData.moveType] = score;
-                Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): clip={score:F2}");
+                Debug.Log($"{moveData.moveName} ({moveData.drawingShape}): clip_raw={clipHint.confidence:F2} normalized={score:F2}");
             }
         }
         else
