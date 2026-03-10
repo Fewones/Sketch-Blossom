@@ -686,6 +686,10 @@ namespace SketchBlossom.Battle
                         !clipTask.Result.StartsWith("error"))
                     {
                         PredictionResponse response = JsonUtility.FromJson<PredictionResponse>(clipTask.Result);
+
+                        // Log all CLIP scores for debugging (all_scores is a dict in JSON)
+                        Debug.Log($"[CLIP] Raw response: {clipTask.Result}");
+
                         if (response != null && response.score >= clipConfidenceThreshold)
                         {
                             clipHint = new MovesetDetector.CLIPMoveHint
@@ -697,7 +701,7 @@ namespace SketchBlossom.Battle
                         }
                         else
                         {
-                            Debug.Log("[CLIP] Confidence too low – using geometric detection only.");
+                            Debug.Log($"[CLIP] Confidence too low (best={response?.label} @ {response?.score:F4}) – falling back to geometric.");
                         }
                     }
                     else

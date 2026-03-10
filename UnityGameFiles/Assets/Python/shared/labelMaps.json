@@ -1,18 +1,18 @@
 {
     "move_shapes": {
-        "a single large closed circle or round loop": "circle",
-        "a single straight line drawn in one direction": "straight_line",
-        "a jagged lightning bolt or sharp angular zigzag": "zigzag",
-        "a smooth wavy horizontal curved line": "wavy_line",
-        "two lines crossing in a plus or cross shape": "plus",
-        "two diagonal lines crossing in an X shape": "x_cross",
-        "an arrow pointing in a direction with a V-shaped tip": "arrow",
-        "multiple small circles or bubbles drawn separately": "multiple_circles",
-        "several lines radiating outward from a center like a star or asterisk": "star",
-        "a closed square or rectangular box shape": "square",
-        "a closed triangle shape with three corners": "triangle",
-        "a V-shaped checkmark or tick mark": "checkmark",
-        "a spiral curving inward or outward like a snail shell": "spiral"
+        "a black circle drawn on white paper, a closed round loop": "circle",
+        "a single black straight line on white paper, one stroke going in one direction": "straight_line",
+        "a black zigzag line on white paper, sharp angular turns like a lightning bolt": "zigzag",
+        "a black wavy curved line on white paper, smooth S-shaped curves": "wavy_line",
+        "a black plus sign on white paper, two straight lines crossing at right angles": "plus",
+        "a black X on white paper, two diagonal lines crossing in the middle": "x_cross",
+        "a black arrow on white paper, a straight line with a V-shaped pointed tip": "arrow",
+        "multiple small black circles on white paper, several separate round dots or bubbles": "multiple_circles",
+        "a black star shape on white paper, lines radiating outward from a center point": "star",
+        "a black square on white paper, four straight sides forming a closed rectangular box": "square",
+        "a black triangle on white paper, three straight sides forming a closed shape with three corners": "triangle",
+        "a black checkmark on white paper, a V-shaped tick mark": "checkmark",
+        "a black spiral on white paper, a line curving inward in a coil shape": "spiral"
     },
     "plant_labels": {
         "a red tulip emitting flames": "flame tulip", 
