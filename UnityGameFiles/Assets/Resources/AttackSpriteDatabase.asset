@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 698d531c4db547b458091900b1743ba9, type: 3}
+  m_Name: AttackSpriteDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.Battle.AttackSpriteDatabase
+  effectEntries:
+  - visualEffect: 3
+    projectileFrames: []
+    impactFrames: []
+    framesPerSecond: 0
+    scaleMultiplier: 0
+    rotateWhileFlying: 0
+    rotationSpeed: 0
+    loopImpact: 0
+  defaultImpactFrames: []
+  defaultProjectileFrames:
+  - {fileID: -7299458245243939298, guid: 8fc3c30f355c24931b314bc7ddc85eb6, type: 3}
+  - {fileID: -1869290018219920624, guid: 3421078018dc3934a8c1ab3b7bf89aa0, type: 3}
