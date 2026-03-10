@@ -303,60 +303,73 @@ public class PythonDownloader
     static async Task DownloadAndExtractPython(string platform, string targetPath) {
         string zipName = platform + ".zip";
 
-        string baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python/";
-        #if UNITY_EDITOR_WIN
-        baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python-win/";
-        #endif
+        // Check for a local zip bundled in the repo (via Git LFS)
+        string localZip = Path.GetFullPath(Path.Combine(pythonFolder, zipName));
+        string tempZip;
 
-        string url = baseUrl + zipName;
-        string tempZip = Path.Combine(Path.GetTempPath(), zipName);
-
-        Debug.Log("[PythonDownloader] Download URL: " + url);
-        Debug.Log("[PythonDownloader] Temp zip path: " + tempZip);
-
-        int maxRetries = 3;
-        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        if (File.Exists(localZip) && new FileInfo(localZip).Length > 1024 * 1024) // >1 MB = real file, not LFS pointer
         {
-            Debug.Log("[PythonDownloader] Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
+            Debug.Log("[PythonDownloader] Found local zip (Git LFS): " + localZip);
+            tempZip = localZip;
+        }
+        else
+        {
+            // Fall back to downloading from GitHub Releases
+            string baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python/";
+            #if UNITY_EDITOR_WIN
+            baseUrl = "https://github.com/Fewones/Sketch-Blossom/releases/download/sketchblossom-python-win/";
+            #endif
 
-            using (var request = UnityWebRequest.Get(url))
+            string url = baseUrl + zipName;
+            tempZip = Path.Combine(Path.GetTempPath(), zipName);
+
+            Debug.Log("[PythonDownloader] No local zip found, downloading from: " + url);
+            Debug.Log("[PythonDownloader] Temp zip path: " + tempZip);
+
+            int maxRetries = 3;
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                request.timeout = 600; // 10 minutes
-                request.downloadHandler = new DownloadHandlerFile(tempZip) { removeFileOnAbort = true };
+                Debug.Log("[PythonDownloader] Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
 
-                var operation = request.SendWebRequest();
-
-                while (!operation.isDone)
+                using (var request = UnityWebRequest.Get(url))
                 {
-                    float progress = request.downloadProgress;
-                    if (progress >= 0)
+                    request.timeout = 600; // 10 minutes
+                    request.downloadHandler = new DownloadHandlerFile(tempZip) { removeFileOnAbort = true };
+
+                    var operation = request.SendWebRequest();
+
+                    while (!operation.isDone)
                     {
-                        int percent = (int)(progress * 100);
-                        string info = "Downloading Python... " + percent + "%";
-                        EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
+                        float progress = request.downloadProgress;
+                        if (progress >= 0)
+                        {
+                            int percent = (int)(progress * 100);
+                            string info = "Downloading Python... " + percent + "%";
+                            EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
+                        }
+                        await Task.Delay(200);
                     }
-                    await Task.Delay(200);
-                }
 
-                EditorUtility.ClearProgressBar();
+                    EditorUtility.ClearProgressBar();
 
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    long fileSize = new FileInfo(tempZip).Length;
-                    Debug.Log("[PythonDownloader] Download complete, file size: " + (fileSize / 1024 / 1024) + " MB");
-                    break;
-                }
-                else
-                {
-                    string error = request.error;
-                    if (attempt == maxRetries)
+                    if (request.result == UnityWebRequest.Result.Success)
                     {
-                        Debug.LogError("[PythonDownloader] Download failed after " + maxRetries + " attempts: " + error);
-                        return;
+                        long fileSize = new FileInfo(tempZip).Length;
+                        Debug.Log("[PythonDownloader] Download complete, file size: " + (fileSize / 1024 / 1024) + " MB");
+                        break;
                     }
-                    int delaySeconds = (int)Math.Pow(2, attempt);
-                    Debug.LogWarning("[PythonDownloader] Attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + error);
-                    await Task.Delay(delaySeconds * 1000);
+                    else
+                    {
+                        string error = request.error;
+                        if (attempt == maxRetries)
+                        {
+                            Debug.LogError("[PythonDownloader] Download failed after " + maxRetries + " attempts: " + error);
+                            return;
+                        }
+                        int delaySeconds = (int)Math.Pow(2, attempt);
+                        Debug.LogWarning("[PythonDownloader] Attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + error);
+                        await Task.Delay(delaySeconds * 1000);
+                    }
                 }
             }
         }
@@ -368,8 +381,11 @@ public class PythonDownloader
             Directory.Delete(targetPath, true);
 
         ZipFile.ExtractToDirectory(tempZip, targetPath);
-        File.Delete(tempZip);
         EditorUtility.ClearProgressBar();
+
+        // Only delete temp downloads, not the local LFS zip
+        if (tempZip != localZip && File.Exists(tempZip))
+            File.Delete(tempZip);
 
         Debug.Log("[PythonDownloader] Python downloaded and extracted to: " + targetPath);
     }
