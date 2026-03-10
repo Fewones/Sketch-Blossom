@@ -1027,6 +1027,21 @@ namespace SketchBlossom.Battle
                 // ENHANCED VISUAL EFFECTS for enemy attack
                 Debug.Log($"[BATTLE] Enemy playing enhanced visual effects - Colors: {moveData.primaryColor} -> {moveData.secondaryColor}");
 
+                // Play sprite-based attack animation for enemy (enemy -> player)
+                if (attackAnimationManager != null && enemyUnit != null && playerUnit != null)
+                {
+                    Transform enemyTransform = enemyUnit.GetTransform();
+                    Transform playerTransform = playerUnit.GetTransform();
+                    if (enemyTransform != null && playerTransform != null)
+                    {
+                        yield return StartCoroutine(attackAnimationManager.PlayAttackAnimation(
+                            enemyTransform,
+                            playerTransform,
+                            moveData
+                        ));
+                    }
+                }
+
                 // Play the gradient color flash on the player
                 if (playerUnit != null)
                 {
