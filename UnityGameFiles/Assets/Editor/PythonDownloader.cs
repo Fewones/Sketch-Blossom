@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEditor;
 using System.IO;
 using System.Net;
@@ -313,61 +314,48 @@ public class PythonDownloader
         Debug.Log("[PythonDownloader] Download URL: " + url);
         Debug.Log("[PythonDownloader] Temp zip path: " + tempZip);
 
-        using (var http = new System.Net.Http.HttpClient()) {
-            http.Timeout = TimeSpan.FromMinutes(10);
-            int maxRetries = 3;
-            for (int attempt = 1; attempt <= maxRetries; attempt++)
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            Debug.Log("[PythonDownloader] Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
+
+            using (var request = UnityWebRequest.Get(url))
             {
-                try {
-                    Debug.Log("[PythonDownloader] Downloading Python (attempt " + attempt + "/" + maxRetries + ")...");
-                    var response = await http.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
-                    response.EnsureSuccessStatusCode();
+                request.timeout = 600; // 10 minutes
+                request.downloadHandler = new DownloadHandlerFile(tempZip) { removeFileOnAbort = true };
 
-                    long? contentLength = response.Content.Headers.ContentLength;
-                    Debug.Log("[PythonDownloader] Status: " + response.StatusCode
-                        + ", Content-Length: " + (contentLength.HasValue ? (contentLength.Value / 1024 / 1024) + " MB" : "unknown"));
+                var operation = request.SendWebRequest();
 
-                    long totalBytes = contentLength ?? 0;
-                    string totalMBStr = totalBytes > 0 ? (totalBytes / 1024 / 1024) + " MB" : "unknown size";
-
-                    using (var stream = new System.IO.BufferedStream(await response.Content.ReadAsStreamAsync(), 1024 * 1024))
-                    using (var fileStream = new FileStream(tempZip, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024))
+                while (!operation.isDone)
+                {
+                    float progress = request.downloadProgress;
+                    if (progress >= 0)
                     {
-                        byte[] buffer = new byte[1024 * 1024]; // 1 MB buffer
-                        long totalRead = 0;
-                        int lastReportedMB = -1;
-                        int bytesRead;
-                        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                        {
-                            await fileStream.WriteAsync(buffer, 0, bytesRead);
-                            totalRead += bytesRead;
-                            int currentMB = (int)(totalRead / 1024 / 1024);
-                            // Update progress bar every 5 MB to avoid UI overhead
-                            if (totalBytes > 0 && currentMB / 5 > lastReportedMB / 5)
-                            {
-                                lastReportedMB = currentMB;
-                                int percent = (int)(totalRead * 100 / totalBytes);
-                                float progress = totalRead / (float)totalBytes;
-                                string info = "Downloading Python... " + percent + "% (" + currentMB + " / " + totalMBStr + ")";
-                                EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
-                            }
-                        }
+                        int percent = (int)(progress * 100);
+                        string info = "Downloading Python... " + percent + "%";
+                        EditorUtility.DisplayProgressBar("[PythonDownloader] Downloading", info, progress);
                     }
+                    await Task.Delay(200);
+                }
 
-                    EditorUtility.ClearProgressBar();
+                EditorUtility.ClearProgressBar();
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
                     long fileSize = new FileInfo(tempZip).Length;
                     Debug.Log("[PythonDownloader] Download complete, file size: " + (fileSize / 1024 / 1024) + " MB");
                     break;
                 }
-                catch (Exception ex) {
-                    EditorUtility.ClearProgressBar();
+                else
+                {
+                    string error = request.error;
                     if (attempt == maxRetries)
                     {
-                        Debug.LogError("[PythonDownloader] Download failed after " + maxRetries + " attempts: " + ex);
+                        Debug.LogError("[PythonDownloader] Download failed after " + maxRetries + " attempts: " + error);
                         return;
                     }
                     int delaySeconds = (int)Math.Pow(2, attempt);
-                    Debug.LogWarning("[PythonDownloader] Attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + ex.Message);
+                    Debug.LogWarning("[PythonDownloader] Attempt " + attempt + " failed, retrying in " + delaySeconds + "s: " + error);
                     await Task.Delay(delaySeconds * 1000);
                 }
             }
