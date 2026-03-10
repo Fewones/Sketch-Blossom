@@ -152,12 +152,16 @@ public class TameGrowthManager : MonoBehaviour
 
     private void OnFillButtonClicked()
     {
-    Debug.Log("Fill button clicked");
+        if (drawingCanvas == null) return;
 
-    if (drawingCanvas != null)
-    {
-        drawingCanvas.FillBackground();
-    }
+        drawingCanvas.ToggleFillMode();
+        bool fillOn = drawingCanvas.IsFillMode;
+        Debug.Log($"Fill button clicked - fill mode {(fillOn ? "ON" : "OFF")}");
+
+        // Visual feedback: tint the button to show active state
+        ColorBlock cb = fillButton.colors;
+        cb.normalColor = fillOn ? new Color(0.7f, 0.9f, 1f) : Color.white;
+        fillButton.colors = cb;
     }
 
     private async void OnSubmitClicked()
@@ -220,7 +224,8 @@ public class TameGrowthManager : MonoBehaviour
         Texture2D drawingTexture = captureHandler.CaptureDrawing(
                 strokes,
                 drawingCanvas.mainCamera,
-                drawingCanvas.drawingArea
+                drawingCanvas.drawingArea,
+                fillTexture: drawingCanvas.GetFillTexture()
             );
 
         string json = await MM.SendImage(drawingTexture, "plant_labels");
@@ -301,7 +306,9 @@ public class TameGrowthManager : MonoBehaviour
         return captureHandler.CaptureDrawing(
             drawingCanvas.allStrokes,
             cam,
-            drawingCanvas.drawingArea
+            drawingCanvas.drawingArea,
+            forceTransparent: true,
+            fillTexture: drawingCanvas.GetFillTexture()
         );
     }
 
