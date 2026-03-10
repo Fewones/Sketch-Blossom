@@ -744,8 +744,7 @@ namespace SketchBlossom.Battle
                 if (IsOnCooldown(playerCooldowns, result.detectedMove))
                 {
                     string moveName = result.detectedMove.ToString();
-                    // Try to get the actual move name
-                    MoveData[] playerMoves = MoveData.GetMovesForPlant(playerPlantType);
+                    // Reuse playerMoves from above to get the actual move name
                     MoveData cooldownMove = System.Array.Find(playerMoves, m => m.moveType == result.detectedMove);
                     if (cooldownMove != null) moveName = cooldownMove.moveName;
 
