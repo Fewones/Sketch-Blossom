@@ -68,8 +68,12 @@ async def predict(file: UploadFile, item_id: str):
     # Warte auf ein Image
     raw_image = Image.open(BytesIO(await file.read())).convert("RGBA")
 
-    # Preprocess so CLIP sees clean black strokes on white
-    image = preprocess_drawing(raw_image)
+    # Only preprocess for battle move shapes (black-on-white).
+    # Drawing scene (plant_labels, upgrade_labels) needs the original colours.
+    if item_id == "move_shapes":
+        image = preprocess_drawing(raw_image)
+    else:
+        image = raw_image.convert("RGB")
 
     # Ähnlichkeiten berechnen
     scores = {}
