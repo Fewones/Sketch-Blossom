@@ -85,7 +85,7 @@ public class BattlePreviewUI : MonoBehaviour
                 {
                     string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(plants[i].element));
                     if (i > 0) elementsStr += "  ";
-                    elementsStr += $"<color=#{colorHex}>{plants[i].displayName} ({plants[i].element})</color>";
+                    elementsStr += $"<color=#{colorHex}>{plants[i].displayName} ({plants[i].element})</color>\n";
                 }
                 elementText.text = elementsStr;
             }

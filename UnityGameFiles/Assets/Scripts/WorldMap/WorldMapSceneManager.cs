@@ -16,14 +16,14 @@ public class WorldMapSceneManager : MonoBehaviour
     [Header("Enemy Setup")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private WorldMapEnemy[] enemies;
-    [SerializeField] private Transform[] enemySpawnPoints;
+    private Vector3[] enemySpawnPoints = {new Vector3(-1.6f, -0.44f, 0f), new Vector3(1.95f, -0.44f, 0f), new Vector3(6.4f, -0.44f, 0f)};
 
     [Header("UI References")]
     [SerializeField] private BattlePreviewUI battlePreviewUI;
 
     [Header("Scene Settings")]
     [SerializeField] private bool spawnEnemiesOnStart = true;
-    [SerializeField] private int numberOfEnemies = 3; // One of each difficulty by default
+    private int numberOfEnemies = 3; // One of each difficulty by default
     [SerializeField] private bool isFirstEncounter = false; // Set true for tutorial/first map
 
     private void Start()
@@ -137,12 +137,7 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         if (enemySpawnPoints != null && enemySpawnPoints.Length >= numberOfEnemies)
         {
-            Vector3[] positions = new Vector3[numberOfEnemies];
-            for (int i = 0; i < numberOfEnemies; i++)
-            {
-                positions[i] = enemySpawnPoints[i].position;
-            }
-            return positions;
+            return enemySpawnPoints;
         }
 
         Vector3[] randomPositions = new Vector3[numberOfEnemies];

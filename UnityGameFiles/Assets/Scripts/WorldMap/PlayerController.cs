@@ -6,14 +6,21 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed;
+
+    [SerializeField] private Sprite leftStep;
+    [SerializeField] private Sprite rightStep;
 
     [Header("References")]
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    private Sprite standingSprite;
+
     private Vector2 movement;
     private Rigidbody2D rb;
     private Animator animator; // Optional: if you add animations later
+
+    private int stepCounter = 0;
 
     private void Awake()
     {
@@ -28,6 +35,7 @@ public class PlayerController : MonoBehaviour
         if (spriteRenderer == null)
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            standingSprite = spriteRenderer.sprite;
         }
 
         animator = GetComponent<Animator>();
@@ -39,10 +47,30 @@ public class PlayerController : MonoBehaviour
         movement.x = Input.GetAxisRaw("Horizontal"); // A/D or Left/Right arrows
         movement.y = Input.GetAxisRaw("Vertical");   // W/S or Up/Down arrows
 
+
+        // Movement Constraints so Player cant leave the worldmap or walk on the sky
+        if ((((this.GetPosition().x < -9) || 
+             ((this.GetPosition().x < -4.2) && (this.GetPosition().y > -1))) && (movement.x < 0)) || 
+             ((this.GetPosition().x > 9) && (movement.x > 0)))
+        {
+            movement.x = 0;
+        }
+        if (((this.GetPosition().y < -3) && (movement.y < 0)) || 
+        ((((this.GetPosition().x < -4.3) && (this.GetPosition().y > -1.1)) || 
+          ((this.GetPosition().x > -4.3) && (this.GetPosition().y > -0.3))) && (movement.y > 0)))
+        {
+            movement.y = 0;
+        }
+
         // Normalize diagonal movement to prevent faster movement
         if (movement.magnitude > 1)
         {
             movement.Normalize();
+        }
+
+        if ((movement.x == 0) && (movement.y == 0))
+        {
+            spriteRenderer.sprite = standingSprite;
         }
 
         // Update sprite facing direction
@@ -64,6 +92,14 @@ public class PlayerController : MonoBehaviour
     {
         // Move the player using physics
         rb.linearVelocity = movement * moveSpeed;
+        stepCounter = (stepCounter % 30) + 1;
+        if (stepCounter == 1)
+        {
+            spriteRenderer.sprite = leftStep;
+        } else if (stepCounter == 16)
+        {
+            spriteRenderer.sprite = rightStep;
+        }
     }
 
     /// <summary>
