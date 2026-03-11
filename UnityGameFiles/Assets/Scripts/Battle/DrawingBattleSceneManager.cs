@@ -48,6 +48,12 @@ namespace SketchBlossom.Battle
         [SerializeField] private GameObject playerTurnPanel;
         [SerializeField] private GameObject enemyTurnPanel;
 
+        [Header("Plant Switching")]
+        [SerializeField] private Button switchPlantButton;
+        [SerializeField] private GameObject switchPlantPanel;
+        [SerializeField] private Transform switchPlantCardContainer;
+        [SerializeField] private GameObject plantCardPrefab;
+
         [Header("Battle Settings")]
         [SerializeField] private float turnDelay = 1.5f;
         [SerializeField] private float actionTextDelay = 2f;
@@ -103,6 +109,10 @@ namespace SketchBlossom.Battle
         // Cooldown tracking: MoveType -> remaining cooldown turns
         private Dictionary<MoveData.MoveType, int> playerCooldowns = new Dictionary<MoveData.MoveType, int>();
         private Dictionary<MoveData.MoveType, int> enemyCooldowns = new Dictionary<MoveData.MoveType, int>();
+
+        // Plant switching state
+        private bool playerChoseSwitch = false;
+        private string switchTargetPlantId = null;
 
         // Multi-plant encounter tracking
         private int enemyArtVariant = 0;
@@ -327,6 +337,18 @@ namespace SketchBlossom.Battle
                 clearDrawingButton.onClick.AddListener(OnClearDrawingClicked);
             }
 
+            // Setup switch plant button
+            if (switchPlantButton != null)
+            {
+                switchPlantButton.onClick.AddListener(OnSwitchPlantClicked);
+            }
+
+            // Hide switch panel at start
+            if (switchPlantPanel != null)
+            {
+                switchPlantPanel.SetActive(false);
+            }
+
             // Display available moves
             UpdateAvailableMovesText();
         }
@@ -467,6 +489,10 @@ namespace SketchBlossom.Battle
             // Tick down player cooldowns at start of turn
             TickCooldowns(playerCooldowns);
 
+            // Reset switch state
+            playerChoseSwitch = false;
+            switchTargetPlantId = null;
+
             // Ensure both units are visible at the start of player's turn
             if (playerUnit != null) playerUnit.EnsureVisible();
             if (enemyUnit != null) enemyUnit.EnsureVisible();
@@ -474,6 +500,7 @@ namespace SketchBlossom.Battle
             UpdateTurnIndicator("YOUR TURN");
             UpdateActionText("Draw your move!");
             ShowPlayerTurnUI(true);
+            UpdateSwitchButtonVisibility();
             if (moveConfidenceDisplay != null) moveConfidenceDisplay.Hide();
 
             // Update available moves display with cooldown info
@@ -484,10 +511,25 @@ namespace SketchBlossom.Battle
             drawingCanvas.EnableDrawing();
             drawingCanvas.ClearCanvas();
 
-            // Wait for player to finish drawing
+            // Wait for player to finish drawing or choose to switch
             while (currentState == BattleState.PlayerDrawing)
             {
                 yield return null;
+            }
+
+            // Check if player chose to switch plants instead of attacking
+            if (playerChoseSwitch && switchTargetPlantId != null)
+            {
+                Debug.Log("[BATTLE] Player chose to switch plants");
+                yield return StartCoroutine(ExecutePlantSwitch(switchTargetPlantId));
+
+                // Ensure both units are visible after switch
+                if (playerUnit != null) playerUnit.EnsureVisible();
+                if (enemyUnit != null) enemyUnit.EnsureVisible();
+
+                ShowPlayerTurnUI(false);
+                yield return new WaitForSeconds(turnDelay);
+                yield break; // Turn is consumed by the switch
             }
 
             Debug.Log("[BATTLE] Player finished drawing, executing move");
@@ -1027,6 +1069,276 @@ namespace SketchBlossom.Battle
             playerIsBlocking = false;
         }
 
+        #region Plant Switching
+
+        /// <summary>
+        /// Called when the Switch Plant button is clicked during player turn.
+        /// Opens the switch panel showing available plants from inventory.
+        /// </summary>
+        private void OnSwitchPlantClicked()
+        {
+            if (currentState != BattleState.PlayerDrawing) return;
+
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory == null || inventory.GetPlantCount() <= 1)
+            {
+                UpdateActionText("No other plants to switch to!");
+                return;
+            }
+
+            // Hide drawing UI, show switch panel
+            drawingCanvas.DisableDrawing();
+            if (switchPlantPanel != null)
+            {
+                switchPlantPanel.SetActive(true);
+                PopulateSwitchPanel();
+            }
+        }
+
+        /// <summary>
+        /// Populates the switch panel with plant cards from the player's inventory.
+        /// Excludes the currently active plant and any fainted (0 HP) plants.
+        /// </summary>
+        private void PopulateSwitchPanel()
+        {
+            if (switchPlantCardContainer == null) return;
+
+            // Clear existing cards
+            foreach (Transform child in switchPlantCardContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory == null) return;
+
+            string currentPlantId = DrawnUnitData.Instance != null ? DrawnUnitData.Instance.inventoryPlantId : "";
+            List<PlantInventoryEntry> allPlants = inventory.GetAllPlants();
+
+            foreach (var plant in allPlants)
+            {
+                // Skip the currently active plant
+                if (plant.plantId == currentPlantId) continue;
+
+                // Skip fainted plants (0 HP)
+                if (plant.currentHealth <= 0) continue;
+
+                if (plantCardPrefab != null)
+                {
+                    GameObject cardObj = Instantiate(plantCardPrefab, switchPlantCardContainer);
+                    var cardUI = cardObj.GetComponent<SketchBlossom.UI.PlantCardUI>();
+                    if (cardUI != null)
+                    {
+                        cardUI.Setup(plant, OnSwitchPlantSelected);
+                    }
+                }
+                else
+                {
+                    // Fallback: create a simple button if no prefab assigned
+                    CreateSimpleSwitchCard(plant);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a simple text button for switching when no card prefab is available.
+        /// </summary>
+        private void CreateSimpleSwitchCard(PlantInventoryEntry plant)
+        {
+            if (switchPlantCardContainer == null) return;
+
+            GameObject cardObj = new GameObject($"SwitchCard_{plant.plantName}");
+            cardObj.transform.SetParent(switchPlantCardContainer, false);
+
+            // Add layout element for sizing
+            var layoutElement = cardObj.AddComponent<UnityEngine.UI.LayoutElement>();
+            layoutElement.minHeight = 80;
+            layoutElement.preferredHeight = 80;
+            layoutElement.flexibleWidth = 1;
+
+            // Add background image
+            var bg = cardObj.AddComponent<Image>();
+            Color elementColor = GetElementColor(plant.elementType);
+            elementColor.a = 0.6f;
+            bg.color = elementColor;
+
+            // Add button
+            var button = cardObj.AddComponent<Button>();
+            string plantId = plant.plantId;
+            button.onClick.AddListener(() =>
+            {
+                PlantInventoryEntry entry = PlayerInventory.Instance?.GetPlantById(plantId);
+                if (entry != null) OnSwitchPlantSelected(entry);
+            });
+
+            // Add text
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(cardObj.transform, false);
+            var text = textObj.AddComponent<TextMeshProUGUI>();
+            text.text = $"{plant.plantName} (Lv.{plant.level})\nHP: {plant.currentHealth}/{plant.maxHealth}  ATK:{plant.attack}  DEF:{plant.defense}";
+            text.fontSize = 16;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
+
+            // Fill parent
+            var rectTransform = textObj.GetComponent<RectTransform>();
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = new Vector2(8, 4);
+            rectTransform.offsetMax = new Vector2(-8, -4);
+        }
+
+        /// <summary>
+        /// Called when a plant is selected from the switch panel.
+        /// Sets the switch target and advances the battle state.
+        /// </summary>
+        private void OnSwitchPlantSelected(PlantInventoryEntry selectedPlant)
+        {
+            if (selectedPlant == null) return;
+
+            Debug.Log($"[BATTLE] Player selected to switch to: {selectedPlant.plantName}");
+
+            switchTargetPlantId = selectedPlant.plantId;
+            playerChoseSwitch = true;
+
+            // Hide switch panel
+            if (switchPlantPanel != null)
+                switchPlantPanel.SetActive(false);
+
+            // Advance past the drawing state - the PlayerTurn coroutine will pick up the switch
+            currentState = BattleState.PlayerExecuting;
+        }
+
+        /// <summary>
+        /// Called when the player cancels switching and wants to go back to drawing.
+        /// </summary>
+        public void OnCancelSwitchClicked()
+        {
+            if (switchPlantPanel != null)
+                switchPlantPanel.SetActive(false);
+
+            // Re-enable drawing
+            drawingCanvas.EnableDrawing();
+        }
+
+        /// <summary>
+        /// Executes the plant switch: saves current plant HP, loads new plant, updates UI.
+        /// This consumes the player's turn (like Pokémon).
+        /// </summary>
+        private IEnumerator ExecutePlantSwitch(string newPlantId)
+        {
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory == null) yield break;
+
+            // Save current plant's HP back to inventory
+            string currentPlantId = DrawnUnitData.Instance != null ? DrawnUnitData.Instance.inventoryPlantId : "";
+            if (!string.IsNullOrEmpty(currentPlantId))
+            {
+                int currentHP = playerHPBar.GetCurrentHP();
+                inventory.UpdatePlantStats(currentPlantId, currentHP);
+                Debug.Log($"[SWITCH] Saved current plant HP: {currentHP}");
+            }
+
+            // Show switch message
+            PlantInventoryEntry newPlant = inventory.GetPlantById(newPlantId);
+            if (newPlant == null)
+            {
+                Debug.LogError($"[SWITCH] Could not find plant with ID: {newPlantId}");
+                yield break;
+            }
+
+            UpdateActionText($"Come back, {playerPlantName}!");
+            yield return new WaitForSeconds(1.0f);
+
+            // Load the new plant into DrawnUnitData
+            inventory.LoadPlantForBattle(newPlantId);
+
+            // Update battle state from the newly loaded DrawnUnitData
+            playerPlantType = DrawnUnitData.Instance.plantType;
+            playerElement = DrawnUnitData.Instance.element;
+            playerPlantName = DrawnUnitData.Instance.plantDisplayName;
+            playerMaxHP = newPlant.maxHealth;
+            playerAttack = newPlant.attack;
+            playerDefense = newPlant.defense;
+
+            // Reset player blocking state on switch
+            playerIsBlocking = false;
+
+            // Reset player cooldowns (new plant has fresh cooldowns)
+            playerCooldowns.Clear();
+
+            // Reload player unit display with new plant texture
+            Texture2D newTexture = newPlant.GetDrawingTexture();
+            if (playerUnit != null)
+            {
+                playerUnit.Initialize(playerPlantType, playerElement, playerPlantName, newTexture, true);
+            }
+
+            // Update player HP bar with new plant's current HP
+            if (playerHPBar != null)
+            {
+                playerHPBar.Initialize(playerPlantName, newPlant.maxHealth);
+                // Set to current health (not max - plant may have taken damage before)
+                int hpDiff = newPlant.maxHealth - newPlant.currentHealth;
+                if (hpDiff > 0)
+                {
+                    playerHPBar.ModifyHP(-hpDiff);
+                }
+            }
+
+            // Update attack animation points for new player unit
+            if (attackAnimationManager != null && playerUnit != null && enemyUnit != null)
+            {
+                Transform playerTransform = playerUnit.GetTransform();
+                Transform enemyTransform = enemyUnit.GetTransform();
+                if (playerTransform != null && enemyTransform != null)
+                {
+                    attackAnimationManager.SetAttackPoints(playerTransform, enemyTransform);
+                }
+            }
+
+            UpdateActionText($"Go, {playerPlantName}!");
+            UpdateAvailableMovesText();
+            yield return new WaitForSeconds(1.0f);
+
+            Debug.Log($"[SWITCH] Switched to {playerPlantName} (HP:{newPlant.currentHealth}/{newPlant.maxHealth} ATK:{playerAttack} DEF:{playerDefense})");
+
+            currentState = BattleState.EnemyTurn;
+        }
+
+        /// <summary>
+        /// Shows or hides the switch button based on whether the player has other usable plants.
+        /// </summary>
+        private void UpdateSwitchButtonVisibility()
+        {
+            if (switchPlantButton == null) return;
+
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory == null)
+            {
+                switchPlantButton.gameObject.SetActive(false);
+                return;
+            }
+
+            string currentPlantId = DrawnUnitData.Instance != null ? DrawnUnitData.Instance.inventoryPlantId : "";
+            List<PlantInventoryEntry> allPlants = inventory.GetAllPlants();
+
+            // Check if there's at least one other alive plant to switch to
+            bool hasOtherPlant = false;
+            foreach (var plant in allPlants)
+            {
+                if (plant.plantId != currentPlantId && plant.currentHealth > 0)
+                {
+                    hasOtherPlant = true;
+                    break;
+                }
+            }
+
+            switchPlantButton.gameObject.SetActive(hasOtherPlant);
+        }
+
+        #endregion
+
         /// <summary>
         /// Calculate damage for an attack
         /// </summary>
@@ -1193,6 +1505,9 @@ namespace SketchBlossom.Battle
             // Store enemy plant data for potential taming (last defeated plant)
             StoreEnemyPlantData();
 
+            // Save current plant's HP back to inventory before leaving battle
+            SaveCurrentPlantHP();
+
             // Record victory for player's plant in inventory
             RecordPlayerVictory();
 
@@ -1207,10 +1522,10 @@ namespace SketchBlossom.Battle
         /// </summary>
         private IEnumerator HandleDefeat()
         {
-            UpdateTurnIndicator("DEFEAT");
-            UpdateActionText("You lost...");
+            UpdateTurnIndicator("PLANT FAINTED!");
+            UpdateActionText($"{playerPlantName} fainted!");
 
-            Debug.Log("=== DEFEAT! Player loses the battle ===");
+            Debug.Log($"=== Player plant {playerPlantName} fainted! ===");
 
             // Ensure enemy unit stays visible during defeat
             if (enemyUnit != null)
@@ -1226,7 +1541,7 @@ namespace SketchBlossom.Battle
                 playerUnit.Die(this);
             }
 
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(2f);
 
             // ROGUE-LIKE MECHANIC: Remove dead plant from inventory (permanent death)
             PlayerInventory inventory = PlayerInventory.Instance;
@@ -1235,13 +1550,25 @@ namespace SketchBlossom.Battle
                 PlantInventoryEntry deadPlant = inventory.GetSelectedPlant();
                 if (deadPlant != null)
                 {
-                    Debug.Log($"[Rogue-like] Plant {deadPlant.plantName} has died permanently!");
+                    string deadPlantName = deadPlant.plantName;
+                    Debug.Log($"[Rogue-like] Plant {deadPlantName} has died permanently!");
                     inventory.RemovePlant(deadPlant.plantId);
 
-                    // Check if player has any plants left
-                    if (inventory.GetPlantCount() == 0)
+                    // Check if player has any alive plants left
+                    List<PlantInventoryEntry> remainingPlants = inventory.GetAllPlants();
+                    bool hasAlivePlant = false;
+                    foreach (var plant in remainingPlants)
                     {
-                        // GAME OVER - No plants remaining
+                        if (plant.currentHealth > 0)
+                        {
+                            hasAlivePlant = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasAlivePlant)
+                    {
+                        // GAME OVER - No usable plants remaining
                         Debug.Log("[Rogue-like] GAME OVER - All plants dead! Returning to main menu.");
                         UpdateTurnIndicator("GAME OVER");
                         UpdateActionText("All your plants have perished...");
@@ -1251,11 +1578,10 @@ namespace SketchBlossom.Battle
                     }
                     else
                     {
-                        // Player has plants remaining - let them choose another
-                        Debug.Log($"[Rogue-like] Player has {inventory.GetPlantCount()} plants remaining. Going to selection screen.");
-                        UpdateActionText("Choose your next plant...");
-                        yield return new WaitForSeconds(1.5f);
-                        SceneManager.LoadScene("PlantSelectionScene");
+                        // Player has alive plants remaining - force a switch (like Pokémon)
+                        Debug.Log($"[BATTLE] Player has alive plants remaining. Forcing switch.");
+                        UpdateActionText("Choose your next plant!");
+                        yield return StartCoroutine(ForcePlayerSwitch());
                         yield break;
                     }
                 }
@@ -1263,6 +1589,96 @@ namespace SketchBlossom.Battle
 
             // Fallback if inventory not found
             SceneManager.LoadScene("WorldMapScene");
+        }
+
+        /// <summary>
+        /// Forces the player to choose a replacement plant after their active plant faints.
+        /// Like Pokémon, the player must send in a new plant to continue the battle.
+        /// </summary>
+        private IEnumerator ForcePlayerSwitch()
+        {
+            // Show the switch panel (mandatory - no cancel option)
+            if (switchPlantPanel != null)
+            {
+                switchPlantPanel.SetActive(true);
+                PopulateSwitchPanel();
+            }
+
+            // Reset switch state
+            playerChoseSwitch = false;
+            switchTargetPlantId = null;
+
+            // Wait for the player to pick a plant
+            while (switchTargetPlantId == null)
+            {
+                yield return null;
+            }
+
+            // Hide switch panel
+            if (switchPlantPanel != null)
+                switchPlantPanel.SetActive(false);
+
+            PlayerInventory inventory = PlayerInventory.Instance;
+            PlantInventoryEntry newPlant = inventory?.GetPlantById(switchTargetPlantId);
+            if (newPlant == null)
+            {
+                Debug.LogError("[SWITCH] Forced switch failed - plant not found");
+                SceneManager.LoadScene("PlantSelectionScene");
+                yield break;
+            }
+
+            // Load the new plant
+            inventory.LoadPlantForBattle(switchTargetPlantId);
+
+            // Update battle state
+            playerPlantType = DrawnUnitData.Instance.plantType;
+            playerElement = DrawnUnitData.Instance.element;
+            playerPlantName = DrawnUnitData.Instance.plantDisplayName;
+            playerMaxHP = newPlant.maxHealth;
+            playerAttack = newPlant.attack;
+            playerDefense = newPlant.defense;
+            playerIsBlocking = false;
+            playerCooldowns.Clear();
+
+            // Reload player unit display
+            Texture2D newTexture = newPlant.GetDrawingTexture();
+            if (playerUnit != null)
+            {
+                playerUnit.Initialize(playerPlantType, playerElement, playerPlantName, newTexture, true);
+            }
+
+            // Update HP bar
+            if (playerHPBar != null)
+            {
+                playerHPBar.Initialize(playerPlantName, newPlant.maxHealth);
+                int hpDiff = newPlant.maxHealth - newPlant.currentHealth;
+                if (hpDiff > 0)
+                {
+                    playerHPBar.ModifyHP(-hpDiff);
+                }
+            }
+
+            // Update attack animation points
+            if (attackAnimationManager != null && playerUnit != null && enemyUnit != null)
+            {
+                Transform playerTransform = playerUnit.GetTransform();
+                Transform enemyTransform = enemyUnit.GetTransform();
+                if (playerTransform != null && enemyTransform != null)
+                {
+                    attackAnimationManager.SetAttackPoints(playerTransform, enemyTransform);
+                }
+            }
+
+            UpdateActionText($"Go, {playerPlantName}!");
+            UpdateAvailableMovesText();
+            yield return new WaitForSeconds(1.5f);
+
+            Debug.Log($"[SWITCH] Forced switch to {playerPlantName} (HP:{newPlant.currentHealth}/{newPlant.maxHealth})");
+
+            // Resume battle - the forced switch doesn't cost a turn,
+            // battle continues from the player's next turn
+            currentState = BattleState.Start;
+            StartCoroutine(BattleSequence());
         }
 
         /// <summary>
@@ -1294,6 +1710,24 @@ namespace SketchBlossom.Battle
                 );
 
                 Debug.Log($"Stored enemy plant data: {enemyPlantName} for potential taming");
+            }
+        }
+
+        /// <summary>
+        /// Saves the current active plant's HP back to inventory.
+        /// Called before victory transition or any time we need to persist battle HP.
+        /// </summary>
+        private void SaveCurrentPlantHP()
+        {
+            PlayerInventory inventory = PlayerInventory.Instance;
+            if (inventory == null) return;
+
+            string currentPlantId = DrawnUnitData.Instance != null ? DrawnUnitData.Instance.inventoryPlantId : "";
+            if (!string.IsNullOrEmpty(currentPlantId) && playerHPBar != null)
+            {
+                int currentHP = playerHPBar.GetCurrentHP();
+                inventory.UpdatePlantStats(currentPlantId, currentHP);
+                Debug.Log($"[BATTLE] Saved plant HP to inventory: {currentHP}");
             }
         }
 
@@ -1396,6 +1830,16 @@ namespace SketchBlossom.Battle
 
             if (clearDrawingButton != null)
                 clearDrawingButton.gameObject.SetActive(show);
+
+            // Hide switch panel and button when turn UI is hidden
+            if (!show)
+            {
+                if (switchPlantPanel != null)
+                    switchPlantPanel.SetActive(false);
+
+                if (switchPlantButton != null)
+                    switchPlantButton.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
