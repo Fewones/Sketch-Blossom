@@ -164,10 +164,28 @@ public class WorldMapSceneManager : MonoBehaviour
             SpriteRenderer sr = healingObj.AddComponent<SpriteRenderer>();
 
             // Load HealingCenter sprite from Michael's Assets
-            Sprite healingSprite = Resources.Load<Sprite>("HealingCenter");
-            if (healingSprite != null)
+            Texture2D loadedTex = Resources.Load<Texture2D>("HealingCenter");
+            if (loadedTex != null)
             {
-                sr.sprite = healingSprite;
+                // Make white/near-white pixels transparent
+                Texture2D processedTex = new Texture2D(loadedTex.width, loadedTex.height, TextureFormat.RGBA32, false);
+                processedTex.filterMode = FilterMode.Point;
+                Color[] pixels = loadedTex.GetPixels();
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    Color p = pixels[i];
+                    // Treat near-white pixels as transparent
+                    if (p.r > 0.92f && p.g > 0.92f && p.b > 0.92f)
+                    {
+                        pixels[i] = Color.clear;
+                    }
+                }
+                processedTex.SetPixels(pixels);
+                processedTex.Apply();
+
+                sr.sprite = Sprite.Create(processedTex,
+                    new Rect(0, 0, processedTex.width, processedTex.height),
+                    new Vector2(0.5f, 0.5f), 100f);
                 // Scale down to fit world map (adjust as needed)
                 healingObj.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
             }

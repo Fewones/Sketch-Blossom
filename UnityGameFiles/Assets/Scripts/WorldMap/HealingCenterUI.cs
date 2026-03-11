@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
 using SketchBlossom.Progression;
@@ -32,14 +33,24 @@ public class HealingCenterUI : MonoBehaviour
     [SerializeField] private Color healedFlashColor = new Color(0.5f, 1f, 0.5f, 0.8f);
 
     private List<GameObject> spawnedEntries = new List<GameObject>();
+    private bool isVisible = false;
 
     private void Awake()
     {
+        // Ensure an EventSystem exists so UI buttons can receive clicks
+        if (FindObjectOfType<EventSystem>() == null)
+        {
+            GameObject eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            eventSystem.AddComponent<StandaloneInputModule>();
+        }
+
         if (popupPanel == null)
         {
             BuildUI();
         }
 
+        // Always start hidden
         if (popupPanel != null)
         {
             popupPanel.SetActive(false);
@@ -48,6 +59,15 @@ public class HealingCenterUI : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(Hide);
+        }
+    }
+
+    private void Update()
+    {
+        // Allow Escape key to close the window
+        if (isVisible && Input.GetKeyDown(KeyCode.Escape))
+        {
+            Hide();
         }
     }
 
@@ -62,6 +82,7 @@ public class HealingCenterUI : MonoBehaviour
         }
 
         popupPanel.SetActive(true);
+        isVisible = true;
         RefreshPlantList();
 
         PlayerController player = FindObjectOfType<PlayerController>();
@@ -80,6 +101,7 @@ public class HealingCenterUI : MonoBehaviour
         {
             popupPanel.SetActive(false);
         }
+        isVisible = false;
 
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
@@ -265,6 +287,10 @@ public class HealingCenterUI : MonoBehaviour
         overlayRect.anchorMax = Vector2.one;
         overlayRect.offsetMin = Vector2.zero;
         overlayRect.offsetMax = Vector2.zero;
+
+        // Clicking the overlay (outside content panel) closes the UI
+        Button overlayBtn = overlay.AddComponent<Button>();
+        overlayBtn.onClick.AddListener(Hide);
 
         // Main content panel
         GameObject contentPanel = new GameObject("ContentPanel");
