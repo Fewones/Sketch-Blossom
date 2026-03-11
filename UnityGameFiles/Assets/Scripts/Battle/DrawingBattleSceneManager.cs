@@ -1511,6 +1511,9 @@ namespace SketchBlossom.Battle
             // Record victory for player's plant in inventory
             RecordPlayerVictory();
 
+            // Grant a healing charge for the Healing Center
+            HealingCenter.GrantHealCharge();
+
             yield return new WaitForSeconds(1.5f);
 
             // Load PostBattleScene to choose Wild Growth or Tame

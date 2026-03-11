@@ -18,6 +18,11 @@ public class WorldMapSceneManager : MonoBehaviour
     [SerializeField] private WorldMapEnemy[] enemies;
     private Vector3[] enemySpawnPoints = {new Vector3(-1.6f, -0.44f, 0f), new Vector3(1.95f, -0.44f, 0f), new Vector3(6.4f, -0.44f, 0f)};
 
+    [Header("Healing Center")]
+    [SerializeField] private GameObject healingCenterPrefab;
+    [SerializeField] private HealingCenter healingCenter;
+    [SerializeField] private Vector3 healingCenterPosition = new Vector3(-5.5f, -0.44f, 0f);
+
     [Header("UI References")]
     [SerializeField] private BattlePreviewUI battlePreviewUI;
 
@@ -34,6 +39,8 @@ public class WorldMapSceneManager : MonoBehaviour
         {
             SetupEnemies();
         }
+
+        SetupHealingCenter();
 
         if (EnemyEncounterData.Instance == null)
         {
@@ -131,6 +138,94 @@ public class WorldMapSceneManager : MonoBehaviour
 
             Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
         }
+    }
+
+    private void SetupHealingCenter()
+    {
+        // Check if one already exists in the scene
+        healingCenter = FindObjectOfType<HealingCenter>();
+        if (healingCenter != null)
+        {
+            Debug.Log("Found Healing Center already in scene");
+            return;
+        }
+
+        // Create the Healing Center game object
+        GameObject healingObj;
+        if (healingCenterPrefab != null)
+        {
+            healingObj = Instantiate(healingCenterPrefab, healingCenterPosition, Quaternion.identity);
+        }
+        else
+        {
+            healingObj = new GameObject("HealingCenter");
+            healingObj.transform.position = healingCenterPosition;
+
+            SpriteRenderer sr = healingObj.AddComponent<SpriteRenderer>();
+
+            // Load HealingCenter sprite from Michael's Assets
+            Texture2D loadedTex = Resources.Load<Texture2D>("HealingCenter");
+            if (loadedTex != null)
+            {
+                // Make white/near-white pixels transparent
+                Texture2D processedTex = new Texture2D(loadedTex.width, loadedTex.height, TextureFormat.RGBA32, false);
+                processedTex.filterMode = FilterMode.Point;
+                Color[] pixels = loadedTex.GetPixels();
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    Color p = pixels[i];
+                    // Treat pure white pixels as transparent (tight threshold to preserve art)
+                    if (p.r > 0.98f && p.g > 0.98f && p.b > 0.98f)
+                    {
+                        pixels[i] = Color.clear;
+                    }
+                }
+                processedTex.SetPixels(pixels);
+                processedTex.Apply();
+
+                sr.sprite = Sprite.Create(processedTex,
+                    new Rect(0, 0, processedTex.width, processedTex.height),
+                    new Vector2(0.5f, 0.5f), 100f);
+                // Scale down to fit world map (adjust as needed)
+                healingObj.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            }
+            else
+            {
+                // Fallback: procedural placeholder if sprite not found
+                sr.color = new Color(0.4f, 0.9f, 0.5f);
+                Texture2D tex = new Texture2D(32, 32);
+                Color fillColor = new Color(0.3f, 0.8f, 0.4f);
+                Color crossColor = Color.white;
+                for (int x = 0; x < 32; x++)
+                {
+                    for (int y = 0; y < 32; y++)
+                    {
+                        bool isCross = (x >= 12 && x <= 19) || (y >= 12 && y <= 19);
+                        tex.SetPixel(x, y, isCross ? crossColor : fillColor);
+                    }
+                }
+                tex.Apply();
+                sr.sprite = Sprite.Create(tex, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);
+                Debug.LogWarning("HealingCenter sprite not found in Resources. Using placeholder.");
+            }
+        }
+
+        healingObj.name = "HealingCenter";
+        healingCenter = healingObj.GetComponent<HealingCenter>();
+        if (healingCenter == null)
+        {
+            healingCenter = healingObj.AddComponent<HealingCenter>();
+        }
+
+        // Add the HealingCenterUI to the scene if not present
+        HealingCenterUI healingUI = FindObjectOfType<HealingCenterUI>();
+        if (healingUI == null)
+        {
+            GameObject uiObj = new GameObject("HealingCenterUI");
+            uiObj.AddComponent<HealingCenterUI>();
+        }
+
+        Debug.Log($"Healing Center set up at {healingCenterPosition}");
     }
 
     private Vector3[] GetEnemySpawnPositions()
