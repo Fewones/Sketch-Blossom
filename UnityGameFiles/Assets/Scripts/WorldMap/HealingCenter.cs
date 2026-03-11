@@ -92,9 +92,11 @@ public class HealingCenter : MonoBehaviour
 
     private void CreateInteractionPrompt()
     {
+        // Create as root object (NOT parented to HealingCenter) to avoid
+        // Unity's WorldSpace Canvas auto-scaling the RectTransform when
+        // the parent has a non-uniform scale.
         GameObject promptObj = new GameObject("InteractionPrompt");
-        promptObj.transform.SetParent(transform);
-        promptObj.transform.localPosition = new Vector3(0, 2.5f, 0);
+        promptObj.transform.position = transform.position + new Vector3(0, 1.2f, 0);
 
         Canvas canvas = promptObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
@@ -104,7 +106,7 @@ public class HealingCenter : MonoBehaviour
         canvasRect.localScale = new Vector3(0.002f, 0.002f, 0.002f);
 
         GameObject textObj = new GameObject("Text");
-        textObj.transform.SetParent(promptObj.transform);
+        textObj.transform.SetParent(promptObj.transform, false);
 
         UnityEngine.UI.Text text = textObj.AddComponent<UnityEngine.UI.Text>();
         text.text = "Press E";
@@ -122,7 +124,7 @@ public class HealingCenter : MonoBehaviour
         textRect.offsetMax = Vector2.zero;
 
         GameObject bgObj = new GameObject("Background");
-        bgObj.transform.SetParent(promptObj.transform);
+        bgObj.transform.SetParent(promptObj.transform, false);
         bgObj.transform.SetAsFirstSibling();
 
         UnityEngine.UI.Image bgImage = bgObj.AddComponent<UnityEngine.UI.Image>();
@@ -183,6 +185,15 @@ public class HealingCenter : MonoBehaviour
         else
         {
             Debug.LogError("HealingCenterUI not found in scene!");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up the prompt since it's not a child of this object
+        if (interactionPrompt != null)
+        {
+            Destroy(interactionPrompt);
         }
     }
 
