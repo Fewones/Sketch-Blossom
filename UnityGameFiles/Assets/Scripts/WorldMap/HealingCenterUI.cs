@@ -50,15 +50,25 @@ public class HealingCenterUI : MonoBehaviour
             BuildUI();
         }
 
-        // Always start hidden
+        // Always start hidden - force hide immediately
         if (popupPanel != null)
         {
             popupPanel.SetActive(false);
         }
+        isVisible = false;
 
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(Hide);
+        }
+    }
+
+    private void Start()
+    {
+        // Double-ensure hidden on start (handles AddComponent during another script's Start)
+        if (popupPanel != null && !isVisible)
+        {
+            popupPanel.SetActive(false);
         }
     }
 
@@ -163,6 +173,39 @@ public class HealingCenterUI : MonoBehaviour
         Image bg = entry.AddComponent<Image>();
         bg.color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
 
+        // Plant card image
+        GameObject cardObj = new GameObject("PlantCard");
+        cardObj.transform.SetParent(entry.transform, false);
+
+        Image cardBg = cardObj.AddComponent<Image>();
+        cardBg.color = GetElementColor(plant.elementType);
+
+        LayoutElement cardLayout = cardObj.AddComponent<LayoutElement>();
+        cardLayout.preferredWidth = 60;
+        cardLayout.preferredHeight = 60;
+
+        // Plant drawing texture on top of card background
+        GameObject imgObj = new GameObject("PlantImage");
+        imgObj.transform.SetParent(cardObj.transform, false);
+
+        RawImage plantImg = imgObj.AddComponent<RawImage>();
+        Texture2D texture = plant.GetDrawingTexture();
+        if (texture != null)
+        {
+            plantImg.texture = texture;
+            plantImg.color = Color.white;
+        }
+        else
+        {
+            plantImg.color = plant.plantColor;
+        }
+
+        RectTransform imgRect = plantImg.GetComponent<RectTransform>();
+        imgRect.anchorMin = new Vector2(0.1f, 0.1f);
+        imgRect.anchorMax = new Vector2(0.9f, 0.9f);
+        imgRect.offsetMin = Vector2.zero;
+        imgRect.offsetMax = Vector2.zero;
+
         // Plant info text
         GameObject infoObj = new GameObject("Info");
         infoObj.transform.SetParent(entry.transform, false);
@@ -264,8 +307,9 @@ public class HealingCenterUI : MonoBehaviour
     /// </summary>
     private void BuildUI()
     {
-        // Root panel
+        // Root panel - start inactive so the Canvas never renders a visible frame
         popupPanel = new GameObject("HealingCenterPanel");
+        popupPanel.SetActive(false);
         popupPanel.transform.SetParent(transform, false);
 
         Canvas canvas = popupPanel.AddComponent<Canvas>();
@@ -428,5 +472,20 @@ public class HealingCenterUI : MonoBehaviour
         closeBtnTextRect.anchorMax = Vector2.one;
         closeBtnTextRect.offsetMin = Vector2.zero;
         closeBtnTextRect.offsetMax = Vector2.zero;
+    }
+
+    private Color GetElementColor(PlantRecognitionSystem.ElementType element)
+    {
+        switch (element)
+        {
+            case PlantRecognitionSystem.ElementType.Fire:
+                return new Color(0.6f, 0.2f, 0.15f, 0.9f);
+            case PlantRecognitionSystem.ElementType.Water:
+                return new Color(0.15f, 0.3f, 0.6f, 0.9f);
+            case PlantRecognitionSystem.ElementType.Grass:
+                return new Color(0.2f, 0.5f, 0.2f, 0.9f);
+            default:
+                return new Color(0.3f, 0.3f, 0.3f, 0.9f);
+        }
     }
 }
