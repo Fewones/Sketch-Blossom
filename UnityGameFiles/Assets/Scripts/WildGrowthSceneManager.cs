@@ -605,12 +605,26 @@ public class WildGrowthSceneManager : MonoBehaviour
         int texW = 512;
         int texH = 512;
 
+        // Move strokes to a temporary layer so the capture camera only sees them
+        int captureLayer = 31; // use an unused layer
+        int[] originalLayers = new int[strokes.Count];
+        for (int i = 0; i < strokes.Count; i++)
+        {
+            if (strokes[i] != null)
+            {
+                originalLayers[i] = strokes[i].gameObject.layer;
+                strokes[i].gameObject.layer = captureLayer;
+                if (!strokes[i].gameObject.activeInHierarchy)
+                    strokes[i].gameObject.SetActive(true);
+            }
+        }
+
         GameObject tempCamObj = new GameObject("_WG_CaptureCamera");
         Camera capCam = tempCamObj.AddComponent<Camera>();
         capCam.orthographic = true;
         capCam.backgroundColor = new Color(0, 0, 0, 0); // transparent
         capCam.clearFlags = CameraClearFlags.SolidColor;
-        capCam.cullingMask = srcCam.cullingMask; // render same layers as main camera
+        capCam.cullingMask = 1 << captureLayer; // ONLY render the stroke layer
         capCam.nearClipPlane = 0.1f;
         capCam.farClipPlane = 100f;
 
@@ -625,11 +639,6 @@ public class WildGrowthSceneManager : MonoBehaviour
         capCam.orthographicSize = Mathf.Max(orthoH, orthoW);
 
         // --- 3) Render only the strokes into a RenderTexture ---
-        // Ensure all strokes are active
-        foreach (var s in strokes)
-            if (s != null && !s.gameObject.activeInHierarchy)
-                s.gameObject.SetActive(true);
-
         RenderTexture rt = new RenderTexture(texW, texH, 24, RenderTextureFormat.ARGB32);
         capCam.targetTexture = rt;
         capCam.Render();
@@ -638,6 +647,13 @@ public class WildGrowthSceneManager : MonoBehaviour
         Texture2D strokeTex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
         strokeTex.ReadPixels(new Rect(0, 0, texW, texH), 0, 0);
         strokeTex.Apply();
+
+        // Restore original layers on strokes
+        for (int i = 0; i < strokes.Count; i++)
+        {
+            if (strokes[i] != null)
+                strokes[i].gameObject.layer = originalLayers[i];
+        }
 
         // Cleanup temp camera
         RenderTexture.active = null;
