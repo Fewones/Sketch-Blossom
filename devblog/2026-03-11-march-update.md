@@ -2,45 +2,71 @@
 
 **Date:** March 11, 2026
 
-It's been a productive sprint for Sketch Blossom! This update covers a batch of improvements spanning our AI pipeline, drawing tools, and overall stability. Here's what changed.
+It's been a productive sprint for Sketch Blossom! This update covers some big changes — our battle scene now uses AI to recognize your drawn moves, enemies come in different difficulty tiers, plant detection got smarter, and you can finally change your brush size. Let's get into it.
 
 ---
 
-## Python Downloader Overhaul
+## Battle Scene Now Uses CLIP for Move Recognition
 
-The biggest area of work this cycle was the **PythonDownloader** — the editor tool that bootstraps our embedded Python environment (used to run the TinyCLIP AI server). It was plagued by timeout errors, painfully slow downloads, and silent failures. We tackled it end-to-end:
+This is the headline change. The battle scene's move detection has been **completely reworked to use TinyCLIP** — the same AI model we use for plant recognition — instead of relying purely on geometric heuristics.
 
-- **Fixed HTTP timeout errors** — The original downloader was timing out on the ~244 MB Python zip. We increased timeouts and added resilience so the download no longer silently fails on slower connections.
-- **Faster downloads** — We replaced `HttpClient` with Unity's native `UnityWebRequest`, bumped buffer sizes, and reduced UI overhead during the download. The result is dramatically faster setup times.
-- **Real-time progress feedback** — Added `EditorUtility.DisplayProgressBar` so you can actually see download progress in the Unity Editor, plus 10%-interval logging in the console.
-- **Git LFS support with fallback** — The downloader now checks for a local zip via Git LFS first, and only falls back to a GitHub Releases download if the local copy isn't available. This makes setup nearly instant for contributors who clone with LFS.
-- **CPU-only PyTorch** — Switched to the CPU-only PyTorch build on Windows, which significantly shrinks the zip size. Since TinyCLIP inference is lightweight, GPU support isn't needed.
-- **Fixed pip bootstrap** — Resolved a bug where pip failed to bootstrap correctly in the embedded Python environment, which was blocking dependency installation entirely.
-- **CI cleanup** — Removed the unused `build_python.yaml` workflow and stripped out macOS/Ubuntu logic from `build_py.yml` since we're targeting Windows only for the embedded distribution.
+Previously, the game tried to figure out what you drew using stroke analysis alone: checking if your lines were circular, spiky, curved, etc. It worked, but it struggled with shapes that look similar (circles vs. spirals, squares vs. zigzags). Now, your drawing gets sent to the TinyCLIP server, which compares it against 13 natural-language shape descriptions — things like *"a black zigzag line on white paper, sharp angular back-and-forth turns like a lightning bolt"* or *"a black spiral on white paper, a curved line winding around itself inward in a coil like a snail shell"*.
 
-## Improved Flower Detection & Transparent Sprites
+Here's how it works under the hood:
 
-Our TinyCLIP-based plant recognition had trouble accurately detecting flowers. We made two key fixes:
+- When you finish drawing a move, the canvas is captured as a 512x512 texture with a transparent background.
+- The image is sent to our TinyCLIP FastAPI server, which preprocesses it into a high-contrast black-on-white image and runs it through the model.
+- TinyCLIP returns confidence scores for all 13 shape labels. Since probability is split across many labels, raw scores are normalized (multiplied by 2.5) so that a strong match lands well above the 0.5 confidence threshold.
+- The old geometric detection now serves as a **fallback only** — it kicks in when the TinyCLIP server isn't available.
 
-- **Better label mapping** — Updated `labelMaps.json` with refined labels that give TinyCLIP more signal for distinguishing flower drawings from other plant types.
-- **Preprocessing improvements** — Enhanced the image preprocessing pipeline in `TinyCLIP.py` to improve classification accuracy across the board, with flowers seeing the biggest gains.
-- **Transparent battle sprites** — Player-drawn sprites now render with transparent backgrounds in battle instead of the previous solid-color fill. This makes drawn plants look much cleaner when displayed on the battle scene.
+We also added **confusion-aware matching** for shapes that TinyCLIP tends to mix up (circle/spiral, square/triangle, arrow/checkmark). When the primary shape is detected, known confusable shapes get a 65% score boost so the system degrades gracefully instead of picking the wrong move entirely.
 
-## New Flood-Fill Tool
+The result: move recognition is noticeably more accurate and consistent. Drawing a zigzag actually registers as a zigzag now, even if your lines aren't perfectly sharp.
 
-Drawing got a major quality-of-life upgrade with the addition of a **flood-fill (paint bucket) tool**:
+---
 
-- Players can now toggle between **draw mode** (freehand brush) and **fill mode** (tap to flood-fill a region with the selected color).
-- The fill tool uses a standard flood-fill algorithm on the canvas texture, respecting existing drawn boundaries.
-- The capture handler was updated so filled regions are properly included when the drawing is sent to TinyCLIP for classification.
-- The fill tool was also wired into the **TameGrowth scene** so players can use it when customizing captured creatures too.
+## Three Difficulty Levels
 
-## World Map & Brush Width
+Encounters on the world map now come in **three difficulty tiers**: Easy, Medium, and Hard.
 
-Two feature branches were merged in this update:
+- **Easy** — You face 1 enemy plant.
+- **Medium** — You face 2 enemy plants in sequence.
+- **Hard** — You face 3 enemy plants back-to-back.
 
-- **World Map** (PR #63) — The world map exploration system is now integrated into the main branch, giving players a way to navigate between encounters.
-- **Brush Width** (PR #78) — Players can now adjust their brush size when drawing, allowing for finer detail or broader strokes.
+Each difficulty tier is **color-coded on the world map** — green for Easy, orange for Medium, red for Hard — so you can pick your battles at a glance. Before engaging, a **battle preview popup** shows the difficulty label, a star rating, the number of plants you'll face, and each plant's element type.
+
+Higher difficulty also scales enemy stats. A difficulty multiplier (`1.0 + (difficulty - 1) * 0.15`) is applied to HP, Attack, and Defense, so Hard encounters hit harder and take more punishment on top of having more plants to get through.
+
+In multi-plant encounters, defeating one plant triggers a "PLANT DEFEATED!" message showing how many remain, then the next plant loads in with fresh HP and new procedurally generated art — all without leaving the battle scene. Every enemy plant type now has **3 distinct art variations** (27 total procedural artworks), so encounters feel more varied even when you're fighting the same plant species.
+
+---
+
+## Smarter Plant Detection with Better Labels
+
+Our TinyCLIP-based plant recognition got a round of meaningful improvements focused on **label quality** and **color awareness**.
+
+The core issue: TinyCLIP was sometimes detecting the wrong plant type — for example, identifying a red fire rose drawing as a bubble flower. The model is only as good as the text descriptions it compares against, so we rewrote the labels in `labelMaps.json` to be more specific and include explicit color cues:
+
+- *"a red tulip emitting flames"* became *"a red tulip with orange flames and fire"*
+- *"a shining sunflower"* became *"a bright yellow sunflower with golden petals radiating light"*
+- *"underwater corals"* became *"blue and purple underwater corals branching out"*
+- *"a small patch of grass"* became *"a small patch of green grass blades"*
+
+Beyond better labels, we added a **color-aware re-ranking system** on the server side. After TinyCLIP returns its initial confidence scores, the server now extracts the dominant hue from the drawing (red, green, or blue) and boosts or penalizes scores based on whether a plant's element color matches. So if you draw something clearly red, fire-type plants get a confidence boost while water-type plants get pushed down. This dramatically reduces misclassifications across element boundaries.
+
+Images are also now composited onto white backgrounds server-side before classification, giving TinyCLIP consistent contrast regardless of how the drawing was captured.
+
+---
+
+## Adjustable Brush Width
+
+A simple but highly requested feature — you can now **change your brush size** while drawing.
+
+A new slider control has been added to the drawing canvas UI. Dragging it adjusts the line width in real time, and the slider handle itself scales to give you a visual preview of the brush thickness. This works everywhere you draw: the main **Drawing scene**, the **Tame scene** (for customizing captured plants), and the **Wild Growth scene** (for upgrades).
+
+The implementation ties a `Slider` component to the `lineWidth` property on the canvas. The handle resizes dynamically based on the slider value so you always know roughly how thick your strokes will be before you put pen to canvas.
+
+One related fix worth noting: in the battle scene specifically, brush size is kept at 8px rather than the player's custom width. This is intentional — thinner strokes give TinyCLIP cleaner shape outlines to classify, which keeps move recognition accurate.
 
 ---
 
@@ -49,7 +75,7 @@ Two feature branches were merged in this update:
 We're continuing to polish the drawing experience and battle flow. Up next on our radar:
 
 - Mid-battle plant switching
-- Enemy AI improvements with type-awareness
+- Smarter enemy AI with type-awareness
 - Audio and animation polish
 - Tutorial system for new players
 
