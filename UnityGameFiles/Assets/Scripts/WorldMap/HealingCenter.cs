@@ -94,14 +94,14 @@ public class HealingCenter : MonoBehaviour
     {
         GameObject promptObj = new GameObject("InteractionPrompt");
         promptObj.transform.SetParent(transform);
-        promptObj.transform.localPosition = new Vector3(0, 1.5f, 0);
+        promptObj.transform.localPosition = new Vector3(0, 2.5f, 0);
 
         Canvas canvas = promptObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
 
         RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(2f, 0.5f);
-        canvasRect.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+        canvasRect.sizeDelta = new Vector2(200f, 50f);
+        canvasRect.localScale = new Vector3(0.005f, 0.005f, 0.005f);
 
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(promptObj.transform);
