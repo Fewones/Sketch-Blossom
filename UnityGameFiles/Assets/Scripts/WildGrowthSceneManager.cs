@@ -559,44 +559,122 @@ public class WildGrowthSceneManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Captures the drawing area (DrawingArea RectTransform) into a new Texture2D.
-    /// The texture contains both the original plant art and the newly drawn stroke.
-    /// The resulting texture is used as updated card art and inventory sprite.
+    /// Captures only the new strokes (transparent background) and composites them
+    /// onto the existing plant art texture. This avoids baking the gray canvas
+    /// background into the saved image.
     /// </summary>
     private Texture2D CaptureDrawingToTexture()
     {
-        if (drawingCaptureArea == null || drawingCanvas == null || drawingCanvas.mainCamera == null)
+        if (drawingCanvas == null || drawingCanvas.mainCamera == null)
         {
-            Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing camera or capture area.");
+            Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing canvas or camera.");
             return null;
         }
 
-        Camera cam = drawingCanvas.mainCamera;
-
-        // Get world corners of the drawing area
-        Vector3[] corners = new Vector3[4];
-        drawingCaptureArea.GetWorldCorners(corners);
-
-        // Convert to screen space
-        Vector2 min = RectTransformUtility.WorldToScreenPoint(cam, corners[0]); // bottom-left
-        Vector2 max = RectTransformUtility.WorldToScreenPoint(cam, corners[2]); // top-right
-
-        int width  = Mathf.RoundToInt(max.x - min.x);
-        int height = Mathf.RoundToInt(max.y - min.y);
-
-        if (width <= 0 || height <= 0)
+        if (captureHandler == null)
         {
-            Debug.LogWarning($"WildGrowthSceneManager: Capture size invalid: {width}x{height}");
+            Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing captureHandler.");
             return null;
         }
 
-        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        Rect rect = new Rect(min.x, min.y, width, height);
-        tex.ReadPixels(rect, 0, 0);
-        tex.Apply();
+        // 1) Capture only the new strokes with a transparent background
+        Texture2D strokeTex = captureHandler.CaptureDrawing(
+            drawingCanvas.allStrokes,
+            drawingCanvas.mainCamera,
+            drawingCaptureArea,
+            forceTransparent: true
+        );
 
-        Debug.Log($"WildGrowthSceneManager: Captured drawing texture {width}x{height}");
-        return tex;
+        if (strokeTex == null)
+        {
+            Debug.LogWarning("WildGrowthSceneManager: Stroke capture returned null.");
+            return null;
+        }
+
+        // 2) Load the existing plant art as the base layer
+        Texture2D baseTex = null;
+        if (selectedPlant != null && !string.IsNullOrEmpty(selectedPlant.drawingTextureBase64))
+        {
+            try
+            {
+                byte[] pngBytes = Convert.FromBase64String(selectedPlant.drawingTextureBase64);
+                baseTex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!baseTex.LoadImage(pngBytes))
+                {
+                    Debug.LogWarning("WildGrowthSceneManager: Failed to load base plant art for compositing.");
+                    baseTex = null;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"WildGrowthSceneManager: Error decoding base plant art: {e.Message}");
+                baseTex = null;
+            }
+        }
+
+        // 3) If there is no base art, just return the strokes as-is
+        if (baseTex == null)
+        {
+            Debug.Log($"WildGrowthSceneManager: No base art - returning stroke-only texture {strokeTex.width}x{strokeTex.height}");
+            return strokeTex;
+        }
+
+        // 4) Composite: draw strokes on top of the base art using alpha blending
+        int w = baseTex.width;
+        int h = baseTex.height;
+
+        // Scale stroke texture to match base art dimensions via RenderTexture blit
+        Texture2D scaledStrokes = ScaleTexture(strokeTex, w, h);
+        UnityEngine.Object.Destroy(strokeTex);
+
+        Color[] basePixels   = baseTex.GetPixels();
+        Color[] strokePixels = scaledStrokes.GetPixels();
+
+        for (int i = 0; i < basePixels.Length; i++)
+        {
+            Color src = strokePixels[i]; // new stroke (foreground)
+            Color dst = basePixels[i];   // existing art (background)
+
+            // Standard alpha-over compositing
+            float outA = src.a + dst.a * (1f - src.a);
+            if (outA > 0f)
+            {
+                basePixels[i] = new Color(
+                    (src.r * src.a + dst.r * dst.a * (1f - src.a)) / outA,
+                    (src.g * src.a + dst.g * dst.a * (1f - src.a)) / outA,
+                    (src.b * src.a + dst.b * dst.a * (1f - src.a)) / outA,
+                    outA
+                );
+            }
+            // else: both fully transparent → leave as default (0,0,0,0)
+        }
+
+        baseTex.SetPixels(basePixels);
+        baseTex.Apply();
+
+        UnityEngine.Object.Destroy(scaledStrokes);
+
+        Debug.Log($"WildGrowthSceneManager: Composited stroke onto plant art {w}x{h}");
+        return baseTex;
+    }
+
+    /// <summary>
+    /// Scales a texture to the target dimensions using a temporary RenderTexture.
+    /// </summary>
+    private static Texture2D ScaleTexture(Texture2D source, int targetWidth, int targetHeight)
+    {
+        RenderTexture rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(source, rt);
+
+        RenderTexture.active = rt;
+        Texture2D result = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
+        result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+        result.Apply();
+
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(rt);
+
+        return result;
     }
 
     /// <summary>
