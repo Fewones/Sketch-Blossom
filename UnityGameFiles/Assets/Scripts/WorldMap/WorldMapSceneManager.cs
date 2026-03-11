@@ -161,25 +161,35 @@ public class WorldMapSceneManager : MonoBehaviour
             healingObj = new GameObject("HealingCenter");
             healingObj.transform.position = healingCenterPosition;
 
-            // Add a sprite renderer with a green-tinted placeholder
             SpriteRenderer sr = healingObj.AddComponent<SpriteRenderer>();
-            sr.color = new Color(0.4f, 0.9f, 0.5f);
 
-            // Create a simple square sprite as placeholder
-            Texture2D tex = new Texture2D(32, 32);
-            Color fillColor = new Color(0.3f, 0.8f, 0.4f);
-            Color crossColor = Color.white;
-            for (int x = 0; x < 32; x++)
+            // Load HealingCenter sprite from Michael's Assets
+            Sprite healingSprite = Resources.Load<Sprite>("HealingCenter");
+            if (healingSprite != null)
             {
-                for (int y = 0; y < 32; y++)
-                {
-                    // Draw a plus/cross symbol (healing cross)
-                    bool isCross = (x >= 12 && x <= 19) || (y >= 12 && y <= 19);
-                    tex.SetPixel(x, y, isCross ? crossColor : fillColor);
-                }
+                sr.sprite = healingSprite;
+                // Scale down to fit world map (adjust as needed)
+                healingObj.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
             }
-            tex.Apply();
-            sr.sprite = Sprite.Create(tex, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);
+            else
+            {
+                // Fallback: procedural placeholder if sprite not found
+                sr.color = new Color(0.4f, 0.9f, 0.5f);
+                Texture2D tex = new Texture2D(32, 32);
+                Color fillColor = new Color(0.3f, 0.8f, 0.4f);
+                Color crossColor = Color.white;
+                for (int x = 0; x < 32; x++)
+                {
+                    for (int y = 0; y < 32; y++)
+                    {
+                        bool isCross = (x >= 12 && x <= 19) || (y >= 12 && y <= 19);
+                        tex.SetPixel(x, y, isCross ? crossColor : fillColor);
+                    }
+                }
+                tex.Apply();
+                sr.sprite = Sprite.Create(tex, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);
+                Debug.LogWarning("HealingCenter sprite not found in Resources. Using placeholder.");
+            }
         }
 
         healingObj.name = "HealingCenter";

@@ -14,8 +14,8 @@ public class HealingCenter : MonoBehaviour
     [Header("Visual Feedback")]
     [SerializeField] private GameObject interactionPrompt;
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private Color highlightColor = new Color(0.4f, 1f, 0.6f); // Green healing tint
-    [SerializeField] private Color baseColor = Color.white;
+    [SerializeField] private Color highlightColor = new Color(1f, 1f, 1f, 1f); // Bright white highlight
+    [SerializeField] private Color baseColor = new Color(0.85f, 0.85f, 0.85f, 1f); // Slightly dimmed when idle
 
     private Transform player;
     private bool playerInRange = false;
