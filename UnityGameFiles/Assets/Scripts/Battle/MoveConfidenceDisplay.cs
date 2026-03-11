@@ -40,9 +40,9 @@ namespace SketchBlossom.Battle
         private const int BarWidth = 10; // number of block characters in each bar
 
         // Rich-text colours
-        private const string ColourMatch   = "#44FF88"; // green  – recognised move
+        private const string ColourMatch   = "#0B620B"; // green  – recognised move
         private const string ColourPartial = "#FFAA44"; // amber  – best guess but below threshold
-        private const string ColourDim     = "#888888"; // grey   – other candidates
+        private const string ColourDim     = "#AAAAAA"; // grey   – other candidates
 
         // ── Lifecycle ───────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ namespace SketchBlossom.Battle
             if (wasRecognized)
             {
                 sb.AppendLine();
-                sb.Append($"<color=#FFFFFF>Quality: <b>{qualityRating}</b>" +
+                sb.Append($"<color=#000000>Quality: <b>{qualityRating}</b>" +
                            $"  ({damageMultiplier:F1}× dmg)</color>");
             }
 
