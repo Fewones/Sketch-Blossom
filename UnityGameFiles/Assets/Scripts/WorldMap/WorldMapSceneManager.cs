@@ -18,6 +18,11 @@ public class WorldMapSceneManager : MonoBehaviour
     [SerializeField] private WorldMapEnemy[] enemies;
     private Vector3[] enemySpawnPoints = {new Vector3(-1.6f, -0.44f, 0f), new Vector3(1.95f, -0.44f, 0f), new Vector3(6.4f, -0.44f, 0f)};
 
+    [Header("Healing Center")]
+    [SerializeField] private GameObject healingCenterPrefab;
+    [SerializeField] private HealingCenter healingCenter;
+    [SerializeField] private Vector3 healingCenterPosition = new Vector3(-5.5f, -0.44f, 0f);
+
     [Header("UI References")]
     [SerializeField] private BattlePreviewUI battlePreviewUI;
 
@@ -34,6 +39,8 @@ public class WorldMapSceneManager : MonoBehaviour
         {
             SetupEnemies();
         }
+
+        SetupHealingCenter();
 
         if (EnemyEncounterData.Instance == null)
         {
@@ -131,6 +138,66 @@ public class WorldMapSceneManager : MonoBehaviour
 
             Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
         }
+    }
+
+    private void SetupHealingCenter()
+    {
+        // Check if one already exists in the scene
+        healingCenter = FindObjectOfType<HealingCenter>();
+        if (healingCenter != null)
+        {
+            Debug.Log("Found Healing Center already in scene");
+            return;
+        }
+
+        // Create the Healing Center game object
+        GameObject healingObj;
+        if (healingCenterPrefab != null)
+        {
+            healingObj = Instantiate(healingCenterPrefab, healingCenterPosition, Quaternion.identity);
+        }
+        else
+        {
+            healingObj = new GameObject("HealingCenter");
+            healingObj.transform.position = healingCenterPosition;
+
+            // Add a sprite renderer with a green-tinted placeholder
+            SpriteRenderer sr = healingObj.AddComponent<SpriteRenderer>();
+            sr.color = new Color(0.4f, 0.9f, 0.5f);
+
+            // Create a simple square sprite as placeholder
+            Texture2D tex = new Texture2D(32, 32);
+            Color fillColor = new Color(0.3f, 0.8f, 0.4f);
+            Color crossColor = Color.white;
+            for (int x = 0; x < 32; x++)
+            {
+                for (int y = 0; y < 32; y++)
+                {
+                    // Draw a plus/cross symbol (healing cross)
+                    bool isCross = (x >= 12 && x <= 19) || (y >= 12 && y <= 19);
+                    tex.SetPixel(x, y, isCross ? crossColor : fillColor);
+                }
+            }
+            tex.Apply();
+            sr.sprite = Sprite.Create(tex, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);
+        }
+
+        healingObj.name = "HealingCenter";
+        healingCenter = healingObj.GetComponent<HealingCenter>();
+        if (healingCenter == null)
+        {
+            healingCenter = healingObj.AddComponent<HealingCenter>();
+        }
+
+        // Add the HealingCenterUI to the scene if not present
+        HealingCenterUI healingUI = FindObjectOfType<HealingCenterUI>();
+        if (healingUI == null)
+        {
+            GameObject uiObj = new GameObject("HealingCenterUI");
+            uiObj.AddComponent<HealingCenterUI>();
+        }
+
+        Debug.Log($"Healing Center set up at {healingCenterPosition}");
     }
 
     private Vector3[] GetEnemySpawnPositions()
