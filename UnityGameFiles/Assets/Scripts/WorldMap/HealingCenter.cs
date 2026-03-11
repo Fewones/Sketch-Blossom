@@ -8,7 +8,7 @@ using UnityEngine;
 public class HealingCenter : MonoBehaviour
 {
     [Header("Interaction Settings")]
-    [SerializeField] private float interactionRange = 2f;
+    [SerializeField] private float interactionRange = 1.2f;
     [SerializeField] private KeyCode interactionKey = KeyCode.E;
 
     [Header("Visual Feedback")]

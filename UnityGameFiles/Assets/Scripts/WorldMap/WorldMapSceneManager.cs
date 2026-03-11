@@ -174,8 +174,8 @@ public class WorldMapSceneManager : MonoBehaviour
                 for (int i = 0; i < pixels.Length; i++)
                 {
                     Color p = pixels[i];
-                    // Treat near-white pixels as transparent
-                    if (p.r > 0.92f && p.g > 0.92f && p.b > 0.92f)
+                    // Treat pure white pixels as transparent (tight threshold to preserve art)
+                    if (p.r > 0.98f && p.g > 0.98f && p.b > 0.98f)
                     {
                         pixels[i] = Color.clear;
                     }
