@@ -559,9 +559,10 @@ public class WildGrowthSceneManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Captures only the new strokes (transparent background) and composites them
-    /// onto the existing plant art texture. This avoids baking the gray canvas
-    /// background into the saved image.
+    /// Captures only the new strokes (transparent background) framed to the full
+    /// drawing area, then composites them onto the existing plant art.
+    /// This avoids baking the gray canvas background and preserves correct
+    /// stroke positioning relative to the canvas.
     /// </summary>
     private Texture2D CaptureDrawingToTexture()
     {
@@ -571,27 +572,80 @@ public class WildGrowthSceneManager : MonoBehaviour
             return null;
         }
 
-        if (captureHandler == null)
+        if (drawingCaptureArea == null)
         {
-            Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing captureHandler.");
+            Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing drawingCaptureArea.");
             return null;
         }
 
-        // 1) Capture only the new strokes with a transparent background
-        Texture2D strokeTex = captureHandler.CaptureDrawing(
-            drawingCanvas.allStrokes,
-            drawingCanvas.mainCamera,
-            drawingCaptureArea,
-            forceTransparent: true
-        );
-
-        if (strokeTex == null)
+        var strokes = drawingCanvas.allStrokes;
+        if (strokes == null || strokes.Count == 0)
         {
-            Debug.LogWarning("WildGrowthSceneManager: Stroke capture returned null.");
+            Debug.LogWarning("WildGrowthSceneManager: No strokes to capture.");
             return null;
         }
 
-        // 2) Load the existing plant art as the base layer
+        Camera srcCam = drawingCanvas.mainCamera;
+
+        // --- 1) Determine the full drawing-area bounds in world space ---
+        // The drawing area is a UI RectTransform; convert its corners to the
+        // world-space plane where strokes live (z ≈ 10 from camera).
+        Vector3[] uiCorners = new Vector3[4];
+        drawingCaptureArea.GetWorldCorners(uiCorners);
+        Vector2 screenMin = RectTransformUtility.WorldToScreenPoint(srcCam, uiCorners[0]);
+        Vector2 screenMax = RectTransformUtility.WorldToScreenPoint(srcCam, uiCorners[2]);
+
+        float strokeDepth = 10f; // strokes are placed at camera.z + 10
+        Vector3 worldBL = srcCam.ScreenToWorldPoint(new Vector3(screenMin.x, screenMin.y, strokeDepth));
+        Vector3 worldTR = srcCam.ScreenToWorldPoint(new Vector3(screenMax.x, screenMax.y, strokeDepth));
+        Vector3 center = (worldBL + worldTR) * 0.5f;
+        Vector3 size   = worldTR - worldBL;
+
+        // --- 2) Set up a temporary orthographic camera framed to the full canvas ---
+        int texW = 512;
+        int texH = 512;
+
+        GameObject tempCamObj = new GameObject("_WG_CaptureCamera");
+        Camera capCam = tempCamObj.AddComponent<Camera>();
+        capCam.orthographic = true;
+        capCam.backgroundColor = new Color(0, 0, 0, 0); // transparent
+        capCam.clearFlags = CameraClearFlags.SolidColor;
+        capCam.cullingMask = srcCam.cullingMask; // render same layers as main camera
+        capCam.nearClipPlane = 0.1f;
+        capCam.farClipPlane = 100f;
+
+        // Position looking at the center of the drawing area
+        capCam.transform.position = new Vector3(center.x, center.y, center.z - 10f);
+        capCam.transform.LookAt(center);
+
+        // Size to cover the full drawing area (use the larger axis)
+        float aspect = (float)texW / texH;
+        float orthoH = Mathf.Abs(size.y) / 2f;
+        float orthoW = Mathf.Abs(size.x) / aspect / 2f;
+        capCam.orthographicSize = Mathf.Max(orthoH, orthoW);
+
+        // --- 3) Render only the strokes into a RenderTexture ---
+        // Ensure all strokes are active
+        foreach (var s in strokes)
+            if (s != null && !s.gameObject.activeInHierarchy)
+                s.gameObject.SetActive(true);
+
+        RenderTexture rt = new RenderTexture(texW, texH, 24, RenderTextureFormat.ARGB32);
+        capCam.targetTexture = rt;
+        capCam.Render();
+
+        RenderTexture.active = rt;
+        Texture2D strokeTex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+        strokeTex.ReadPixels(new Rect(0, 0, texW, texH), 0, 0);
+        strokeTex.Apply();
+
+        // Cleanup temp camera
+        RenderTexture.active = null;
+        capCam.targetTexture = null;
+        Destroy(rt);
+        Destroy(tempCamObj);
+
+        // --- 4) Load existing plant art as the base layer ---
         Texture2D baseTex = null;
         if (selectedPlant != null && !string.IsNullOrEmpty(selectedPlant.drawingTextureBase64))
         {
@@ -600,10 +654,7 @@ public class WildGrowthSceneManager : MonoBehaviour
                 byte[] pngBytes = Convert.FromBase64String(selectedPlant.drawingTextureBase64);
                 baseTex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 if (!baseTex.LoadImage(pngBytes))
-                {
-                    Debug.LogWarning("WildGrowthSceneManager: Failed to load base plant art for compositing.");
                     baseTex = null;
-                }
             }
             catch (Exception e)
             {
@@ -612,20 +663,26 @@ public class WildGrowthSceneManager : MonoBehaviour
             }
         }
 
-        // 3) If there is no base art, just return the strokes as-is
         if (baseTex == null)
         {
-            Debug.Log($"WildGrowthSceneManager: No base art - returning stroke-only texture {strokeTex.width}x{strokeTex.height}");
+            Debug.Log($"WildGrowthSceneManager: No base art - returning stroke-only texture.");
             return strokeTex;
         }
 
-        // 4) Composite: draw strokes on top of the base art using alpha blending
+        // --- 5) Composite strokes onto plant art with alpha blending ---
         int w = baseTex.width;
         int h = baseTex.height;
 
-        // Scale stroke texture to match base art dimensions via RenderTexture blit
-        Texture2D scaledStrokes = ScaleTexture(strokeTex, w, h);
-        UnityEngine.Object.Destroy(strokeTex);
+        // Scale stroke texture to match base art dimensions
+        RenderTexture scaleRT = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(strokeTex, scaleRT);
+        RenderTexture.active = scaleRT;
+        Texture2D scaledStrokes = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        scaledStrokes.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+        scaledStrokes.Apply();
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(scaleRT);
+        Destroy(strokeTex);
 
         Color[] basePixels   = baseTex.GetPixels();
         Color[] strokePixels = scaledStrokes.GetPixels();
@@ -635,7 +692,6 @@ public class WildGrowthSceneManager : MonoBehaviour
             Color src = strokePixels[i]; // new stroke (foreground)
             Color dst = basePixels[i];   // existing art (background)
 
-            // Standard alpha-over compositing
             float outA = src.a + dst.a * (1f - src.a);
             if (outA > 0f)
             {
@@ -646,35 +702,15 @@ public class WildGrowthSceneManager : MonoBehaviour
                     outA
                 );
             }
-            // else: both fully transparent → leave as default (0,0,0,0)
         }
 
         baseTex.SetPixels(basePixels);
         baseTex.Apply();
 
-        UnityEngine.Object.Destroy(scaledStrokes);
+        Destroy(scaledStrokes);
 
         Debug.Log($"WildGrowthSceneManager: Composited stroke onto plant art {w}x{h}");
         return baseTex;
-    }
-
-    /// <summary>
-    /// Scales a texture to the target dimensions using a temporary RenderTexture.
-    /// </summary>
-    private static Texture2D ScaleTexture(Texture2D source, int targetWidth, int targetHeight)
-    {
-        RenderTexture rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.ARGB32);
-        Graphics.Blit(source, rt);
-
-        RenderTexture.active = rt;
-        Texture2D result = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
-        result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
-        result.Apply();
-
-        RenderTexture.active = null;
-        RenderTexture.ReleaseTemporary(rt);
-
-        return result;
     }
 
     /// <summary>
