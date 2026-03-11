@@ -19,7 +19,7 @@ public class HealingCenterUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI chargesText;
 
     [Header("Plant List")]
-    [SerializeField] private Transform plantListContent;
+    [SerializeField] private RectTransform plantListContent;
     [SerializeField] private GameObject plantEntryPrefab;
 
     [Header("Buttons")]
@@ -356,10 +356,6 @@ public class HealingCenterUI : MonoBehaviour
         contentContainer.transform.SetParent(viewport.transform, false);
 
         plantListContent = contentContainer.GetComponent<RectTransform>();
-        if (plantListContent == null)
-        {
-            plantListContent = contentContainer.AddComponent<RectTransform>();
-        }
         plantListContent.anchorMin = new Vector2(0, 1);
         plantListContent.anchorMax = new Vector2(1, 1);
         plantListContent.pivot = new Vector2(0.5f, 1);
@@ -376,7 +372,7 @@ public class HealingCenterUI : MonoBehaviour
         csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         scrollRect.viewport = viewportRect;
-        scrollRect.content = (RectTransform)plantListContent;
+        scrollRect.content = plantListContent;
 
         // Close button
         GameObject closeBtnObj = new GameObject("CloseButton");
