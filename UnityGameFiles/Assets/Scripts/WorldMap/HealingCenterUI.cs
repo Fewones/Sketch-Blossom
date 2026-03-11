@@ -421,9 +421,11 @@ public class HealingCenterUI : MonoBehaviour
 
         viewport.AddComponent<RectMask2D>();
 
-        // Content container
+        // Content container - add VLG first so RectTransform is auto-created
         GameObject contentContainer = new GameObject("Content");
         contentContainer.transform.SetParent(viewport.transform, false);
+
+        VerticalLayoutGroup contentVlg = contentContainer.AddComponent<VerticalLayoutGroup>();
 
         plantListContent = contentContainer.GetComponent<RectTransform>();
         plantListContent.anchorMin = new Vector2(0, 1);
@@ -431,8 +433,6 @@ public class HealingCenterUI : MonoBehaviour
         plantListContent.pivot = new Vector2(0.5f, 1);
         plantListContent.offsetMin = Vector2.zero;
         plantListContent.offsetMax = Vector2.zero;
-
-        VerticalLayoutGroup contentVlg = contentContainer.AddComponent<VerticalLayoutGroup>();
         contentVlg.spacing = 5;
         contentVlg.padding = new RectOffset(5, 5, 5, 5);
         contentVlg.childForceExpandWidth = true;

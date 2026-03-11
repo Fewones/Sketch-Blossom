@@ -101,7 +101,7 @@ public class HealingCenter : MonoBehaviour
 
         RectTransform canvasRect = canvas.GetComponent<RectTransform>();
         canvasRect.sizeDelta = new Vector2(200f, 50f);
-        canvasRect.localScale = new Vector3(0.005f, 0.005f, 0.005f);
+        canvasRect.localScale = new Vector3(0.002f, 0.002f, 0.002f);
 
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(promptObj.transform);
