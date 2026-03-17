@@ -82,7 +82,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
             if (IsInsideDrawingArea(mousePos))
             {
                 if (isFillMode)
-                    PerformFill(mousePos);
+                    PerformFill(ScreenToTextureCoord(mousePos), false);
                 else
                     StartStroke(mousePos);
             }
@@ -330,7 +330,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
     {
         if (fillPixels == null) return;
         for (int i = 0; i < fillPixels.Length; i++)
-            fillPixels[i] = Color.clear;
+            fillPixels[i] = Color.white;
         if (fillTexture != null)
         {
             fillTexture.SetPixels(fillPixels);
@@ -338,9 +338,8 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
     }
 
-    private void PerformFill(Vector2 screenPos)
+    public void PerformFill(Vector2Int texCoord, bool transparent)
     {
-        Vector2Int texCoord = ScreenToTextureCoord(screenPos);
         if (texCoord.x < 0) return; // outside bounds
 
         // Build a snapshot: existing fills + rasterized strokes
@@ -351,15 +350,8 @@ public class SimpleDrawingCanvas : MonoBehaviour
         int startIdx = texCoord.y * FillTexSize + texCoord.x;
         Color targetColor = snapshot[startIdx];
 
-        // Only fill transparent / empty regions
-        if (targetColor.a > 0.5f)
-        {
-            Debug.Log("Fill: clicked on an existing stroke or filled region, skipping.");
-            return;
-        }
-
         Color fillColor = currentColor;
-        fillColor.a = 1f;
+        fillColor.a = transparent ? 0f: 1f;
 
         // BFS flood fill
         bool[] visited = new bool[FillTexSize * FillTexSize];
@@ -375,10 +367,10 @@ public class SimpleDrawingCanvas : MonoBehaviour
             int x = idx % FillTexSize;
             int y = idx / FillTexSize;
 
-            TryEnqueueFill(queue, visited, snapshot, x + 1, y);
-            TryEnqueueFill(queue, visited, snapshot, x - 1, y);
-            TryEnqueueFill(queue, visited, snapshot, x, y + 1);
-            TryEnqueueFill(queue, visited, snapshot, x, y - 1);
+            TryEnqueueFill(queue, visited, snapshot, x + 1, y, targetColor);
+            TryEnqueueFill(queue, visited, snapshot, x - 1, y, targetColor);
+            TryEnqueueFill(queue, visited, snapshot, x, y + 1, targetColor);
+            TryEnqueueFill(queue, visited, snapshot, x, y - 1, targetColor);
         }
 
         fillTexture.SetPixels(fillPixels);
@@ -386,12 +378,12 @@ public class SimpleDrawingCanvas : MonoBehaviour
         Debug.Log($"Fill performed at ({texCoord.x},{texCoord.y}) with color {fillColor}");
     }
 
-    private void TryEnqueueFill(Queue<int> queue, bool[] visited, Color[] snapshot, int x, int y)
+    private void TryEnqueueFill(Queue<int> queue, bool[] visited, Color[] snapshot, int x, int y, Color previousColor)
     {
         if (x < 0 || x >= FillTexSize || y < 0 || y >= FillTexSize) return;
         int idx = y * FillTexSize + x;
         if (visited[idx]) return;
-        if (snapshot[idx].a > 0.5f) return; // boundary (stroke or existing fill)
+        if (snapshot[idx] != previousColor) return; // boundary (stroke with a different Color)
         visited[idx] = true;
         queue.Enqueue(idx);
     }
