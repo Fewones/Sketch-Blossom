@@ -1420,7 +1420,7 @@ GameObject:
   - component: {fileID: 1265770991}
   - component: {fileID: 1265770990}
   - component: {fileID: 1265770989}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -1997,6 +1997,9 @@ MonoBehaviour:
   playerController: {fileID: 0}
   enemyPrefab: {fileID: 2825286312004050028, guid: 6a5083ee42d5c3e40a03728b44b87ab9, type: 3}
   enemies: []
+  healingCenterPrefab: {fileID: 0}
+  healingCenter: {fileID: 0}
+  healingCenterPosition: {x: -5.5, y: -0.44, z: 0}
   battlePreviewUI: {fileID: 1019342488}
   spawnEnemiesOnStart: 1
   isFirstEncounter: 0
@@ -2146,7 +2149,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1555732112}
   - component: {fileID: 1555732111}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WorldMapBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}

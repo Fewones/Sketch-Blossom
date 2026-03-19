@@ -8,6 +8,7 @@ using System.Collections;
 using SketchBlossom.Progression; // for PlayerInventory & PlantInventoryEntry
 using SketchBlossom.Model;
 using System.Threading.Tasks;
+using SketchBlossom.Drawing;
 
 /// <summary>
 /// Manages the Wild Growth reward scene:
@@ -24,10 +25,7 @@ using System.Threading.Tasks;
 /// </summary>
 public class WildGrowthSceneManager : MonoBehaviour
 {
-    [Header("Plant Art")]
-    [SerializeField] private Image plantArtImage;
-    // This Image shows the *existing* plant art loaded from the inventory entry
-    // (selectedPlant.drawingTextureBase64). The new stroke is drawn on top in the canvas.
+    private Texture2D plantBaseTex;
 
     [Header("Existing UI")]
     [SerializeField] private TextMeshProUGUI messageText;
@@ -129,13 +127,10 @@ public class WildGrowthSceneManager : MonoBehaviour
 
     /// <summary>
     /// Loads the selected plant's stored drawing sprite from PlayerInventory
-    /// and sets it on plantArtImage. This is the base art that the player will draw on top of.
+    /// and sets it to the fillTexture of the drawingCanvas. This is the base art that the player will draw on top of.
     /// </summary>
     private void LoadPlantArtForWildGrowth()
     {
-        if (plantArtImage == null)
-            return;
-
         if (selectedPlant == null)
         {
             Debug.LogWarning("WildGrowthSceneManager: No selected plant to load art for.");
@@ -145,27 +140,20 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (string.IsNullOrEmpty(selectedPlant.drawingTextureBase64))
         {
             Debug.Log("WildGrowthSceneManager: Plant has no stored drawingTextureBase64 yet.");
-            plantArtImage.sprite = null; // Could assign a fallback sprite here if desired
             return;
         }
 
         try
         {
             byte[] pngBytes = Convert.FromBase64String(selectedPlant.drawingTextureBase64);
-            Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            if (!tex.LoadImage(pngBytes))
+            plantBaseTex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!plantBaseTex.LoadImage(pngBytes))
             {
                 Debug.LogWarning("WildGrowthSceneManager: Failed to LoadImage from plant base64.");
                 return;
             }
-
-            Sprite sprite = Sprite.Create(
-                tex,
-                new Rect(0, 0, tex.width, tex.height),
-                new Vector2(0.5f, 0.5f)
-            );
-
-            plantArtImage.sprite = sprite;
+            drawingCanvas.SetFillTexture(plantBaseTex);
+            drawingCanvas.FillCorners(Color.white);
         }
         catch (Exception e)
         {
@@ -476,6 +464,8 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (drawingCanvas != null)
         {
             drawingCanvas.ClearCanvas();
+            drawingCanvas.SetFillTexture(plantBaseTex);
+            drawingCanvas.FillCorners(Color.white);
         }
 
         hasAnyDrawing = false;
@@ -528,6 +518,7 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (drawingCanvas != null)
         {
             drawingCanvas.ForceEndStroke();
+            drawingCanvas.FillCorners(Color.clear);
         }
 
         // 2) Wait for end of frame so drawing is fully rendered
@@ -570,33 +561,16 @@ public class WildGrowthSceneManager : MonoBehaviour
             Debug.LogWarning("WildGrowthSceneManager: Cannot capture drawing - missing camera or capture area.");
             return null;
         }
-
+        
         Camera cam = drawingCanvas.mainCamera;
 
-        // Get world corners of the drawing area
-        Vector3[] corners = new Vector3[4];
-        drawingCaptureArea.GetWorldCorners(corners);
-
-        // Convert to screen space
-        Vector2 min = RectTransformUtility.WorldToScreenPoint(cam, corners[0]); // bottom-left
-        Vector2 max = RectTransformUtility.WorldToScreenPoint(cam, corners[2]); // top-right
-
-        int width  = Mathf.RoundToInt(max.x - min.x);
-        int height = Mathf.RoundToInt(max.y - min.y);
-
-        if (width <= 0 || height <= 0)
-        {
-            Debug.LogWarning($"WildGrowthSceneManager: Capture size invalid: {width}x{height}");
-            return null;
-        }
-
-        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        Rect rect = new Rect(min.x, min.y, width, height);
-        tex.ReadPixels(rect, 0, 0);
-        tex.Apply();
-
-        Debug.Log($"WildGrowthSceneManager: Captured drawing texture {width}x{height}");
-        return tex;
+        return captureHandler.CaptureWholeDrawingArea(
+            drawingCanvas.allStrokes,
+            cam,
+            drawingCanvas.drawingArea,
+            forceTransparent: true,
+            fillTexture: drawingCanvas.GetFillTexture()
+        );
     }
 
     /// <summary>
@@ -646,7 +620,8 @@ public class WildGrowthSceneManager : MonoBehaviour
         Texture2D drawingTexture = captureHandler.CaptureDrawing(
                 drawingCanvas.allStrokes,
                 drawingCanvas.mainCamera,
-                drawingCanvas.drawingArea
+                drawingCanvas.drawingArea,
+                fillTexture: drawingCanvas.GetFillTexture()
             );
 
         Debug.Log("Saved new stroke as texture");

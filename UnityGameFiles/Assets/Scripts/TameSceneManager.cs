@@ -182,6 +182,9 @@ public class TameGrowthManager : MonoBehaviour
 
         drawingCanvas.ForceEndStroke();
 
+        // Clear out from the corners so only the inner facettes remain colored
+        drawingCanvas.FillCorners(Color.clear);
+
         if (drawingCanvas.allStrokes == null || drawingCanvas.allStrokes.Count == 0)
         {
             SetFeedback($"Please draw a {requiredPlantType} first.");

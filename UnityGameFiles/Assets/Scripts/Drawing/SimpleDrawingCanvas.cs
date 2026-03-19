@@ -82,7 +82,7 @@ public class SimpleDrawingCanvas : MonoBehaviour
             if (IsInsideDrawingArea(mousePos))
             {
                 if (isFillMode)
-                    PerformFill(ScreenToTextureCoord(mousePos), false);
+                    PerformFill(ScreenToTextureCoord(mousePos));
                 else
                     StartStroke(mousePos);
             }
@@ -298,6 +298,14 @@ public class SimpleDrawingCanvas : MonoBehaviour
         return fillTexture;
     }
 
+    // Set Fill texture (used by wild growth for the plant base image)
+    public void SetFillTexture(Texture2D newFillTexture)
+    {
+        fillPixels = newFillTexture.GetPixels();
+        fillTexture.SetPixels(fillPixels);
+        fillTexture.Apply();
+    }
+
     // ── Fill Tool Internals ────────────────────────────────────
 
     private void InitFillTexture()
@@ -338,7 +346,34 @@ public class SimpleDrawingCanvas : MonoBehaviour
         }
     }
 
-    public void PerformFill(Vector2Int texCoord, bool transparent)
+    public void FillCorners(Color color)
+    {
+        // change current color to given color and change it back at the end
+        Color tempColor = currentColor;
+        SetColor(color);
+
+        // Fill the corners so only the inner facettes remain colored if the corners are colored white or clear
+        if (fillPixels[0] == Color.white || fillPixels[0] == Color.clear)
+        {
+            PerformFill(new Vector2Int(0,0));
+        }
+        if (fillPixels[511] == Color.white || fillPixels[0] == Color.clear)
+        {
+            PerformFill(new Vector2Int(0,511));
+        }
+        if (fillPixels[512*511] == Color.white || fillPixels[0] == Color.clear)
+        {
+            PerformFill(new Vector2Int(511,0));
+        }
+        if (fillPixels[512*511+511] == Color.white || fillPixels[0] == Color.clear)
+        {
+            PerformFill(new Vector2Int(511,511));
+        }
+
+        SetColor(tempColor);
+    }
+
+    private void PerformFill(Vector2Int texCoord)
     {
         if (texCoord.x < 0) return; // outside bounds
 
@@ -351,7 +386,6 @@ public class SimpleDrawingCanvas : MonoBehaviour
         Color targetColor = snapshot[startIdx];
 
         Color fillColor = currentColor;
-        fillColor.a = transparent ? 0f: 1f;
 
         // BFS flood fill
         bool[] visited = new bool[FillTexSize * FillTexSize];
