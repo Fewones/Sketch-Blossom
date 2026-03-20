@@ -16,15 +16,17 @@ public class WorldMapSceneManager : MonoBehaviour
     [Header("Enemy Setup")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private WorldMapEnemy[] enemies;
-    private Vector3[] enemySpawnPoints = {new Vector3(-1.6f, -0.44f, 0f), new Vector3(1.95f, -0.44f, 0f), new Vector3(6.4f, -0.44f, 0f)};
+    [SerializeField] private Vector3[] enemySpawnPoints;
 
     [Header("Healing Center")]
     [SerializeField] private GameObject healingCenterPrefab;
     [SerializeField] private HealingCenter healingCenter;
-    [SerializeField] private Vector3 healingCenterPosition = new Vector3(-5.5f, -0.44f, 0f);
+    [SerializeField] private Vector3 healingCenterPosition;
 
     [Header("UI References")]
     [SerializeField] private BattlePreviewUI battlePreviewUI;
+
+    [SerializeField] private Transform background;
 
     [Header("Scene Settings")]
     [SerializeField] private bool spawnEnemiesOnStart = true;
@@ -108,7 +110,7 @@ public class WorldMapSceneManager : MonoBehaviour
         for (int i = 0; i < numberOfEnemies; i++)
         {
             Vector3 spawnPos = spawnPositions[i];
-            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity, parent: background);
 
             // Determine difficulty: if first encounter, all are difficulty 1
             // Otherwise, cycle through difficulties 1, 2, 3

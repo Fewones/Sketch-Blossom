@@ -1440,6 +1440,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 3
+  leftConstraints:
+  - {x: -9, y: 0, z: 0}
+  - {x: -4.2, y: -1, z: 1}
+  rightConstraints:
+  - {x: 9, y: 0, z: 0}
+  lowerConstraints:
+  - {x: 0, y: -3, z: 0}
+  upperConstraints:
+  - {x: -4.3, y: -1.1, z: -1}
+  - {x: -4.3, y: -0.3, z: 1}
   leftStep: {fileID: -5806565978475588115, guid: 13051578eccdbed4dae66c2627db87b8, type: 3}
   rightStep: {fileID: 3784747584637234365, guid: f6d852b9bff46bd4ca85b5bee2c4d8f8, type: 3}
   spriteRenderer: {fileID: 0}
@@ -1997,9 +2007,13 @@ MonoBehaviour:
   playerController: {fileID: 0}
   enemyPrefab: {fileID: 2825286312004050028, guid: 6a5083ee42d5c3e40a03728b44b87ab9, type: 3}
   enemies: []
+  enemySpawnPoints:
+  - {x: -1.6, y: -0.44, z: 0}
+  - {x: 1.95, y: -0.44, z: 0}
+  - {x: 6.4, y: -0.44, z: 0}
   healingCenterPrefab: {fileID: 0}
   healingCenter: {fileID: 0}
-  healingCenterPosition: {x: -5.5, y: -0.44, z: 0}
+  healingCenterPosition: {x: -6.5, y: -0.54, z: 0}
   battlePreviewUI: {fileID: 1019342488}
   spawnEnemiesOnStart: 1
   isFirstEncounter: 0
