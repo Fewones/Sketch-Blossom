@@ -17,13 +17,24 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Sprite leftStep;
     [SerializeField] private Sprite rightStep;
 
+    private Vector3 startPosition;
+
     [Header("References")]
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    [SerializeField] private Transform background;
+    [SerializeField] private float leftEnd;
+    [SerializeField] private float rightEnd;
+    [SerializeField] private float upperEnd;
+    [SerializeField] private float lowerEnd;
+    [SerializeField] private bool movingBackground;
+    private Rigidbody2D rbBackground;
     private Sprite standingSprite;
 
     private Vector2 movement;
     private Rigidbody2D rb;
+
+
     private Animator animator; // Optional: if you add animations later
 
     private int stepCounter = 0;
@@ -38,12 +49,24 @@ public class PlayerController : MonoBehaviour
             rb.constraints = RigidbodyConstraints2D.FreezeRotation; // Prevent rotation
         }
 
+        if (movingBackground) {
+            rbBackground = background.GetComponent<Rigidbody2D>();
+            if (rbBackground == null)
+            {
+                rbBackground = gameObject.AddComponent<Rigidbody2D>();
+                rbBackground.gravityScale = 0f; // Top-down movement, no gravity
+                rbBackground.constraints = RigidbodyConstraints2D.FreezeRotation; // Prevent rotation
+            }  
+        }
+        
+
         if (spriteRenderer == null)
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
             standingSprite = spriteRenderer.sprite;
         }
 
+        startPosition = GetPosition();
         animator = GetComponent<Animator>();
     }
 
@@ -86,8 +109,21 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Move the player using physics
-        rb.linearVelocity = movement * moveSpeed;
+        // Move the player using physics (depending on the scene having a moving background)
+        if (movingBackground){
+            if (stopBackground(movement) != movement){
+                rbBackground.linearVelocity = -stopBackground(movement) * moveSpeed;
+                rb.linearVelocity = (movement -stopBackground(movement)) * moveSpeed;
+
+            } else {
+                rbBackground.linearVelocity = -movement * moveSpeed;
+                rb.linearVelocity = new Vector2(0,0);
+            }
+        } else{
+            rb.linearVelocity = movement * moveSpeed;
+        }
+        
+        
         stepCounter = (stepCounter % 30) + 1;
         if (stepCounter == 1)
         {
@@ -203,5 +239,23 @@ public class PlayerController : MonoBehaviour
         else {
             return direction;
         }
+    }
+
+    // returns the movement of the background if it gets constrained in one direction
+    public Vector2 stopBackground(Vector2 movement)
+    {
+        float x = movement.x;
+        float y = movement.y;
+        // Since the background moves opposite to the player, > 0 means left/down and < 0 means right/up
+        // The background should not move left if it is at its leftmost point or if the player is left of his starting point
+        if (((movement.x > 0) && ((background.position.x < leftEnd) || (GetPosition().x < startPosition.x))) ||
+            ((movement.x < 0) && ((background.position.x > rightEnd) || (GetPosition().x > startPosition.x)))){
+            x = 0;
+        }
+        if (((movement.y > 0) && ((background.position.y < lowerEnd) || (GetPosition().y < startPosition.y))) ||
+            ((movement.y < 0) && ((background.position.y > upperEnd) || (GetPosition().y > startPosition.y)))){
+            y = 0;
+        }
+        return new Vector2(x,y);
     }
 }
