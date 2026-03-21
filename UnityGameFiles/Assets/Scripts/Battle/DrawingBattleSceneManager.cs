@@ -1576,7 +1576,7 @@ namespace SketchBlossom.Battle
                         UpdateTurnIndicator("GAME OVER");
                         UpdateActionText("All your plants have perished...");
                         yield return new WaitForSeconds(2f);
-                        SceneManager.LoadScene("MainMenuScene");
+                        SceneManager.LoadScene("IntroScene");
                         yield break;
                     }
                     else

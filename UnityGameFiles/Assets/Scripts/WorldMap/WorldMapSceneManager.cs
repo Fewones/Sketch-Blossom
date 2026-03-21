@@ -266,7 +266,7 @@ public class WorldMapSceneManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        SceneManager.LoadScene("MainMenuScene");
+        SceneManager.LoadScene("IntroScene");
     }
 
     public void OpenInventory()
