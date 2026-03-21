@@ -205,7 +205,7 @@ namespace SketchBlossom.UI
             Time.timeScale = 1f;
 
             // Load main menu
-            SceneManager.LoadScene("MainMenuScene");
+            SceneManager.LoadScene("IntroScene");
         }
 
         /// <summary>

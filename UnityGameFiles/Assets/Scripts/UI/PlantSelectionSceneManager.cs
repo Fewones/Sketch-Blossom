@@ -401,7 +401,7 @@ namespace SketchBlossom.UI
         private void OnBackButtonClicked()
         {
             Debug.Log("Returning to main menu");
-            SceneManager.LoadScene("MainMenuScene");
+            SceneManager.LoadScene("IntroScene");
         }
 
         /// <summary>
