@@ -9,10 +9,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed;
 
     // The corners of the area the player is able to move in
-    [SerializeField] private Vector3[] leftConstraints;
-    [SerializeField] private Vector3[] rightConstraints;
-    [SerializeField] private Vector3[] lowerConstraints;
-    [SerializeField] private Vector3[] upperConstraints;
+    [SerializeField] private Vector3[] leftConstraintsPlayer;
+    [SerializeField] private Vector3[] rightConstraintsPlayer;
+    [SerializeField] private Vector3[] lowerConstraintsPlayer;
+    [SerializeField] private Vector3[] upperConstraintsPlayer;
+
+    [SerializeField] private BoxCollider2D leftBoxCollider;
+    [SerializeField] private BoxCollider2D rightBoxCollider;
+    [SerializeField] private BoxCollider2D lowerBoxCollider;
+    [SerializeField] private BoxCollider2D upperBoxCollider;
 
     [SerializeField] private Sprite leftStep;
     [SerializeField] private Sprite rightStep;
@@ -29,6 +34,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float lowerEnd;
     [SerializeField] private bool movingBackground;
     private Rigidbody2D rbBackground;
+    private EdgeCollider2D[] barriers;
     private Sprite standingSprite;
 
     private Vector2 movement;
@@ -58,6 +64,11 @@ public class PlayerController : MonoBehaviour
                 rbBackground.constraints = RigidbodyConstraints2D.FreezeRotation; // Prevent rotation
             }  
         }
+
+        if (background != null)
+        {
+            barriers = background.GetComponents<EdgeCollider2D>();
+        }
         
 
         if (spriteRenderer == null)
@@ -78,19 +89,8 @@ public class PlayerController : MonoBehaviour
 
 
         // Movement Constraints so Player cant leave the worldmap or walk on the sky
-        movement.x = ApplyHorizontalConstraints(movement.x);
-        movement.y = ApplyVerticalConstraints(movement.y);
-
-        // Normalize diagonal movement to prevent faster movement
-        if (movement.magnitude > 1)
-        {
-            movement.Normalize();
-        }
-
-        if ((movement.x == 0) && (movement.y == 0))
-        {
-            spriteRenderer.sprite = standingSprite;
-        }
+        //movement.x = ApplyHorizontalConstraints(GetPosition(), movement.x, leftConstraintsPlayer, rightConstraintsPlayer);
+        //movement.y = ApplyVerticalConstraints(GetPosition(), movement.y, lowerConstraintsPlayer, upperConstraintsPlayer);
 
         // Update sprite facing direction
         if (movement.x != 0 && spriteRenderer != null)
@@ -110,28 +110,35 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         // Move the player using physics (depending on the scene having a moving background)
-        if (movingBackground){
-            if (stopBackground(movement) != movement){
-                rbBackground.linearVelocity = -stopBackground(movement) * moveSpeed;
-                rb.linearVelocity = (movement -stopBackground(movement)) * moveSpeed;
+        movement = checkEdgeColliders(movement);
 
-            } else {
-                rbBackground.linearVelocity = -movement * moveSpeed;
-                rb.linearVelocity = new Vector2(0,0);
+        // Normalize diagonal movement to prevent faster movement
+        if (movement.magnitude > 1)
+        {
+            movement.Normalize();
+        }
+
+        if ((movement.x == 0) && (movement.y == 0))
+        {
+            spriteRenderer.sprite = standingSprite;
+        } else {
+            stepCounter = (stepCounter % 30) + 1;
+            if (stepCounter == 1)
+            {
+                spriteRenderer.sprite = leftStep;
+            } else if (stepCounter == 16)
+            {
+                spriteRenderer.sprite = rightStep;
             }
+        }
+
+        if (movingBackground){
+            rbBackground.linearVelocity = moveBackground(movement) * moveSpeed;
+            rb.linearVelocity = (movement + moveBackground(movement)) * moveSpeed;  
         } else{
             rb.linearVelocity = movement * moveSpeed;
         }
         
-        
-        stepCounter = (stepCounter % 30) + 1;
-        if (stepCounter == 1)
-        {
-            spriteRenderer.sprite = leftStep;
-        } else if (stepCounter == 16)
-        {
-            spriteRenderer.sprite = rightStep;
-        }
     }
 
     /// <summary>
@@ -255,6 +262,38 @@ public class PlayerController : MonoBehaviour
         if (((movement.y > 0) && ((background.position.y < lowerEnd) || (GetPosition().y < startPosition.y))) ||
             ((movement.y < 0) && ((background.position.y > upperEnd) || (GetPosition().y > startPosition.y)))){
             y = 0;
+        }
+        return new Vector2(x,y);
+    }
+
+    public bool barrier(float a, float barrier)
+    {
+        return  (a > (barrier -0.1)) && (a < (barrier + 0.1));
+    }
+
+    public Vector2 checkEdgeColliders(Vector2 movement)
+    {
+        float x = movement.x;
+        float y = movement.y;
+
+        foreach(EdgeCollider2D edgeCollider in barriers)
+        {
+            if (leftBoxCollider.IsTouching(edgeCollider) && (x < 0))
+            {
+                x = 0;
+            }
+            if (rightBoxCollider.IsTouching(edgeCollider) && (x > 0))
+            {
+                x = 0;
+            }
+            if (lowerBoxCollider.IsTouching(edgeCollider) && (y < 0))
+            {
+                y = 0;
+            }
+            if (upperBoxCollider.IsTouching(edgeCollider) && (y > 0))
+            {
+                y = 0;
+            }
         }
         return new Vector2(x,y);
     }
