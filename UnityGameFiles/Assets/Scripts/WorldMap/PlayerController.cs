@@ -8,20 +8,15 @@ public class PlayerController : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed;
 
-    // The corners of the area the player is able to move in
-    [SerializeField] private Vector3[] leftConstraintsPlayer;
-    [SerializeField] private Vector3[] rightConstraintsPlayer;
-    [SerializeField] private Vector3[] lowerConstraintsPlayer;
-    [SerializeField] private Vector3[] upperConstraintsPlayer;
-
-    [SerializeField] private BoxCollider2D leftBoxCollider;
-    [SerializeField] private BoxCollider2D rightBoxCollider;
-    [SerializeField] private BoxCollider2D lowerBoxCollider;
-    [SerializeField] private BoxCollider2D upperBoxCollider;
-
+    // The player has 4 circle colliders to constrain movement
+    [SerializeField] private CircleCollider2D leftCircleCollider;
+    [SerializeField] private CircleCollider2D rightCircleCollider;
+    [SerializeField] private CircleCollider2D lowerCircleCollider;
+    [SerializeField] private CircleCollider2D upperCircleCollider;
+    
     [SerializeField] private Sprite leftStep;
     [SerializeField] private Sprite rightStep;
-
+    private Sprite standingSprite;
     private Vector3 startPosition;
 
     [Header("References")]
@@ -35,8 +30,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool movingBackground;
     private Rigidbody2D rbBackground;
     private EdgeCollider2D[] barriers;
-    private Sprite standingSprite;
-
+    
     private Vector2 movement;
     private Rigidbody2D rb;
 
@@ -87,11 +81,6 @@ public class PlayerController : MonoBehaviour
         movement.x = Input.GetAxisRaw("Horizontal"); // A/D or Left/Right arrows
         movement.y = Input.GetAxisRaw("Vertical");   // W/S or Up/Down arrows
 
-
-        // Movement Constraints so Player cant leave the worldmap or walk on the sky
-        //movement.x = ApplyHorizontalConstraints(GetPosition(), movement.x, leftConstraintsPlayer, rightConstraintsPlayer);
-        //movement.y = ApplyVerticalConstraints(GetPosition(), movement.y, lowerConstraintsPlayer, upperConstraintsPlayer);
-
         // Update sprite facing direction
         if (movement.x != 0 && spriteRenderer != null)
         {
@@ -109,8 +98,8 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Move the player using physics (depending on the scene having a moving background)
-        movement = checkEdgeColliders(movement);
+        // Check if the the player collides with an edge
+        movement = ApplyEdgeColliders(movement);
 
         // Normalize diagonal movement to prevent faster movement
         if (movement.magnitude > 1)
@@ -132,6 +121,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // Move the player using physics (depending on the scene having a moving background)
         if (movingBackground){
             rbBackground.linearVelocity = moveBackground(movement) * moveSpeed;
             rb.linearVelocity = (movement + moveBackground(movement)) * moveSpeed;  
@@ -162,135 +152,44 @@ public class PlayerController : MonoBehaviour
         return transform.position;
     }
 
-    public float ApplyHorizontalConstraints(float direction)
+    // returns the movement of the background (the movement of the background is opposite to the player)
+    public Vector2 moveBackground(Vector2 movement)
     {
-        // Get current player position
-        Vector3 currentPosition = this.GetPosition();
-
-        if (direction < 0) {
-            // Check for left constraints
-            // z=0: constrain along the whole y axis
-            // z=1: constrain if y is greater than constraint y value
-            // z=-1: constrain if y is smaller than constraint y value
-            bool constrainLeft = false;
-            foreach (Vector3 leftConstraint in leftConstraints){
-                switch (leftConstraint.z) {
-                    case 0: constrainLeft = constrainLeft || (currentPosition.x < leftConstraint.x);
-                    break;
-                    case 1: constrainLeft = constrainLeft || ((currentPosition.x < leftConstraint.x) && (currentPosition.y > leftConstraint.y));
-                    break;
-                    case -1: constrainLeft = constrainLeft || ((currentPosition.x < leftConstraint.x) && (currentPosition.y < leftConstraint.y));
-                    break;
-                }
-            }
-            return constrainLeft ? 0 : direction;
-        } 
-        else if (direction > 0) {
-            // Check for right constraints
-            bool constrainRight = false;
-            foreach (Vector3 rightConstraint in rightConstraints){
-                switch (rightConstraint.z) {
-                    case 0: constrainRight = constrainRight || (currentPosition.x > rightConstraint.x);
-                    break;
-                    case 1: constrainRight = constrainRight || ((currentPosition.x > rightConstraint.x) && (currentPosition.y > rightConstraint.y));
-                    break;
-                    case -1: constrainRight = constrainRight || ((currentPosition.x > rightConstraint.x) && (currentPosition.y < rightConstraint.y));
-                    break;
-                }
-            }
-            return constrainRight ? 0 : direction;
-        } 
-        else {
-            return direction;
-        }
-    }
-
-    public float ApplyVerticalConstraints(float direction)
-    {
-        // Get current player position
-        Vector3 currentPosition = this.GetPosition();
-
-        if (direction < 0) {
-            // Check for lower constraints
-            // z=0: constrain along the whole x axis
-            // z=1: constrain if x is greater than constraint x value
-            // z=-1: constrain if x is smaller than constraint x value
-            bool constrainLower = false;
-            foreach (Vector3 lowerConstraint in lowerConstraints){
-                switch (lowerConstraint.z) {
-                    case 0: constrainLower = constrainLower || (currentPosition.y < lowerConstraint.y);
-                    break;
-                    case 1: constrainLower = constrainLower || ((currentPosition.y < lowerConstraint.y) && (currentPosition.x > lowerConstraint.x));
-                    break;
-                    case -1: constrainLower = constrainLower || ((currentPosition.y < lowerConstraint.y) && (currentPosition.x < lowerConstraint.x));
-                    break;
-                }
-            }
-            return constrainLower ? 0 : direction;
-        } 
-        else if (direction > 0) {
-            // Check for right constraints
-            bool constrainUpper = false;
-            foreach (Vector3 upperConstraint in upperConstraints){
-                switch (upperConstraint.z) {
-                    case 0: constrainUpper = constrainUpper || (currentPosition.y > upperConstraint.y);
-                    break;
-                    case 1: constrainUpper = constrainUpper || ((currentPosition.y > upperConstraint.y) && (currentPosition.x > upperConstraint.x));
-                    break;
-                    case -1: constrainUpper = constrainUpper || ((currentPosition.y > upperConstraint.y) && (currentPosition.x < upperConstraint.x));
-                    break;
-                }
-            }
-            return constrainUpper ? 0 : direction;
-        } 
-        else {
-            return direction;
-        }
-    }
-
-    // returns the movement of the background if it gets constrained in one direction
-    public Vector2 stopBackground(Vector2 movement)
-    {
-        float x = movement.x;
-        float y = movement.y;
+        float x = -movement.x;
+        float y = -movement.y;
         // Since the background moves opposite to the player, > 0 means left/down and < 0 means right/up
         // The background should not move left if it is at its leftmost point or if the player is left of his starting point
-        if (((movement.x > 0) && ((background.position.x < leftEnd) || (GetPosition().x < startPosition.x))) ||
-            ((movement.x < 0) && ((background.position.x > rightEnd) || (GetPosition().x > startPosition.x)))){
+        if (((x < 0) && ((background.position.x < leftEnd) || (GetPosition().x < startPosition.x))) ||
+            ((x > 0) && ((background.position.x > rightEnd) || (GetPosition().x > startPosition.x)))){
             x = 0;
         }
-        if (((movement.y > 0) && ((background.position.y < lowerEnd) || (GetPosition().y < startPosition.y))) ||
-            ((movement.y < 0) && ((background.position.y > upperEnd) || (GetPosition().y > startPosition.y)))){
+        if (((y < 0) && ((background.position.y < lowerEnd) || (GetPosition().y < startPosition.y))) ||
+            ((y > 0) && ((background.position.y > upperEnd) || (GetPosition().y > startPosition.y)))){
             y = 0;
         }
         return new Vector2(x,y);
     }
 
-    public bool barrier(float a, float barrier)
-    {
-        return  (a > (barrier -0.1)) && (a < (barrier + 0.1));
-    }
-
-    public Vector2 checkEdgeColliders(Vector2 movement)
+    public Vector2 ApplyEdgeColliders(Vector2 movement)
     {
         float x = movement.x;
         float y = movement.y;
 
         foreach(EdgeCollider2D edgeCollider in barriers)
         {
-            if (leftBoxCollider.IsTouching(edgeCollider) && (x < 0))
+            if (leftCircleCollider.IsTouching(edgeCollider) && (x < 0))
             {
                 x = 0;
             }
-            if (rightBoxCollider.IsTouching(edgeCollider) && (x > 0))
+            if (rightCircleCollider.IsTouching(edgeCollider) && (x > 0))
             {
                 x = 0;
             }
-            if (lowerBoxCollider.IsTouching(edgeCollider) && (y < 0))
+            if (lowerCircleCollider.IsTouching(edgeCollider) && (y < 0))
             {
                 y = 0;
             }
-            if (upperBoxCollider.IsTouching(edgeCollider) && (y > 0))
+            if (upperCircleCollider.IsTouching(edgeCollider) && (y > 0))
             {
                 y = 0;
             }
