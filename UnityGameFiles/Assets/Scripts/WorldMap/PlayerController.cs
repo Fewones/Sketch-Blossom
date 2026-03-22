@@ -17,7 +17,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Sprite leftStep;
     [SerializeField] private Sprite rightStep;
     private Sprite standingSprite;
-    private Vector3 startPosition;
 
     [Header("References")]
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -72,7 +71,6 @@ public class PlayerController : MonoBehaviour
             standingSprite = spriteRenderer.sprite;
         }
 
-        startPosition = GetPosition();
         animator = GetComponent<Animator>();
     }
 
@@ -159,13 +157,13 @@ public class PlayerController : MonoBehaviour
         float x = -movement.x;
         float y = -movement.y;
         // Since the background moves opposite to the player, > 0 means left/down and < 0 means right/up
-        // The background should not move left if it is at its leftmost point or if the player is left of his starting point
-        if (((x < 0) && ((background.position.x < leftEnd) || (GetPosition().x < startPosition.x))) ||
-            ((x > 0) && ((background.position.x > rightEnd) || (GetPosition().x > startPosition.x)))){
+        // The background should not move left if it is at its leftmost point or if the player is left of the middle
+        if (((x < 0) && ((background.position.x < leftEnd) || (GetPosition().x < 0))) ||
+            ((x > 0) && ((background.position.x > rightEnd) || (GetPosition().x > 0)))){
             x = 0;
         }
-        if (((y < 0) && ((background.position.y < lowerEnd) || (GetPosition().y < startPosition.y))) ||
-            ((y > 0) && ((background.position.y > upperEnd) || (GetPosition().y > startPosition.y)))){
+        if (((y < 0) && ((background.position.y < lowerEnd) || (GetPosition().y < 0))) ||
+            ((y > 0) && ((background.position.y > upperEnd) || (GetPosition().y > 0)))){
             y = 0;
         }
         return new Vector2(x,y);
