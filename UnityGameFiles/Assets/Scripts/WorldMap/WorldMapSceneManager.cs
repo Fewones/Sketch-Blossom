@@ -30,7 +30,7 @@ public class WorldMapSceneManager : MonoBehaviour
 
     [Header("Scene Settings")]
     [SerializeField] private bool spawnEnemiesOnStart = true;
-    private int numberOfEnemies = 3; // One of each difficulty by default
+    [SerializeField] private int numberOfEnemies; // One of each difficulty by default
     [SerializeField] private bool isFirstEncounter = false; // Set true for tutorial/first map
 
     private void Start()

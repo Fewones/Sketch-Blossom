@@ -24,9 +24,10 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Transform background;
     [SerializeField] private float leftEnd;
-    [SerializeField] private float rightEnd;
-    [SerializeField] private float upperEnd;
+    [SerializeField] private float rightEnd;    
     [SerializeField] private float lowerEnd;
+    [SerializeField] private float upperEnd;
+
     [SerializeField] private bool movingBackground;
     private Rigidbody2D rbBackground;
     private EdgeCollider2D[] barriers;
