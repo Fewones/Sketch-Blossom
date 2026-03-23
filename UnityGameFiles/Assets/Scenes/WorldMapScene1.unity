@@ -1811,8 +1811,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldMapSceneManager
   playerPrefab: {fileID: 0}
-  playerSpawnPosition: {x: 0, y: 0, z: 0}
-  playerController: {fileID: 0}
+  playerController: {fileID: 1661921008}
   enemyPrefab: {fileID: 2825286312004050028, guid: 6a5083ee42d5c3e40a03728b44b87ab9, type: 3}
   enemies: []
   enemySpawnPoints:
@@ -1825,6 +1824,7 @@ MonoBehaviour:
   battlePreviewUI: {fileID: 1019342488}
   background: {fileID: 0}
   spawnEnemiesOnStart: 1
+  numberOfEnemies: 0
   isFirstEncounter: 0
 --- !u!4 &1529402964
 Transform:
@@ -2339,6 +2339,7 @@ MonoBehaviour:
   upperCircleCollider: {fileID: 1661921015}
   leftStep: {fileID: -5806565978475588115, guid: 13051578eccdbed4dae66c2627db87b8, type: 3}
   rightStep: {fileID: 3784747584637234365, guid: f6d852b9bff46bd4ca85b5bee2c4d8f8, type: 3}
+  spawnManager: {fileID: 0}
   spriteRenderer: {fileID: 0}
   background: {fileID: 1555732112}
   leftEnd: 0

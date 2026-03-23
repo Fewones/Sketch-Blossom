@@ -2108,8 +2108,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldMapSceneManager
   playerPrefab: {fileID: 0}
-  playerPosition: {x: 0, y: 0, z: 0}
-  playerController: {fileID: 0}
+  playerController: {fileID: 1160762603}
   enemyPrefab: {fileID: 2825286312004050028, guid: 6a5083ee42d5c3e40a03728b44b87ab9, type: 3}
   enemies: []
   enemySpawnPoints: []

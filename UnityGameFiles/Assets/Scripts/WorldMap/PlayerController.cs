@@ -15,6 +15,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CircleCollider2D upperCircleCollider;
     [SerializeField] private Sprite leftStep;
     [SerializeField] private Sprite rightStep;
+
+    public SpawnManager spawnManager;
     private Sprite standingSprite;  
     private int stepCounter = 0;
     private Vector2 movement;
@@ -37,10 +39,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public BoxCollider2D formerLoadingZone; 
     [SerializeField] public BoxCollider2D nextLoadingZone; 
     [SerializeField] public int currentWorldMap;
-
     
     public bool changeWorldMap;
-  
+
     private Animator animator; // Optional: if you add animations later
 
     private void Awake()
@@ -63,6 +64,13 @@ public class PlayerController : MonoBehaviour
             }  
         }
 
+        if (spawnManager == null)
+        {
+            spawnManager = FindObjectOfType<SpawnManager>();
+        }
+
+        
+
         if (background != null)
         {
             barriers = background.GetComponents<EdgeCollider2D>();
@@ -74,6 +82,10 @@ public class PlayerController : MonoBehaviour
             spriteRenderer = GetComponent<SpriteRenderer>();
             standingSprite = spriteRenderer.sprite;
         }
+
+        if (spawnManager.facingLeft){
+                    spriteRenderer.flipX = true;
+            }
 
         animator = GetComponent<Animator>();
     }
@@ -104,20 +116,24 @@ public class PlayerController : MonoBehaviour
         // If the player should progress to another WorldMap, freeze movement
         if (formerLoadingZone != null)
         {
-           if (checkWorldMapProgression(formerLoadingZone))
+           if (checkWorldMapProgression(formerLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
+                SetSpawnPosition(currentWorldMap);
                 currentWorldMap -= 1;
+                spawnManager.facingLeft = true;
                 changeWorldMap = true;
             } 
         }
 
         if (nextLoadingZone != null)
         {
-          if (checkWorldMapProgression(nextLoadingZone))
+          if (checkWorldMapProgression(nextLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
+                SetSpawnPosition(currentWorldMap);
                 currentWorldMap += 1;
+                spawnManager.facingLeft = false;
                 changeWorldMap = true;
             }  
         }
@@ -151,6 +167,16 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = movement * moveSpeed;
         }
         
+    }
+
+    public Vector2 GetSpawnPosition()
+    {
+        return spawnManager.playerSpawnPoints[currentWorldMap-1];
+    }
+
+    public void SetSpawnPosition(int i)
+    {
+        spawnManager.playerSpawnPoints[i-1] = GetPosition()*new Vector2(0.99f, 0.99f);
     }
 
     /// <summary>
@@ -192,11 +218,12 @@ public class PlayerController : MonoBehaviour
         return new Vector2(x,y);
     }
 
-    private bool checkWorldMapProgression(BoxCollider2D loadingZone)
+    private bool checkWorldMapProgression(BoxCollider2D loadingZone, bool currentlyChanging)
     {
-        return leftCircleCollider.IsTouching(loadingZone) ||
-            rightCircleCollider.IsTouching(loadingZone) ||
-            lowerCircleCollider.IsTouching(loadingZone) ||
-            upperCircleCollider.IsTouching(loadingZone);
+        return !currentlyChanging && 
+                (leftCircleCollider.IsTouching(loadingZone) ||
+                rightCircleCollider.IsTouching(loadingZone) ||
+                lowerCircleCollider.IsTouching(loadingZone) ||
+                upperCircleCollider.IsTouching(loadingZone));
     }
 }
