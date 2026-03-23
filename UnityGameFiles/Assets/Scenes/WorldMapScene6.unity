@@ -2115,7 +2115,7 @@ MonoBehaviour:
   enemySpawnPoints: []
   healingCenterPrefab: {fileID: 0}
   healingCenter: {fileID: 0}
-  healingCenterPosition: {x: -6.5, y: -54, z: 0}
+  healingCenterPosition: {x: -5.6, y: -1, z: 0}
   battlePreviewUI: {fileID: 1019342488}
   background: {fileID: 1555732112}
   spawnEnemiesOnStart: 1

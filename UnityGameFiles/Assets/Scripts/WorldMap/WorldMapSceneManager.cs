@@ -148,12 +148,13 @@ public class WorldMapSceneManager : MonoBehaviour
         GameObject healingObj;
         if (healingCenterPrefab != null)
         {
-            healingObj = Instantiate(healingCenterPrefab, healingCenterPosition, Quaternion.identity);
+            healingObj = Instantiate(healingCenterPrefab, healingCenterPosition, Quaternion.identity, parent: background);
         }
         else
         {
             healingObj = new GameObject("HealingCenter");
             healingObj.transform.position = healingCenterPosition;
+            healingObj.transform.SetParent(background);
 
             SpriteRenderer sr = healingObj.AddComponent<SpriteRenderer>();
 
@@ -181,7 +182,7 @@ public class WorldMapSceneManager : MonoBehaviour
                     new Rect(0, 0, processedTex.width, processedTex.height),
                     new Vector2(0.5f, 0.5f), 100f);
                 // Scale down to fit world map (adjust as needed)
-                healingObj.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+                healingObj.transform.localScale = new Vector3(0.4f, 0.4f, 1f);
             }
             else
             {

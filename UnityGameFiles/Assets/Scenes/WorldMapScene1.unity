@@ -1822,9 +1822,9 @@ MonoBehaviour:
   healingCenter: {fileID: 0}
   healingCenterPosition: {x: -6.5, y: -0.54, z: 0}
   battlePreviewUI: {fileID: 1019342488}
-  background: {fileID: 0}
+  background: {fileID: 1555732112}
   spawnEnemiesOnStart: 1
-  numberOfEnemies: 0
+  numberOfEnemies: 3
   isFirstEncounter: 0
 --- !u!4 &1529402964
 Transform:
@@ -2339,7 +2339,7 @@ MonoBehaviour:
   - {x: 0.1, y: 0}
   - {x: 0, y: 0.1}
   - {x: 0.1, y: 0.1}
-  - {x: 0, y: 0.1}
+  - {x: -0.1, y: 0.1}
   nextOffset:
   - {x: -0.1, y: 0}
   - {x: -0.1, y: 0}

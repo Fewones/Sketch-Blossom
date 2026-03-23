@@ -96,7 +96,8 @@ public class HealingCenter : MonoBehaviour
         // Unity's WorldSpace Canvas auto-scaling the RectTransform when
         // the parent has a non-uniform scale.
         GameObject promptObj = new GameObject("InteractionPrompt");
-        promptObj.transform.position = transform.position + new Vector3(0, 1.2f, 0);
+        promptObj.transform.SetParent(this.transform);
+        promptObj.transform.position = this.transform.position + new Vector3(0, 1.2f, 0);
 
         Canvas canvas = promptObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
