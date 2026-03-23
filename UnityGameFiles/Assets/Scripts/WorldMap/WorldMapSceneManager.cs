@@ -10,7 +10,7 @@ public class WorldMapSceneManager : MonoBehaviour
 {
     [Header("Player Setup")]
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private Vector3 playerSpawnPosition = Vector3.zero;
+    [SerializeField] private Vector3 playerPosition;
     [SerializeField] private PlayerController playerController;
 
     [Header("Enemy Setup")]
@@ -62,7 +62,7 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         if (playerController != null)
         {
-            playerController.transform.position = playerSpawnPosition;
+            playerController.transform.position = playerPosition;
             return;
         }
 
@@ -70,7 +70,7 @@ public class WorldMapSceneManager : MonoBehaviour
 
         if (playerController == null && playerPrefab != null)
         {
-            GameObject playerObj = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
+            GameObject playerObj = Instantiate(playerPrefab, playerPosition, Quaternion.identity);
             playerObj.name = "Player";
             playerObj.tag = "Player";
             playerController = playerObj.GetComponent<PlayerController>();
@@ -84,6 +84,14 @@ public class WorldMapSceneManager : MonoBehaviour
         if (playerController == null)
         {
             Debug.LogError("Failed to setup player! Make sure Player prefab is assigned or exists in scene.");
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (playerController.changeWorldMap){
+            playerController.changeWorldMap = false;
+            ChangeWorldMap(playerController.currentWorldMap);
         }
     }
 
@@ -243,8 +251,8 @@ public class WorldMapSceneManager : MonoBehaviour
             float angle = (360f / numberOfEnemies) * i;
             float distance = Random.Range(5f, 10f);
 
-            float x = playerSpawnPosition.x + Mathf.Cos(angle * Mathf.Deg2Rad) * distance;
-            float y = playerSpawnPosition.y + Mathf.Sin(angle * Mathf.Deg2Rad) * distance;
+            float x = playerPosition.x + Mathf.Cos(angle * Mathf.Deg2Rad) * distance;
+            float y = playerPosition.y + Mathf.Sin(angle * Mathf.Deg2Rad) * distance;
 
             randomPositions[i] = new Vector3(x, y, 0);
         }
@@ -274,6 +282,11 @@ public class WorldMapSceneManager : MonoBehaviour
     public void OpenInventory()
     {
         SceneManager.LoadScene("InventoryScene");
+    }
+
+    public void ChangeWorldMap(int i)
+    {
+        SceneManager.LoadScene($"WorldMapScene{i}");
     }
 
     /// <summary>

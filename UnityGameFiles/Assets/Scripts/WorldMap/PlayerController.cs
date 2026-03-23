@@ -13,10 +13,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CircleCollider2D rightCircleCollider;
     [SerializeField] private CircleCollider2D lowerCircleCollider;
     [SerializeField] private CircleCollider2D upperCircleCollider;
-    
     [SerializeField] private Sprite leftStep;
     [SerializeField] private Sprite rightStep;
-    private Sprite standingSprite;
+    private Sprite standingSprite;  
+    private int stepCounter = 0;
+    private Vector2 movement;
+    private Rigidbody2D rb;
 
     [Header("References")]
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -30,14 +32,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool movingBackground;
     private Rigidbody2D rbBackground;
     private EdgeCollider2D[] barriers;
+
+    [Header("Progression")]
+    [SerializeField] public BoxCollider2D formerLoadingZone; 
+    [SerializeField] public BoxCollider2D nextLoadingZone; 
+    [SerializeField] public int currentWorldMap;
+
     
-    private Vector2 movement;
-    private Rigidbody2D rb;
-
-
+    public bool changeWorldMap;
+  
     private Animator animator; // Optional: if you add animations later
-
-    private int stepCounter = 0;
 
     private void Awake()
     {
@@ -97,9 +101,28 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Check if the the player collides with an edge
-        movement = ApplyEdgeColliders(movement);
+        // If the player should progress to another WorldMap, freeze movement
+        if (formerLoadingZone != null)
+        {
+           if (checkWorldMapProgression(formerLoadingZone))
+            {
+                movement = Vector2.zero;
+                currentWorldMap -= 1;
+                changeWorldMap = true;
+            } 
+        }
 
+        if (nextLoadingZone != null)
+        {
+          if (checkWorldMapProgression(nextLoadingZone))
+            {
+                movement = Vector2.zero;
+                currentWorldMap += 1;
+                changeWorldMap = true;
+            }  
+        }
+        
+        
         // Normalize diagonal movement to prevent faster movement
         if (movement.magnitude > 1)
         {
@@ -169,30 +192,11 @@ public class PlayerController : MonoBehaviour
         return new Vector2(x,y);
     }
 
-    public Vector2 ApplyEdgeColliders(Vector2 movement)
+    private bool checkWorldMapProgression(BoxCollider2D loadingZone)
     {
-        float x = movement.x;
-        float y = movement.y;
-
-        foreach(EdgeCollider2D edgeCollider in barriers)
-        {
-            if (leftCircleCollider.IsTouching(edgeCollider) && (x < 0))
-            {
-                x = 0;
-            }
-            if (rightCircleCollider.IsTouching(edgeCollider) && (x > 0))
-            {
-                x = 0;
-            }
-            if (lowerCircleCollider.IsTouching(edgeCollider) && (y < 0))
-            {
-                y = 0;
-            }
-            if (upperCircleCollider.IsTouching(edgeCollider) && (y > 0))
-            {
-                y = 0;
-            }
-        }
-        return new Vector2(x,y);
+        return leftCircleCollider.IsTouching(loadingZone) ||
+            rightCircleCollider.IsTouching(loadingZone) ||
+            lowerCircleCollider.IsTouching(loadingZone) ||
+            upperCircleCollider.IsTouching(loadingZone);
     }
 }

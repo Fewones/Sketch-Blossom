@@ -1973,6 +1973,7 @@ GameObject:
   - component: {fileID: 1555732112}
   - component: {fileID: 1555732111}
   - component: {fileID: 1555732113}
+  - component: {fileID: 1555732114}
   m_Layer: 0
   m_Name: WorldMapBackground
   m_TagString: Untagged
@@ -2093,8 +2094,8 @@ EdgeCollider2D:
   m_Points:
   - {x: -9.605967, y: -1.7314293}
   - {x: -9.680764, y: -4.347281}
-  - {x: 9.614724, y: -4.3169956}
-  - {x: 9.614305, y: -1.1448178}
+  - {x: 9.748512, y: -4.3169956}
+  - {x: 9.714645, y: -1.1448178}
   - {x: 3.8656702, y: -0.29034162}
   - {x: 0.2778548, y: -0.8273602}
   - {x: -1.4816608, y: -0.40282032}
@@ -2104,6 +2105,52 @@ EdgeCollider2D:
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0
   m_UseAdjacentEndPoint: 0
+--- !u!61 &1555732114
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1555732110}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 9.60771, y: -2.8430133}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 19.2, y: 10.8}
+    newSize: {x: 1, y: 0.59}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.18526363, y: 3.3747158}
+  m_EdgeRadius: 0
 --- !u!1 &1579598002
 GameObject:
   m_ObjectHideFlags: 0
@@ -2296,9 +2343,13 @@ MonoBehaviour:
   background: {fileID: 1555732112}
   leftEnd: 0
   rightEnd: 0
-  upperEnd: 0
   lowerEnd: 0
+  upperEnd: 0
   movingBackground: 0
+  formerLoadingZone: {fileID: 0}
+  nextLoadingZone: {fileID: 1555732114}
+  currentWorldMap: 1
+  changeWorldMap: 0
 --- !u!50 &1661921013
 Rigidbody2D:
   serializedVersion: 5
