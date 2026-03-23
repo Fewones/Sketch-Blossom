@@ -305,6 +305,7 @@ MonoBehaviour:
   upperCircleCollider: {fileID: 11680968}
   leftStep: {fileID: -5806565978475588115, guid: 13051578eccdbed4dae66c2627db87b8, type: 3}
   rightStep: {fileID: 3784747584637234365, guid: f6d852b9bff46bd4ca85b5bee2c4d8f8, type: 3}
+  spawnManager: {fileID: 0}
   spriteRenderer: {fileID: 0}
   background: {fileID: 1555732112}
   leftEnd: -4.7
@@ -2349,7 +2350,7 @@ Transform:
   m_GameObject: {fileID: 1555732110}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -440, y: 943, z: 0}
+  m_LocalPosition: {x: -440, y: 950, z: 0}
   m_LocalScale: {x: 100, y: 100, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

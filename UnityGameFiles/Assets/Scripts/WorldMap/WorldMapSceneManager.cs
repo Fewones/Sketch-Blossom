@@ -36,6 +36,11 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         SetupPlayer();
 
+        if (playerController.movingBackground)
+        {
+            background.position = playerController.GetBackgroundPosition();
+        }
+
         if (spawnEnemiesOnStart)
         {
             SetupEnemies();

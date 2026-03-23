@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float lowerEnd;
     [SerializeField] private float upperEnd;
 
-    [SerializeField] private bool movingBackground;
+    [SerializeField] public bool movingBackground;
     private Rigidbody2D rbBackground;
     private EdgeCollider2D[] barriers;
 
@@ -54,28 +54,17 @@ public class PlayerController : MonoBehaviour
             rb.constraints = RigidbodyConstraints2D.FreezeRotation; // Prevent rotation
         }
 
-        if (movingBackground) {
-            rbBackground = background.GetComponent<Rigidbody2D>();
-            if (rbBackground == null)
-            {
-                rbBackground = gameObject.AddComponent<Rigidbody2D>();
-                rbBackground.gravityScale = 0f; // Top-down movement, no gravity
-                rbBackground.constraints = RigidbodyConstraints2D.FreezeRotation; // Prevent rotation
-            }  
-        }
+        
 
         if (spawnManager == null)
         {
             spawnManager = FindObjectOfType<SpawnManager>();
         }
 
-        
-
-        if (background != null)
-        {
-            barriers = background.GetComponents<EdgeCollider2D>();
-        }
-        
+        barriers = background.GetComponents<EdgeCollider2D>();
+        if (movingBackground) {
+                rbBackground = background.GetComponent<Rigidbody2D>();
+            }
 
         if (spriteRenderer == null)
         {
@@ -120,6 +109,10 @@ public class PlayerController : MonoBehaviour
             {
                 movement = Vector2.zero;
                 SetSpawnPosition(currentWorldMap);
+                if (movingBackground)
+                {
+                   SetBackgroundPosition(currentWorldMap); 
+                }
                 currentWorldMap -= 1;
                 spawnManager.facingLeft = true;
                 changeWorldMap = true;
@@ -132,6 +125,10 @@ public class PlayerController : MonoBehaviour
             {
                 movement = Vector2.zero;
                 SetSpawnPosition(currentWorldMap);
+                if (movingBackground)
+                {
+                   SetBackgroundPosition(currentWorldMap); 
+                }
                 currentWorldMap += 1;
                 spawnManager.facingLeft = false;
                 changeWorldMap = true;
@@ -162,7 +159,7 @@ public class PlayerController : MonoBehaviour
         // Move the player using physics (depending on the scene having a moving background)
         if (movingBackground){
             rbBackground.linearVelocity = moveBackground(movement) * moveSpeed;
-            rb.linearVelocity = (movement + moveBackground(movement)) * moveSpeed;  
+            rb.linearVelocity = (movement + moveBackground(movement)) * moveSpeed;
         } else{
             rb.linearVelocity = movement * moveSpeed;
         }
@@ -176,7 +173,20 @@ public class PlayerController : MonoBehaviour
 
     public void SetSpawnPosition(int i)
     {
+        // The player gets moved a little bit to the center to avoid touching the loading zone
         spawnManager.playerSpawnPoints[i-1] = GetPosition()*new Vector2(0.99f, 0.99f);
+    }
+
+    public Vector2 GetBackgroundPosition()
+    {
+        // WorldMaps 2,4 and 6 have moving backgrounds, so you can just use (currentWorldMap/2)-1
+        return spawnManager.backgroundSpawnPoints[(currentWorldMap/2)-1];
+    }
+
+    public void SetBackgroundPosition(int i)
+    {
+        // WorldMaps 2,4 and 6 have moving backgrounds, so you can just use (currentWorldMap/2)-1
+        spawnManager.backgroundSpawnPoints[(i/2)-1] = rbBackground.position;
     }
 
     /// <summary>
