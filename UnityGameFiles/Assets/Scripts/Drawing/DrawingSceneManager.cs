@@ -585,6 +585,7 @@ namespace SketchBlossom.Drawing
                 uiController.OnFinishDrawing -= HandleFinishDrawing;
                 uiController.OnRedrawRequested -= HandleRedraw;
                 uiController.OnContinueRequested -= HandleContinue;
+                drawingCanvas.OnStrokeFinished += getCurrentResult;
             }
         }
 
