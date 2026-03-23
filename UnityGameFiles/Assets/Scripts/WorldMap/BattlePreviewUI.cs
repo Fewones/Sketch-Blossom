@@ -172,6 +172,13 @@ public class BattlePreviewUI : MonoBehaviour
 
         HidePreview();
 
+        PlayerController player = FindObjectOfType<PlayerController>();
+        player.SetSpawnPosition(player.currentWorldMap, Vector2.zero);
+        if (player.movingBackground)
+        {
+           player.SetBackgroundPosition(player.currentWorldMap); 
+        }
+
         Debug.Log("Loading PlantSelectionScene for battle preparation...");
         SceneManager.LoadScene("PlantSelectionScene");
     }

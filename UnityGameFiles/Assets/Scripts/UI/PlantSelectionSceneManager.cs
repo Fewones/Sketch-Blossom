@@ -348,7 +348,8 @@ namespace SketchBlossom.UI
             {
                 // Player is just selecting a plant, go to world map
                 Debug.Log("Proceeding to world map.");
-                SceneManager.LoadScene("WorldMapScene");
+                SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+                SceneManager.LoadScene($"WorldMapScene{spawnManager.currentWorldMap}");
             }
         }
 
@@ -400,8 +401,8 @@ namespace SketchBlossom.UI
         /// </summary>
         private void OnBackButtonClicked()
         {
-            Debug.Log("Returning to world map");
-            SceneManager.LoadScene("WorldMapScene");
+            SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+            SceneManager.LoadScene($"WorldMapScene{spawnManager.currentWorldMap}");
         }
 
         /// <summary>

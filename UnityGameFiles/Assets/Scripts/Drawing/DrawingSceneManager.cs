@@ -292,7 +292,7 @@ namespace SketchBlossom.Drawing
             if (enableBattleTransition)
             {
                 Debug.Log("Loading WorldMapScene...");
-                SceneManager.LoadScene("WorldMapScene");
+                SceneManager.LoadScene("WorldMapScene1");
             }
             else
             {

@@ -2351,6 +2351,7 @@ MonoBehaviour:
   - {x: 6.48, y: 0.93}
   - {x: -0.32, y: 6.48}
   - {x: -4.07, y: 8.8}
+  currentWorldMap: 1
   facingLeft: 0
 --- !u!1 &1661921006
 GameObject:

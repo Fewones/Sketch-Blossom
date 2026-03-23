@@ -365,7 +365,9 @@ public class TameGrowthManager : MonoBehaviour
         if (EnemyUnitData.Instance != null)
             EnemyUnitData.Instance.Clear();
 
-        SceneManager.LoadScene(worldMapSceneName);
+        SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+
+        SceneManager.LoadScene(worldMapSceneName + spawnManager.currentWorldMap);
     }
 
     private void SetFeedback(string msg)

@@ -264,12 +264,19 @@ public class WorldMapSceneManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
+        playerController.ResetSpawnManager();
         SceneManager.LoadScene("IntroScene");
     }
 
     public void OpenInventory()
     {
+        playerController.SetSpawnPosition(playerController.currentWorldMap, Vector2.zero);
+        if (playerController.movingBackground)
+        {
+           playerController.SetBackgroundPosition(playerController.currentWorldMap); 
+        }
         SceneManager.LoadScene("InventoryScene");
+        
     }
 
     public void ChangeWorldMap(int i)

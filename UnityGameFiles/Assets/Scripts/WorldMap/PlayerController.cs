@@ -60,6 +60,7 @@ public class PlayerController : MonoBehaviour
         {
             spawnManager = FindObjectOfType<SpawnManager>();
         }
+        spawnManager.currentWorldMap = currentWorldMap;
 
         barriers = background.GetComponents<EdgeCollider2D>();
         if (movingBackground) {
@@ -108,7 +109,7 @@ public class PlayerController : MonoBehaviour
            if (checkWorldMapProgression(formerLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
-                SetSpawnPosition(currentWorldMap, false);
+                SetSpawnPosition(currentWorldMap, spawnManager.formerOffset[currentWorldMap-1]);
                 if (movingBackground)
                 {
                    SetBackgroundPosition(currentWorldMap); 
@@ -124,7 +125,7 @@ public class PlayerController : MonoBehaviour
           if (checkWorldMapProgression(nextLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
-                SetSpawnPosition(currentWorldMap, true);
+                SetSpawnPosition(currentWorldMap, spawnManager.nextOffset[currentWorldMap-1]);
                 if (movingBackground)
                 {
                    SetBackgroundPosition(currentWorldMap); 
@@ -171,19 +172,10 @@ public class PlayerController : MonoBehaviour
         return spawnManager.playerSpawnPoints[currentWorldMap-1];
     }
 
-    public void SetSpawnPosition(int i, bool next)
+    public void SetSpawnPosition(int i, Vector2 offset)
     {   
         spawnManager.playerSpawnPoints[i-1] = GetPosition();
-
-        // The player gets moved by an offset to avoid touching the loading zone
-        if (next)
-        {
-            spawnManager.playerSpawnPoints[i-1] += spawnManager.nextOffset[i-1];
-        } else
-        {
-            spawnManager.playerSpawnPoints[i-1] += spawnManager.formerOffset[i-1];
-        }
-        
+        spawnManager.playerSpawnPoints[i-1] += offset;
     }
 
     public Vector2 GetBackgroundPosition()
@@ -244,5 +236,10 @@ public class PlayerController : MonoBehaviour
                 rightCircleCollider.IsTouching(loadingZone) ||
                 lowerCircleCollider.IsTouching(loadingZone) ||
                 upperCircleCollider.IsTouching(loadingZone));
+    }
+
+    public void ResetSpawnManager()
+    {
+        spawnManager.ResetValues();
     }
 }
