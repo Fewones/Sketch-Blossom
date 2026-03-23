@@ -108,7 +108,7 @@ public class PlayerController : MonoBehaviour
            if (checkWorldMapProgression(formerLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
-                SetSpawnPosition(currentWorldMap);
+                SetSpawnPosition(currentWorldMap, false);
                 if (movingBackground)
                 {
                    SetBackgroundPosition(currentWorldMap); 
@@ -124,7 +124,7 @@ public class PlayerController : MonoBehaviour
           if (checkWorldMapProgression(nextLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
-                SetSpawnPosition(currentWorldMap);
+                SetSpawnPosition(currentWorldMap, true);
                 if (movingBackground)
                 {
                    SetBackgroundPosition(currentWorldMap); 
@@ -171,10 +171,19 @@ public class PlayerController : MonoBehaviour
         return spawnManager.playerSpawnPoints[currentWorldMap-1];
     }
 
-    public void SetSpawnPosition(int i)
-    {
-        // The player gets moved a little bit to the center to avoid touching the loading zone
-        spawnManager.playerSpawnPoints[i-1] = GetPosition()*new Vector2(0.99f, 0.99f);
+    public void SetSpawnPosition(int i, bool next)
+    {   
+        spawnManager.playerSpawnPoints[i-1] = GetPosition();
+
+        // The player gets moved by an offset to avoid touching the loading zone
+        if (next)
+        {
+            spawnManager.playerSpawnPoints[i-1] += spawnManager.nextOffset[i-1];
+        } else
+        {
+            spawnManager.playerSpawnPoints[i-1] += spawnManager.formerOffset[i-1];
+        }
+        
     }
 
     public Vector2 GetBackgroundPosition()
