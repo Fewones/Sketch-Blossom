@@ -1821,7 +1821,7 @@ MonoBehaviour:
   - {x: 5.7, y: 6.93, z: 0}
   healingCenterPrefab: {fileID: 0}
   healingCenter: {fileID: 0}
-  healingCenterPosition: {x: 7, y: 6, z: 0}
+  healingCenterPosition: {x: 7, y: 0.86, z: 0}
   battlePreviewUI: {fileID: 1019342488}
   background: {fileID: 1555732112}
   spawnEnemiesOnStart: 1

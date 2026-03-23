@@ -46,6 +46,8 @@ public class WorldMapSceneManager : MonoBehaviour
             SetupEnemies();
         }
 
+        healingCenterPosition += background.position;
+
         SetupHealingCenter();
 
         if (EnemyEncounterData.Instance == null)
