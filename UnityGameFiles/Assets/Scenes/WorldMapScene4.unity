@@ -1814,14 +1814,18 @@ MonoBehaviour:
   playerController: {fileID: 1912216838}
   enemyPrefab: {fileID: 2825286312004050028, guid: 6a5083ee42d5c3e40a03728b44b87ab9, type: 3}
   enemies: []
-  enemySpawnPoints: []
+  enemySpawnPoints:
+  - {x: -4.98, y: -11.1, z: 0}
+  - {x: -8.51, y: 1.12, z: 0}
+  - {x: 0.4, y: 0.17, z: 0}
+  - {x: 5.7, y: 6.93, z: 0}
   healingCenterPrefab: {fileID: 0}
   healingCenter: {fileID: 0}
   healingCenterPosition: {x: 7, y: 6, z: 0}
   battlePreviewUI: {fileID: 1019342488}
   background: {fileID: 1555732112}
   spawnEnemiesOnStart: 1
-  numberOfEnemies: 0
+  numberOfEnemies: 4
   isFirstEncounter: 0
 --- !u!4 &1529402964
 Transform:

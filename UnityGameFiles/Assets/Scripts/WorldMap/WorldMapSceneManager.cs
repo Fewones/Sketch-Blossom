@@ -227,6 +227,7 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         if (enemySpawnPoints != null && enemySpawnPoints.Length >= numberOfEnemies)
         {
+            background.TransformPoints(enemySpawnPoints);
             return enemySpawnPoints;
         }
 
