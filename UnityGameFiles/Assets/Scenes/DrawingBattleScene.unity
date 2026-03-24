@@ -1499,7 +1499,7 @@ Transform:
   m_GameObject: {fileID: 112096828}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -32.57, y: 8.59, z: -71.95}
+  m_LocalPosition: {x: -32.5, y: -0.25, z: -71.95}
   m_LocalScale: {x: 1.0871003, y: 1.0067178, z: 0.7177}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13185,7 +13185,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.4}
   m_AnchorMax: {x: 0, y: 0.4}
-  m_AnchoredPosition: {x: 53.682, y: 64.595}
+  m_AnchoredPosition: {x: 53.68213, y: 64.595}
   m_SizeDelta: {x: 407.36, y: 218.77}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &919149399
@@ -15423,11 +15423,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8523807056093973740, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.5946693
+      value: 4.41
       objectReference: {fileID: 0}
     - target: {fileID: 8523807056093973740, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.027978
+      value: -14.72
       objectReference: {fileID: 0}
     - target: {fileID: 8523807056093973740, guid: 42a18d9073075964983d4434926bb355, type: 3}
       propertyPath: m_LocalPosition.z
@@ -15586,7 +15586,7 @@ Transform:
   m_GameObject: {fileID: 1142578271}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -29.650002, y: 7.65, z: 0}
+  m_LocalPosition: {x: -28.7, y: 1.87, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16877,7 +16877,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.26933336}
   m_AnchorMax: {x: 1, y: 0.9}
-  m_AnchoredPosition: {x: 1.3024292, y: 5}
+  m_AnchoredPosition: {x: 1.3024902, y: 5}
   m_SizeDelta: {x: 0, y: 9.9999}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1295282035
@@ -17708,10 +17708,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -17728,7 +17728,7 @@ Canvas:
   m_GameObject: {fileID: 1329619944}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -18109,7 +18109,7 @@ Transform:
   m_GameObject: {fileID: 1390305086}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.07158996, w: 0.9974342}
-  m_LocalPosition: {x: -24.31, y: 9.67, z: 8.64}
+  m_LocalPosition: {x: -24.38, y: 4.84, z: 8.64}
   m_LocalScale: {x: 1.4573961, y: 1.4037409, z: 1.7048}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27390,7 +27390,7 @@ Transform:
   m_GameObject: {fileID: 2082635641}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -14.5, y: 18.1, z: 24.8}
+  m_LocalPosition: {x: -14.35, y: 13.47, z: 24.8}
   m_LocalScale: {x: 1.9306816, y: 2.0600286, z: 1.4324}
   m_ConstrainProportionsScale: 0
   m_Children: []
