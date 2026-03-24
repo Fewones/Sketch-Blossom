@@ -628,7 +628,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1872279711397887626, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1992889735315137342, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1367,6 +1367,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5574493850589978094, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
+      propertyPath: settingsPanel
+      value: 
+      objectReference: {fileID: 1175679273}
     - target: {fileID: 6855444310909746527, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
       propertyPath: m_Name
       value: PauseMenu
@@ -1381,6 +1385,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4345590836575699623, guid: 52601f51cf392624ba7031c5210498f6, type: 3}
   m_PrefabInstance: {fileID: 1164065895}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1175679273 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3037178221461449888, guid: fa3210ff605d56c4e99edfdf0caf9020, type: 3}
+  m_PrefabInstance: {fileID: 317421471}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e7c5912ba4334643af30c5fa97a3725, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SketchBlossom.UI.SettingsPanel
 --- !u!1 &1327870977
 GameObject:
   m_ObjectHideFlags: 0
