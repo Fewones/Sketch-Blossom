@@ -780,6 +780,7 @@ namespace SketchBlossom.Battle
                 // If the best match is on cooldown, try to fall back to the next best
                 // available move above the confidence threshold. This prevents the
                 // initial cooldowns on special moves from blocking similar shapes.
+                bool blocked = false;
                 if (IsOnCooldown(playerCooldowns, result.detectedMove))
                 {
                     var fallback = result.scores
@@ -805,15 +806,18 @@ namespace SketchBlossom.Battle
                         UpdateActionText($"{moveName} is recharging! Draw a different move.");
                         drawingCanvas.ClearCanvas();
                         currentState = BattleState.PlayerDrawing;
-                        return;
+                        blocked = true;
                     }
                 }
 
-                // Destroy temp LineRenderers now that CLIP capture is done.
-                // If these aren't cleaned up, the next turn's CaptureDrawing()
-                // camera will render stale strokes from this turn on top of the new drawing.
-                drawingCanvas.DestroyTempLineRenderers();
-                StartCoroutine(ExecutePlayerMove(result));
+                if (!blocked)
+                {
+                    // Destroy temp LineRenderers now that CLIP capture is done.
+                    // If these aren't cleaned up, the next turn's CaptureDrawing()
+                    // camera will render stale strokes from this turn on top of the new drawing.
+                    drawingCanvas.DestroyTempLineRenderers();
+                    StartCoroutine(ExecutePlayerMove(result));
+                }
             }
             else
             {
