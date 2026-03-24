@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using SketchBlossom.Battle;
+using TMPro;
 
 /// <summary>
 /// Editor utility to automatically setup the battle scene with MoveExecutor
@@ -68,6 +70,11 @@ public class BattleSceneSetupHelper : EditorWindow
         if (GUILayout.Button("Create MoveGuideBook GameObject"))
         {
             CreateMoveGuideBook();
+        }
+
+        if (GUILayout.Button("Create Guide Book Shape Previews & Labels"))
+        {
+            CreateGuideBookShapePreviews();
         }
     }
 
@@ -255,6 +262,34 @@ public class BattleSceneSetupHelper : EditorWindow
                 hasIssues = true;
             }
 
+            // Check shape preview slots
+            if (newGuideBook.moveShapePreviews == null || newGuideBook.moveShapePreviews.Length < 4)
+            {
+                Debug.LogWarning("   ⚠️ moveShapePreviews needs 4 RawImage slots! Click 'Create Guide Book Shape Previews & Labels' to fix.");
+                hasIssues = true;
+            }
+            else
+            {
+                bool anyNull = false;
+                foreach (var img in newGuideBook.moveShapePreviews)
+                    if (img == null) { anyNull = true; break; }
+                if (anyNull)
+                {
+                    Debug.LogWarning("   ⚠️ Some moveShapePreviews slots are unassigned! Click 'Create Guide Book Shape Previews & Labels' to fix.");
+                    hasIssues = true;
+                }
+                else
+                {
+                    Debug.Log("   ✅ Shape preview slots configured (4/4)");
+                }
+            }
+
+            if (newGuideBook.moveShapeLabels == null || newGuideBook.moveShapeLabels.Length < 4)
+            {
+                Debug.LogWarning("   ⚠️ moveShapeLabels needs 4 TextMeshProUGUI slots! Click 'Create Guide Book Shape Previews & Labels' to fix.");
+                hasIssues = true;
+            }
+
             if (!hasIssues)
             {
                 Debug.Log("   ✅ MoveGuideBook appears to be properly configured");
@@ -292,5 +327,120 @@ public class BattleSceneSetupHelper : EditorWindow
 
         Selection.activeGameObject = guideBookObj;
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+    }
+
+    /// <summary>
+    /// Creates 4 RawImage preview slots and 4 TextMeshProUGUI labels inside the
+    /// GuideBookPanel, then wires them into the MoveGuideBook component.
+    /// </summary>
+    private void CreateGuideBookShapePreviews()
+    {
+        var guideBook = FindFirstObjectByType<MoveGuideBook>();
+        if (guideBook == null)
+        {
+            Debug.LogError("❌ MoveGuideBook not found in scene! Create it first.");
+            return;
+        }
+
+        if (guideBook.bookPanel == null)
+        {
+            Debug.LogError("❌ MoveGuideBook.bookPanel is not assigned! Wire it up first.");
+            return;
+        }
+
+        // Create a container for the shape previews inside the book panel.
+        Transform existingContainer = guideBook.bookPanel.transform.Find("ShapePreviewContainer");
+        GameObject container;
+        if (existingContainer != null)
+        {
+            container = existingContainer.gameObject;
+            Debug.Log("Found existing ShapePreviewContainer – recreating children.");
+            // Clear existing children
+            for (int i = container.transform.childCount - 1; i >= 0; i--)
+                DestroyImmediate(container.transform.GetChild(i).gameObject);
+        }
+        else
+        {
+            container = new GameObject("ShapePreviewContainer");
+            container.transform.SetParent(guideBook.bookPanel.transform, false);
+
+            var rect = container.AddComponent<RectTransform>();
+            // Position along the right side of the book panel
+            rect.anchorMin = new Vector2(0.65f, 0.1f);
+            rect.anchorMax = new Vector2(0.98f, 0.9f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            var layout = container.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.padding = new RectOffset(4, 4, 4, 4);
+        }
+
+        RawImage[] previews = new RawImage[4];
+        TextMeshProUGUI[] labels = new TextMeshProUGUI[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            // Wrapper for each move slot (image + label)
+            var slot = new GameObject($"MoveSlot_{i}");
+            slot.transform.SetParent(container.transform, false);
+
+            var slotRect = slot.AddComponent<RectTransform>();
+            slotRect.sizeDelta = new Vector2(0, 100);
+
+            var slotLayout = slot.AddComponent<VerticalLayoutGroup>();
+            slotLayout.spacing = 2f;
+            slotLayout.childAlignment = TextAnchor.UpperCenter;
+            slotLayout.childForceExpandWidth = false;
+            slotLayout.childForceExpandHeight = false;
+
+            // RawImage for the shape preview
+            var imgObj = new GameObject($"ShapePreview_{i}");
+            imgObj.transform.SetParent(slot.transform, false);
+
+            var imgRect = imgObj.AddComponent<RectTransform>();
+            imgRect.sizeDelta = new Vector2(64, 64);
+
+            var rawImage = imgObj.AddComponent<RawImage>();
+            rawImage.color = Color.white;
+            previews[i] = rawImage;
+
+            // Add a LayoutElement so the image keeps its preferred size
+            var imgLayoutElem = imgObj.AddComponent<LayoutElement>();
+            imgLayoutElem.preferredWidth = 64;
+            imgLayoutElem.preferredHeight = 64;
+
+            // Label beneath the preview
+            var lblObj = new GameObject($"ShapeLabel_{i}");
+            lblObj.transform.SetParent(slot.transform, false);
+
+            var lblRect = lblObj.AddComponent<RectTransform>();
+            lblRect.sizeDelta = new Vector2(120, 28);
+
+            var label = lblObj.AddComponent<TextMeshProUGUI>();
+            label.text = "";
+            label.fontSize = 11;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = new Color(0.2f, 0.2f, 0.2f);
+            labels[i] = label;
+
+            var lblLayoutElem = lblObj.AddComponent<LayoutElement>();
+            lblLayoutElem.preferredWidth = 120;
+            lblLayoutElem.preferredHeight = 28;
+        }
+
+        // Wire into MoveGuideBook
+        guideBook.moveShapePreviews = previews;
+        guideBook.moveShapeLabels = labels;
+
+        Debug.Log("✅ Created 4 shape preview slots and 4 labels, wired into MoveGuideBook.");
+        Debug.Log("   Preview container placed on the right side of the book panel.");
+
+        EditorUtility.SetDirty(guideBook);
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        Selection.activeGameObject = container;
     }
 }
