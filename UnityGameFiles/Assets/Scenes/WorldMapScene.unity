@@ -1420,7 +1420,7 @@ GameObject:
   - component: {fileID: 1265770991}
   - component: {fileID: 1265770990}
   - component: {fileID: 1265770989}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -2149,7 +2149,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1555732112}
   - component: {fileID: 1555732111}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WorldMapBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}

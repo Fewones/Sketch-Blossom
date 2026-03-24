@@ -148,6 +148,117 @@ public class DrawingCaptureHandler : MonoBehaviour
         return capturedTexture;
     }
 
+        // Same method without framing and bounds and another texture for the base plant image
+        public Texture2D CaptureWholeDrawingArea(List<LineRenderer> strokes, Camera sourceCamera, RectTransform drawingArea = null, bool forceTransparent = false, Texture2D fillTexture = null)
+    {
+        if (strokes == null || strokes.Count == 0)
+        {
+            Debug.LogWarning("DrawingCaptureHandler: No strokes to capture!");
+            return null;
+        }
+
+        if (sourceCamera == null)
+        {
+            Debug.LogError("DrawingCaptureHandler: Source camera is null!");
+            return null;
+        }
+
+        Debug.Log($"DrawingCaptureHandler: Capturing {strokes.Count} strokes to texture ({textureWidth}x{textureHeight})");
+
+        // Ensure all strokes are active and visible
+        int activeStrokes = 0;
+        int inactiveStrokes = 0;
+        foreach (var stroke in strokes)
+        {
+            if (stroke != null)
+            {
+                // Force activate any inactive strokes
+                if (!stroke.gameObject.activeInHierarchy)
+                {
+                    Debug.LogWarning($"Stroke '{stroke.name}' was inactive - activating for capture");
+                    stroke.gameObject.SetActive(true);
+                    inactiveStrokes++;
+                }
+                else
+                {
+                    activeStrokes++;
+                }
+            }
+        }
+        Debug.Log($"Stroke status: {activeStrokes} active, {inactiveStrokes} were inactive (now activated)");
+
+        // Create a temporary camera for capturing
+        GameObject tempCameraObj = new GameObject("TempCaptureCamera");
+        Camera captureCamera = tempCameraObj.AddComponent<Camera>();
+
+        // Configure camera
+        captureCamera.orthographic = true;
+        if (forceTransparent)
+        {
+            captureCamera.backgroundColor = new Color(0, 0, 0, 0);
+        }
+        else if ((drawingArea == null) || (drawingArea.GetComponent<Image> () == null))
+        {
+            captureCamera.backgroundColor = backgroundColor;
+        }
+        else
+        {
+            captureCamera.backgroundColor = drawingArea.GetComponent<Image> ().color;
+        }
+        captureCamera.clearFlags = CameraClearFlags.SolidColor;
+        captureCamera.cullingMask = 1 + 2 + 4 + 16 + 32; // Render all layers except background layer (layer 3)
+        captureCamera.depth = sourceCamera.depth + 1; // Render after main camera
+        captureCamera.nearClipPlane = 0.1f;
+        captureCamera.farClipPlane = 100f;
+
+        // We have no drawing bounds but we still need to change the z value of the camera to capture the strokes
+        captureCamera.transform.position -= new Vector3(0,0,10);
+
+        // Create RenderTexture
+        RenderTexture renderTexture = new RenderTexture(textureWidth, textureHeight, 24);
+        renderTexture.format = RenderTextureFormat.ARGB32;
+        captureCamera.targetTexture = renderTexture;
+
+        // If a fill texture is provided, create a temporary world-space quad behind strokes
+        // so the capture camera picks it up automatically.
+        GameObject tempFillQuad = null;
+        if (fillTexture != null && drawingArea != null)
+        {
+            tempFillQuad = CreateFillQuad(fillTexture, drawingArea, sourceCamera);
+        }
+
+        // Render the scene
+        captureCamera.Render();
+
+        // Destroy the temp fill quad immediately
+        if (tempFillQuad != null)
+        {
+            DestroyImmediate(tempFillQuad);
+        }
+
+        // Read pixels from RenderTexture into Texture2D
+        RenderTexture.active = renderTexture;
+        Texture2D capturedTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false);
+        capturedTexture.ReadPixels(new Rect(0, 0, textureWidth, textureHeight), 0, 0);
+        capturedTexture.Apply();
+
+        // Validate texture has content
+        bool hasContent = ValidateTextureContent(capturedTexture);
+        if (!hasContent)
+        {
+            Debug.LogWarning("DrawingCaptureHandler: Captured texture appears to be empty or all transparent!");
+        }
+
+        // Cleanup
+        RenderTexture.active = null;
+        captureCamera.targetTexture = null;
+        Destroy(renderTexture);
+        Destroy(tempCameraObj);
+
+        Debug.Log("DrawingCaptureHandler: Successfully captured drawing to texture!");
+        return capturedTexture;
+    }
+
     /// <summary>
     /// Calculate the bounds that encompass all strokes
     /// </summary>

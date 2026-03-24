@@ -244,6 +244,9 @@ namespace SketchBlossom.Drawing
             // Force end any in-progress stroke
             drawingCanvas.ForceEndStroke();
 
+            // Clear out from the corners so only the inner facettes remain colored
+            drawingCanvas.FillCorners(Color.clear);
+
             // Analyze the drawing
 
         

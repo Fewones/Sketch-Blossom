@@ -400,8 +400,8 @@ namespace SketchBlossom.UI
         /// </summary>
         private void OnBackButtonClicked()
         {
-            Debug.Log("Returning to main menu");
-            SceneManager.LoadScene("IntroScene");
+            Debug.Log("Returning to world map");
+            SceneManager.LoadScene("WorldMapScene");
         }
 
         /// <summary>
