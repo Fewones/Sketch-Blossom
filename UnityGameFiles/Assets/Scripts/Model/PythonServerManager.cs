@@ -4,7 +4,31 @@ using UnityEngine;
 
 public class PythonServerManager: MonoBehaviour
 {
+    private static PythonServerManager _instance;
     private Process pythonProcess;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void AutoStart()
+    {
+        if (_instance != null) return;
+
+        GameObject serverObj = new GameObject("PythonServerManager");
+        _instance = serverObj.AddComponent<PythonServerManager>();
+        DontDestroyOnLoad(serverObj);
+        UnityEngine.Debug.Log("PythonServerManager: Auto-started at game launch");
+    }
+
+    public static PythonServerManager Instance => _instance;
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        _instance = this;
+    }
 
     public void Start()
     {
@@ -65,9 +89,11 @@ public class PythonServerManager: MonoBehaviour
 
     public void Cleanup()
     {
-        if (!pythonProcess.HasExited)
+        if (pythonProcess != null && !pythonProcess.HasExited)
+        {
             pythonProcess.Kill();
             UnityEngine.Debug.Log("Python server deactivated.");
+        }
     }
 
     public void OnDestroy()

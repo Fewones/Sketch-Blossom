@@ -148,18 +148,15 @@ namespace SketchBlossom.Drawing
                 }
             }
 
-            // Auto-find or create pythonserver
+            // Use the auto-started singleton
             if (pythonserver == null)
             {
-                pythonserver = FindFirstObjectByType<PythonServerManager>();
+                pythonserver = PythonServerManager.Instance;
                 if (pythonserver == null)
                 {
-                    GameObject serverObj = new GameObject("PythonServerManager");
-                    pythonserver = serverObj.AddComponent<PythonServerManager>();
-                    Debug.Log("DrawingSceneManager: Created PythonServerManager");
+                    Debug.LogWarning("DrawingSceneManager: PythonServerManager not found, it should have auto-started");
                 }
             }
-            DontDestroyOnLoad(pythonserver);
         }
 
         private void InitializeUnitData()
