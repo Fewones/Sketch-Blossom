@@ -26,12 +26,15 @@ namespace SketchBlossom.Battle
         public Image backgroundPanel;            // For page background color
         public TextMeshProUGUI pageNumberText;
 
-        [Header("Shape Previews")]
-        [Tooltip("Assign 4 RawImage slots in the Inspector – one per move on a plant page (Block + 3 attacks).")]
-        public RawImage[] moveShapePreviews;
+        [Header("Move Entry Rows (Plant Pages)")]
+        [Tooltip("Container holding the individual move rows. Hidden on non-plant pages.")]
+        public Transform moveEntriesContainer;
 
-        [Tooltip("Assign 4 TextMeshProUGUI labels – one below each shape preview to show move name and shape.")]
-        public TextMeshProUGUI[] moveShapeLabels;
+        [Tooltip("Assign 4 TextMeshProUGUI elements – one per move row for the move text.")]
+        public TextMeshProUGUI[] moveEntryTexts;
+
+        [Tooltip("Assign 4 RawImage slots – one per move row for the shape preview.")]
+        public RawImage[] moveShapePreviews;
 
         [Header("Animation")]
         public float transitionSpeed = 5f;
@@ -46,9 +49,6 @@ namespace SketchBlossom.Battle
         // Textures created for the current page – destroyed when we move to another page.
         private Texture2D[] activePreviewTextures;
 
-        // Cached original right margin of pageDescription so we can restore it on non-plant pages.
-        private float originalDescriptionRightMargin = -1f;
-
         [System.Serializable]
         public class MoveGuidePageData
         {
@@ -58,7 +58,7 @@ namespace SketchBlossom.Battle
             public Color primaryColor;
             public Color secondaryColor;
             public Color pageBackgroundColor;
-            /// <summary>Populated for plant pages – one entry per move (Block, Attack1, Attack2).</summary>
+            /// <summary>Populated for plant pages – one entry per move (Block, Attack1, Attack2, Attack3).</summary>
             public MoveData[] movesOnPage;
         }
 
@@ -111,19 +111,19 @@ namespace SketchBlossom.Battle
             // ═══════════════════════════════════════════════════════════
             pageList.Add(new MoveGuidePageData
             {
-                title = "⚔️ Battle Move Guide",
+                title = "Battle Move Guide",
                 description = "<b>Master the Art of Combat Drawing!</b>\n\n" +
                              "Each plant has <color=yellow>4 unique moves</color>:\n" +
-                             "• <color=#5599FF>① Block</color> - Defensive stance\n" +
-                             "• <color=#FF9955>② Basic Attack</color> - Quick normal hit\n" +
-                             "• <color=#FF5555>③ Element Attack</color> - Type-based move\n" +
-                             "• <color=#FF3333>④ Signature Move</color> - Powerful finisher\n\n" +
-                             "<b>✏️ Drawing Quality Matters!</b>\n" +
-                             "Perfect drawings = 1.5× damage\n" +
-                             "Poor drawings = 0.5× damage\n\n" +
-                             "<b>📖 Each page shows example drawings!</b>\n" +
-                             "Match the numbered shapes to learn each move.\n\n" +
-                             "→ Use arrows to explore all moves!",
+                             "* <color=#5599FF>Block</color> - Defensive stance\n" +
+                             "* <color=#FF9955>Basic Attack</color> - Quick normal hit\n" +
+                             "* <color=#FF5555>Element Attack</color> - Type-based move\n" +
+                             "* <color=#FF3333>Signature Move</color> - Powerful finisher\n\n" +
+                             "<b>Drawing Quality Matters!</b>\n" +
+                             "Perfect drawings = 1.5x damage\n" +
+                             "Poor drawings = 0.5x damage\n\n" +
+                             "<b>Each page shows example drawings!</b>\n" +
+                             "Match the shape next to each move to learn it.\n\n" +
+                             "Use arrows to explore all moves!",
                 primaryColor = new Color(1f, 0.9f, 0.3f),
                 secondaryColor = new Color(1f, 0.6f, 0.2f),
                 pageBackgroundColor = new Color(0.95f, 0.95f, 0.85f)
@@ -132,71 +132,59 @@ namespace SketchBlossom.Battle
             // ═══════════════════════════════════════════════════════════
             // FIRE PLANTS
             // ═══════════════════════════════════════════════════════════
-
-            // SUNFLOWER
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.Sunflower,
-                "🔥 Sunflower", "Fire", "Golden solar flames");
+                "Sunflower", "Fire", "Golden solar flames");
 
-            // FIRE ROSE
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.FireRose,
-                "🔥 Fire Rose", "Fire", "Crimson burning petals");
+                "Fire Rose", "Fire", "Crimson burning petals");
 
-            // FLAME TULIP
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.FlameTulip,
-                "🔥 Flame Tulip", "Fire", "Intense inferno attacks");
+                "Flame Tulip", "Fire", "Intense inferno attacks");
 
             // ═══════════════════════════════════════════════════════════
             // GRASS PLANTS
             // ═══════════════════════════════════════════════════════════
-
-            // CACTUS
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.Cactus,
-                "🌿 Cactus", "Grass", "Sharp desert needles");
+                "Cactus", "Grass", "Sharp desert needles");
 
-            // VINE FLOWER
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.VineFlower,
-                "🌿 Vine Flower", "Grass", "Strangling vine attacks");
+                "Vine Flower", "Grass", "Strangling vine attacks");
 
-            // GRASS SPROUT
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.GrassSprout,
-                "🌿 Grass Sprout", "Grass", "Rapid growth assaults");
+                "Grass Sprout", "Grass", "Rapid growth assaults");
 
             // ═══════════════════════════════════════════════════════════
             // WATER PLANTS
             // ═══════════════════════════════════════════════════════════
-
-            // WATER LILY
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.WaterLily,
-                "💧 Water Lily", "Water", "Tranquil healing waters");
+                "Water Lily", "Water", "Tranquil healing waters");
 
-            // CORAL BLOOM
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.CoralBloom,
-                "💧 Coral Bloom", "Water", "Sharp coral strikes");
+                "Coral Bloom", "Water", "Sharp coral strikes");
 
-            // BUBBLE FLOWER
             AddPlantMovesPages(pageList, PlantRecognitionSystem.PlantType.BubbleFlower,
-                "💧 Bubble Flower", "Water", "Healing bubble magic");
+                "Bubble Flower", "Water", "Healing bubble magic");
 
             // ═══════════════════════════════════════════════════════════
             // TIPS & TRICKS PAGE
             // ═══════════════════════════════════════════════════════════
             pageList.Add(new MoveGuidePageData
             {
-                title = "⚡ Combat Master Tips",
-                description = "<b>✏️ Drawing Shape Tips:</b>\n" +
-                             "• <b>Circle:</b> One closed round stroke\n" +
-                             "• <b>Square:</b> Closed box with corners\n" +
-                             "• <b>Triangle:</b> Closed 3-corner shape\n" +
-                             "• <b>Zigzag:</b> Sharp back-and-forth\n" +
-                             "• <b>Spiral:</b> Curved inward/outward swirl\n" +
-                             "• <b>Star:</b> Lines from center outward\n" +
-                             "• <b>Arrow:</b> Line with V-shaped tip\n" +
-                             "• <b>Plus/X:</b> Two crossing lines\n\n" +
-                             "<b>⚔️ Type Advantages:</b>\n" +
-                             "💧 Water > 🔥 Fire (1.5× damage)\n" +
-                             "🔥 Fire > 🌿 Grass (1.5× damage)\n" +
-                             "🌿 Grass > 💧 Water (1.5× damage)\n\n" +
-                             "<b>Practice makes perfect! ✨</b>",
+                title = "Combat Master Tips",
+                description = "<b>Drawing Shape Tips:</b>\n" +
+                             "* <b>Circle:</b> One closed round stroke\n" +
+                             "* <b>Square:</b> Closed box with corners\n" +
+                             "* <b>Triangle:</b> Closed 3-corner shape\n" +
+                             "* <b>Zigzag:</b> Sharp back-and-forth\n" +
+                             "* <b>Spiral:</b> Curved inward/outward swirl\n" +
+                             "* <b>Star:</b> Lines from center outward\n" +
+                             "* <b>Arrow:</b> Line with V-shaped tip\n" +
+                             "* <b>Plus/X:</b> Two crossing lines\n\n" +
+                             "<b>Type Advantages:</b>\n" +
+                             "Water > Fire (1.5x damage)\n" +
+                             "Fire > Grass (1.5x damage)\n" +
+                             "Grass > Water (1.5x damage)\n\n" +
+                             "<b>Practice makes perfect!</b>",
                 primaryColor = new Color(0.5f, 0.9f, 1f),
                 secondaryColor = new Color(1f, 0.5f, 0.9f),
                 pageBackgroundColor = new Color(0.95f, 0.95f, 1f)
@@ -208,7 +196,9 @@ namespace SketchBlossom.Battle
         }
 
         /// <summary>
-        /// Add a page for each plant's moves
+        /// Add a page for each plant's moves.
+        /// The description only contains the header; individual moves are displayed
+        /// via the moveEntryTexts + moveShapePreviews rows.
         /// </summary>
         private void AddPlantMovesPages(List<MoveGuidePageData> pageList,
             PlantRecognitionSystem.PlantType plantType,
@@ -221,49 +211,16 @@ namespace SketchBlossom.Battle
                 return;
             }
 
-            // Create one page showing all moves for this plant with numbered references
-            // matching the shape preview images displayed alongside the text.
-            string movesDescription = $"<b>{plantName}</b>\n" +
-                                     $"<i>{plantDescription}</i>\n\n";
-
-            // Move index markers so the player can match text to the preview images
-            string[] indexMarkers = { "①", "②", "③", "④" };
-
-            for (int i = 0; i < moves.Length; i++)
-            {
-                MoveData move = moves[i];
-
-                // Get element color for text
-                string elementColor = elementName == "Fire" ? "#FF6633" :
-                                    elementName == "Grass" ? "#66DD66" :
-                                    "#5599FF"; // Water
-
-                // Build move description
-                string moveType = move.isDefensiveMove ? "🛡️ Defense" :
-                                move.isHealingMove ? "💚 Healing" :
-                                "⚔️ Attack";
-
-                string powerText = move.basePower > 0 ? $"PWR: {move.basePower}" : "Reduces damage";
-                string shapeName = FormatShapeName(move.drawingShape);
-                string marker = i < indexMarkers.Length ? indexMarkers[i] : "•";
-
-                movesDescription += $"<b>{marker} <color={elementColor}>{move.moveName}</color></b> {moveType}\n";
-                movesDescription += $"{move.description}\n";
-                movesDescription += $"<size=11><color=#999999>{powerText}</color></size>\n";
-                movesDescription += $"<size=12>✏️ <b>Draw: {shapeName}</b>  <i>({move.drawingHint})</i></size>\n";
-
-                if (i < moves.Length - 1)
-                    movesDescription += "\n";
-            }
+            // Header-only description; the per-move details are rendered in individual rows.
+            string headerDescription = $"<i>{plantDescription}</i>";
 
             // Use the plant's first attack move colors for the page theme
-            // (Skip Block which is always first)
             MoveData themeMove = moves.Length > 1 ? moves[1] : moves[0];
 
             pageList.Add(new MoveGuidePageData
             {
                 title = plantName,
-                description = movesDescription,
+                description = headerDescription,
                 primaryColor = themeMove.primaryColor,
                 secondaryColor = themeMove.secondaryColor,
                 pageBackgroundColor = GetPageBackgroundColor(elementName),
@@ -433,7 +390,6 @@ namespace SketchBlossom.Battle
             // Update color display with gradient
             if (moveColorDisplay != null)
             {
-                // Create a simple vertical gradient texture
                 Texture2D gradientTexture = CreateGradientTexture(page.primaryColor, page.secondaryColor);
                 Sprite gradientSprite = Sprite.Create(gradientTexture,
                     new Rect(0, 0, gradientTexture.width, gradientTexture.height),
@@ -467,21 +423,17 @@ namespace SketchBlossom.Battle
                 nextPageButton.interactable = currentPage < pages.Length - 1;
             }
 
-            // Update shape reference previews
-            UpdateShapePreviews(page);
+            // Update move entry rows (plant pages) or hide them (non-plant pages)
+            UpdateMoveEntries(page);
         }
 
         /// <summary>
-        /// Generate and display the reference-drawing shape for each move on the current plant page.
-        /// Each preview is paired with an optional label showing the move name, shape, and index marker.
-        /// Hides all preview images and labels on non-plant pages (welcome, tips, etc.).
+        /// On plant pages, populate each move row with text on the left and
+        /// the shape preview on the right. On non-plant pages, hide the rows.
         /// </summary>
-        private void UpdateShapePreviews(MoveGuidePageData page)
+        private void UpdateMoveEntries(MoveGuidePageData page)
         {
-            if (moveShapePreviews == null || moveShapePreviews.Length == 0)
-                return;
-
-            // Destroy textures we created for the previous page to avoid leaks.
+            // Destroy textures from the previous page to avoid leaks.
             if (activePreviewTextures != null)
             {
                 foreach (var t in activePreviewTextures)
@@ -491,77 +443,91 @@ namespace SketchBlossom.Battle
 
             bool isPlantPage = page.movesOnPage != null && page.movesOnPage.Length > 0;
 
-            // Cache the original right margin on first call so we can restore it.
-            if (originalDescriptionRightMargin < 0f && pageDescription != null)
-            {
-                originalDescriptionRightMargin = pageDescription.margin.z;
-            }
-
-            // Adjust the description text area so it doesn't run under the previews.
-            if (pageDescription != null)
-            {
-                Vector4 m = pageDescription.margin;
-                // On plant pages, reserve the right ~30% for shape previews.
-                // On other pages, restore full width.
-                m.z = isPlantPage ? 160f : (originalDescriptionRightMargin >= 0f ? originalDescriptionRightMargin : 0f);
-                pageDescription.margin = m;
-            }
-
-            // Show or hide the preview container parent (if it exists) so it doesn't
-            // absorb clicks or leave dead space on non-plant pages.
-            if (moveShapePreviews.Length > 0 && moveShapePreviews[0] != null)
-            {
-                Transform container = moveShapePreviews[0].transform.parent?.parent;
-                if (container != null && container.name == "ShapePreviewContainer")
-                    container.gameObject.SetActive(isPlantPage);
-            }
+            // Show or hide the move entries container.
+            if (moveEntriesContainer != null)
+                moveEntriesContainer.gameObject.SetActive(isPlantPage);
 
             if (!isPlantPage)
             {
-                // Hide all preview slots and labels on non-plant pages.
-                foreach (var img in moveShapePreviews)
-                    if (img != null) img.gameObject.SetActive(false);
-                if (moveShapeLabels != null)
-                    foreach (var lbl in moveShapeLabels)
-                        if (lbl != null) lbl.gameObject.SetActive(false);
+                // Hide all previews and entry texts on non-plant pages.
+                if (moveShapePreviews != null)
+                    foreach (var img in moveShapePreviews)
+                        if (img != null) img.gameObject.SetActive(false);
+                if (moveEntryTexts != null)
+                    foreach (var txt in moveEntryTexts)
+                        if (txt != null) txt.transform.parent.gameObject.SetActive(false);
                 return;
             }
 
-            string[] indexMarkers = { "①", "②", "③", "④" };
-            activePreviewTextures = new Texture2D[moveShapePreviews.Length];
+            int slotCount = moveEntryTexts != null ? moveEntryTexts.Length : 0;
+            int previewCount = moveShapePreviews != null ? moveShapePreviews.Length : 0;
+            int maxSlots = Mathf.Max(slotCount, previewCount);
+            activePreviewTextures = new Texture2D[maxSlots];
 
-            for (int i = 0; i < moveShapePreviews.Length; i++)
+            for (int i = 0; i < maxSlots; i++)
             {
-                if (moveShapePreviews[i] == null) continue;
+                bool hasMove = i < page.movesOnPage.Length;
 
-                if (i < page.movesOnPage.Length)
+                // Show or hide the entire row (the parent of the text element).
+                if (i < slotCount && moveEntryTexts[i] != null)
                 {
-                    MoveData move = page.movesOnPage[i];
-                    // Use the move's primary color so it reads on the pale background.
+                    Transform row = moveEntryTexts[i].transform.parent;
+                    if (row != null)
+                        row.gameObject.SetActive(hasMove);
+                }
+
+                if (!hasMove)
+                {
+                    if (i < previewCount && moveShapePreviews[i] != null)
+                        moveShapePreviews[i].gameObject.SetActive(false);
+                    continue;
+                }
+
+                MoveData move = page.movesOnPage[i];
+
+                // --- Build the text for this move ---
+                if (i < slotCount && moveEntryTexts[i] != null)
+                {
+                    string elementColor = GetElementColorHex(move.element);
+                    string moveType = move.isDefensiveMove ? "Defense" :
+                                      move.isHealingMove ? "Healing" :
+                                      "Attack";
+                    string powerText = move.basePower > 0 ? $"PWR: {move.basePower}" : "Reduces damage";
+                    string shapeName = FormatShapeName(move.drawingShape);
+
+                    string text = $"<b><color={elementColor}>{move.moveName}</color></b>  {moveType}\n";
+                    text += $"{move.description}\n";
+                    text += $"<size=11><color=#999999>{powerText}</color></size>\n";
+                    text += $"<size=11>Draw: <b>{shapeName}</b>  <i>({move.drawingHint})</i></size>";
+
+                    moveEntryTexts[i].text = text;
+                }
+
+                // --- Generate the shape preview image ---
+                if (i < previewCount && moveShapePreviews[i] != null)
+                {
                     Color previewColor = move.primaryColor;
                     previewColor.a = 1f;
 
-                    // Generate a preview for the player to reference when drawing.
                     Texture2D tex = MoveShapePreview.GeneratePreview(move.drawingShape, 120, 120, previewColor);
                     activePreviewTextures[i] = tex;
                     moveShapePreviews[i].texture = tex;
                     moveShapePreviews[i].gameObject.SetActive(true);
+                }
+            }
+        }
 
-                    // Update the label beneath the preview with move name and shape.
-                    if (moveShapeLabels != null && i < moveShapeLabels.Length && moveShapeLabels[i] != null)
-                    {
-                        string marker = i < indexMarkers.Length ? indexMarkers[i] : "•";
-                        string shapeName = FormatShapeName(move.drawingShape);
-                        moveShapeLabels[i].text = $"{marker} {move.moveName}\n<size=10>{shapeName}</size>";
-                        moveShapeLabels[i].gameObject.SetActive(true);
-                    }
-                }
-                else
-                {
-                    moveShapePreviews[i].gameObject.SetActive(false);
-                    if (moveShapeLabels != null && i < moveShapeLabels.Length && moveShapeLabels[i] != null)
-                        moveShapeLabels[i].gameObject.SetActive(false);
-                }
+        /// <summary>
+        /// Return a hex color string appropriate for the move's element type.
+        /// </summary>
+        private static string GetElementColorHex(MoveData.ElementType element)
+        {
+            switch (element)
+            {
+                case MoveData.ElementType.Fire:    return "#FF6633";
+                case MoveData.ElementType.Grass:   return "#66DD66";
+                case MoveData.ElementType.Water:   return "#5599FF";
+                default:                           return "#FFFFFF";
             }
         }
 
