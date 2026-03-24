@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using SketchBlossom.Progression;
@@ -776,26 +777,43 @@ namespace SketchBlossom.Battle
 
             if (result.wasRecognized)
             {
-                // Check if the detected move is on cooldown
+                // If the best match is on cooldown, try to fall back to the next best
+                // available move above the confidence threshold. This prevents the
+                // initial cooldowns on special moves from blocking similar shapes.
                 if (IsOnCooldown(playerCooldowns, result.detectedMove))
                 {
-                    string moveName = result.detectedMove.ToString();
-                    // Reuse playerMoves from above to get the actual move name
-                    MoveData cooldownMove = System.Array.Find(playerMoves, m => m.moveType == result.detectedMove);
-                    if (cooldownMove != null) moveName = cooldownMove.moveName;
+                    var fallback = result.scores
+                        .Where(kvp => !IsOnCooldown(playerCooldowns, kvp.Key))
+                        .OrderByDescending(kvp => kvp.Value)
+                        .FirstOrDefault();
 
-                    UpdateActionText($"{moveName} is recharging! Draw a different move.");
-                    drawingCanvas.ClearCanvas();
-                    currentState = BattleState.PlayerDrawing;
+                    if (fallback.Value >= movesetDetector.confidenceThreshold)
+                    {
+                        // Use the fallback move instead
+                        result.detectedMove = fallback.Key;
+                        result.confidence = fallback.Value;
+                        result.quality = Mathf.InverseLerp(movesetDetector.confidenceThreshold, 1f, result.confidence);
+                        result.damageMultiplier = Mathf.Lerp(0.5f, 1.5f, result.quality);
+                        Debug.Log($"[Battle] Cooldown fallback: using {result.detectedMove} at {result.confidence:P0}");
+                    }
+                    else
+                    {
+                        string moveName = result.detectedMove.ToString();
+                        MoveData cooldownMove = System.Array.Find(playerMoves, m => m.moveType == result.detectedMove);
+                        if (cooldownMove != null) moveName = cooldownMove.moveName;
+
+                        UpdateActionText($"{moveName} is recharging! Draw a different move.");
+                        drawingCanvas.ClearCanvas();
+                        currentState = BattleState.PlayerDrawing;
+                        return;
+                    }
                 }
-                else
-                {
-                    // Destroy temp LineRenderers now that CLIP capture is done.
-                    // If these aren't cleaned up, the next turn's CaptureDrawing()
-                    // camera will render stale strokes from this turn on top of the new drawing.
-                    drawingCanvas.DestroyTempLineRenderers();
-                    StartCoroutine(ExecutePlayerMove(result));
-                }
+
+                // Destroy temp LineRenderers now that CLIP capture is done.
+                // If these aren't cleaned up, the next turn's CaptureDrawing()
+                // camera will render stale strokes from this turn on top of the new drawing.
+                drawingCanvas.DestroyTempLineRenderers();
+                StartCoroutine(ExecutePlayerMove(result));
             }
             else
             {
