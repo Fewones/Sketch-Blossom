@@ -27,8 +27,11 @@ namespace SketchBlossom.Battle
         public TextMeshProUGUI pageNumberText;
 
         [Header("Shape Previews")]
-        [Tooltip("Assign 3 RawImage slots in the Inspector – one per move row on a plant page.")]
+        [Tooltip("Assign 4 RawImage slots in the Inspector – one per move on a plant page (Block + 3 attacks).")]
         public RawImage[] moveShapePreviews;
+
+        [Tooltip("Assign 4 TextMeshProUGUI labels – one below each shape preview to show move name and shape.")]
+        public TextMeshProUGUI[] moveShapeLabels;
 
         [Header("Animation")]
         public float transitionSpeed = 5f;
@@ -107,15 +110,16 @@ namespace SketchBlossom.Battle
             {
                 title = "⚔️ Battle Move Guide",
                 description = "<b>Master the Art of Combat Drawing!</b>\n\n" +
-                             "Each plant has <color=yellow>3 unique moves</color>:\n" +
-                             "• <color=#5599FF>Block</color> - Defensive stance (all plants)\n" +
-                             "• <color=#FF5555>Attack Move 1</color> - Element-based attack\n" +
-                             "• <color=#FF5555>Attack Move 2</color> - Powerful signature move\n\n" +
+                             "Each plant has <color=yellow>4 unique moves</color>:\n" +
+                             "• <color=#5599FF>① Block</color> - Defensive stance\n" +
+                             "• <color=#FF9955>② Basic Attack</color> - Quick normal hit\n" +
+                             "• <color=#FF5555>③ Element Attack</color> - Type-based move\n" +
+                             "• <color=#FF3333>④ Signature Move</color> - Powerful finisher\n\n" +
                              "<b>✏️ Drawing Quality Matters!</b>\n" +
                              "Perfect drawings = 1.5× damage\n" +
                              "Poor drawings = 0.5× damage\n\n" +
-                             "<b>🎨 Each move has unique colors!</b>\n" +
-                             "Watch for visual effects during battle.\n\n" +
+                             "<b>📖 Each page shows example drawings!</b>\n" +
+                             "Match the numbered shapes to learn each move.\n\n" +
                              "→ Use arrows to explore all moves!",
                 primaryColor = new Color(1f, 0.9f, 0.3f),
                 secondaryColor = new Color(1f, 0.6f, 0.2f),
@@ -214,9 +218,13 @@ namespace SketchBlossom.Battle
                 return;
             }
 
-            // Create one page showing all 3 moves for this plant
+            // Create one page showing all moves for this plant with numbered references
+            // matching the shape preview images displayed alongside the text.
             string movesDescription = $"<b>{plantName}</b>\n" +
                                      $"<i>{plantDescription}</i>\n\n";
+
+            // Move index markers so the player can match text to the preview images
+            string[] indexMarkers = { "①", "②", "③", "④" };
 
             for (int i = 0; i < moves.Length; i++)
             {
@@ -233,11 +241,13 @@ namespace SketchBlossom.Battle
                                 "⚔️ Attack";
 
                 string powerText = move.basePower > 0 ? $"PWR: {move.basePower}" : "Reduces damage";
+                string shapeName = FormatShapeName(move.drawingShape);
+                string marker = i < indexMarkers.Length ? indexMarkers[i] : "•";
 
-                movesDescription += $"<b><color={elementColor}>{move.moveName}</color></b> {moveType}\n";
+                movesDescription += $"<b>{marker} <color={elementColor}>{move.moveName}</color></b> {moveType}\n";
                 movesDescription += $"{move.description}\n";
                 movesDescription += $"<size=11><color=#999999>{powerText}</color></size>\n";
-                movesDescription += $"<size=11>✏️ <i>{move.drawingHint}</i></size>\n";
+                movesDescription += $"<size=12>✏️ <b>Draw: {shapeName}</b>  <i>({move.drawingHint})</i></size>\n";
 
                 if (i < moves.Length - 1)
                     movesDescription += "\n";
@@ -460,7 +470,8 @@ namespace SketchBlossom.Battle
 
         /// <summary>
         /// Generate and display the reference-drawing shape for each move on the current plant page.
-        /// Hides all preview images on non-plant pages (welcome, tips, etc.).
+        /// Each preview is paired with an optional label showing the move name, shape, and index marker.
+        /// Hides all preview images and labels on non-plant pages (welcome, tips, etc.).
         /// </summary>
         private void UpdateShapePreviews(MoveGuidePageData page)
         {
@@ -479,12 +490,16 @@ namespace SketchBlossom.Battle
 
             if (!isPlantPage)
             {
-                // Hide all preview slots on non-plant pages.
+                // Hide all preview slots and labels on non-plant pages.
                 foreach (var img in moveShapePreviews)
                     if (img != null) img.gameObject.SetActive(false);
+                if (moveShapeLabels != null)
+                    foreach (var lbl in moveShapeLabels)
+                        if (lbl != null) lbl.gameObject.SetActive(false);
                 return;
             }
 
+            string[] indexMarkers = { "①", "②", "③", "④" };
             activePreviewTextures = new Texture2D[moveShapePreviews.Length];
 
             for (int i = 0; i < moveShapePreviews.Length; i++)
@@ -494,19 +509,55 @@ namespace SketchBlossom.Battle
                 if (i < page.movesOnPage.Length)
                 {
                     MoveData move = page.movesOnPage[i];
-                    // Use a darkened version of the move's primary color so it reads on the pale background.
+                    // Use the move's primary color so it reads on the pale background.
                     Color previewColor = move.primaryColor;
                     previewColor.a = 1f;
 
-                    Texture2D tex = MoveShapePreview.GeneratePreview(move.drawingShape, 80, 80, previewColor);
+                    // Generate a larger preview so the player can clearly see the example shape.
+                    Texture2D tex = MoveShapePreview.GeneratePreview(move.drawingShape, 120, 120, previewColor);
                     activePreviewTextures[i] = tex;
                     moveShapePreviews[i].texture = tex;
                     moveShapePreviews[i].gameObject.SetActive(true);
+
+                    // Update the label beneath the preview with move name and shape.
+                    if (moveShapeLabels != null && i < moveShapeLabels.Length && moveShapeLabels[i] != null)
+                    {
+                        string marker = i < indexMarkers.Length ? indexMarkers[i] : "•";
+                        string shapeName = FormatShapeName(move.drawingShape);
+                        moveShapeLabels[i].text = $"{marker} {move.moveName}\n<size=10>{shapeName}</size>";
+                        moveShapeLabels[i].gameObject.SetActive(true);
+                    }
                 }
                 else
                 {
                     moveShapePreviews[i].gameObject.SetActive(false);
+                    if (moveShapeLabels != null && i < moveShapeLabels.Length && moveShapeLabels[i] != null)
+                        moveShapeLabels[i].gameObject.SetActive(false);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Convert a DrawingShape enum value into a human-friendly display name.
+        /// </summary>
+        private static string FormatShapeName(MoveData.DrawingShape shape)
+        {
+            switch (shape)
+            {
+                case MoveData.DrawingShape.Circle:          return "Circle";
+                case MoveData.DrawingShape.StraightLine:    return "Straight Line";
+                case MoveData.DrawingShape.Zigzag:          return "Zigzag";
+                case MoveData.DrawingShape.WavyLine:        return "Wavy Line";
+                case MoveData.DrawingShape.Plus:             return "Plus (+)";
+                case MoveData.DrawingShape.XCross:           return "X Cross";
+                case MoveData.DrawingShape.Arrow:            return "Arrow";
+                case MoveData.DrawingShape.MultipleCircles:  return "3 Circles";
+                case MoveData.DrawingShape.Star:             return "Star";
+                case MoveData.DrawingShape.Square:           return "Square";
+                case MoveData.DrawingShape.Triangle:         return "Triangle";
+                case MoveData.DrawingShape.Checkmark:        return "Checkmark";
+                case MoveData.DrawingShape.Spiral:           return "Spiral";
+                default:                                     return shape.ToString();
             }
         }
 
