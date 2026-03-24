@@ -161,28 +161,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Square),
 
                     new MoveData(MoveType.Sting, "Sting", "A quick stinging jab of solar energy",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(1f, 0.9f, 0.6f),     // Warm white
                         new Color(1f, 0.7f, 0.3f),     // Soft orange
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw a straight line",
                         false, false, 0, DrawingShape.StraightLine),
 
-                    new MoveData(MoveType.Fireball, "Fireball", "Launch a blazing sphere of solar fire",
-                        ElementType.Fire, 15,
+                    new MoveData(MoveType.Fireball, "Fireball", "Launch a blazing fireball at the enemy",
+                        ElementType.Fire, 12,
                         new Color(1f, 0.4f, 0f),       // Bright orange
                         new Color(1f, 0.8f, 0f),       // Yellow
                         VisualEffect.Flames,
                         1.0f, 0.4f, "Draw a circle",
                         false, false, 0, DrawingShape.Circle),
 
-                    new MoveData(MoveType.Burn, "Solar Flare", "Unleash intense burning rays",
-                        ElementType.Fire, 25,
+                    new MoveData(MoveType.Burn, "Solar Flare", "Unleash a devastating burst of concentrated solar rays",
+                        ElementType.Fire, 20,
                         new Color(1f, 0.2f, 0f),       // Deep orange-red
                         new Color(1f, 1f, 0.3f),       // Bright yellow
                         VisualEffect.Lightning,
                         1.5f, 0.7f, "Draw a zigzag",
-                        false, false, 1, DrawingShape.Zigzag)
+                        false, false, 2, DrawingShape.Zigzag)
                 };
 
             // FireRose shapes: XCross, Arrow, Star, Spiral
@@ -198,28 +198,28 @@ public class MoveData
                         false, true, 0, DrawingShape.XCross),
 
                     new MoveData(MoveType.Sting, "Sting", "A sharp thorn jabs the enemy",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.9f, 0.7f, 0.7f),   // Light rose
                         new Color(0.7f, 0.3f, 0.3f),   // Muted red
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw an arrow shape",
                         false, false, 0, DrawingShape.Arrow),
 
-                    new MoveData(MoveType.Burn, "Ember Petals", "Burning rose petals rain down on foes",
-                        ElementType.Fire, 15,
+                    new MoveData(MoveType.Burn, "Ember Petals", "Smoldering petals singe the enemy",
+                        ElementType.Fire, 12,
                         new Color(1f, 0.1f, 0.2f),     // Crimson
                         new Color(1f, 0.4f, 0f),       // Orange
                         VisualEffect.Petals,
                         1.2f, 0.5f, "Draw lines from center outward",
                         false, false, 0, DrawingShape.Star),
 
-                    new MoveData(MoveType.Fireball, "Passion Burst", "Explosive fire erupts from blooming roses",
-                        ElementType.Fire, 25,
+                    new MoveData(MoveType.Fireball, "Passion Burst", "A devastating explosion of fire erupts from blooming roses",
+                        ElementType.Fire, 20,
                         new Color(1f, 0f, 0.3f),       // Hot pink-red
                         new Color(1f, 0.3f, 0f),       // Red-orange
                         VisualEffect.Flames,
                         1.4f, 0.6f, "Draw a spiral",
-                        false, false, 1, DrawingShape.Spiral)
+                        false, false, 2, DrawingShape.Spiral)
                 };
 
             // FlameTulip shapes: Triangle, Checkmark, Circle, WavyLine
@@ -235,28 +235,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Triangle),
 
                     new MoveData(MoveType.Sting, "Sting", "A swift fiery poke singes the target",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(1f, 0.8f, 0.6f),     // Peach
                         new Color(1f, 0.5f, 0.3f),     // Soft coral
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw a checkmark",
                         false, false, 0, DrawingShape.Checkmark),
 
-                    new MoveData(MoveType.Fireball, "Flame Strike", "A precise beam of concentrated fire",
-                        ElementType.Fire, 15,
+                    new MoveData(MoveType.Fireball, "Flame Strike", "A focused beam of fire strikes the target",
+                        ElementType.Fire, 12,
                         new Color(1f, 0.25f, 0f),      // Pure flame orange
                         new Color(1f, 0.5f, 0.1f),     // Light orange
                         VisualEffect.Flames,
                         1.1f, 0.5f, "Draw a circle",
                         false, false, 0, DrawingShape.Circle),
 
-                    new MoveData(MoveType.Burn, "Inferno Wave", "A devastating wave of scorching heat",
-                        ElementType.Fire, 25,
+                    new MoveData(MoveType.Burn, "Inferno Wave", "A devastating wave of scorching heat engulfs the battlefield",
+                        ElementType.Fire, 20,
                         new Color(1f, 0.15f, 0f),      // Deep flame
                         new Color(1f, 0.7f, 0f),       // Bright fire
                         VisualEffect.Smoke,
                         1.8f, 0.9f, "Draw a wavy line",
-                        false, false, 1, DrawingShape.WavyLine)
+                        false, false, 2, DrawingShape.WavyLine)
                 };
 
             // ═══════════════════════════════════════════════════════════
@@ -276,28 +276,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Square),
 
                     new MoveData(MoveType.Cut, "Cut", "A quick slash with a sharp spine",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.6f, 0.7f, 0.5f),   // Pale sage
                         new Color(0.4f, 0.5f, 0.3f),   // Muted green
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw a straight line",
                         false, false, 0, DrawingShape.StraightLine),
 
-                    new MoveData(MoveType.VineWhip, "Needle Shot", "Fire sharp cactus needles at enemies",
-                        ElementType.Grass, 15,
+                    new MoveData(MoveType.VineWhip, "Needle Shot", "Fire a volley of sharp cactus needles",
+                        ElementType.Grass, 12,
                         new Color(0.4f, 0.7f, 0.3f),   // Bright green
                         new Color(0.8f, 0.8f, 0.6f),   // Tan (needle color)
                         VisualEffect.Crystals,
                         1.0f, 0.4f, "Draw an arrow shape",
                         false, false, 0, DrawingShape.Arrow),
 
-                    new MoveData(MoveType.LeafStorm, "Spine Storm", "A relentless barrage of sharp spines",
-                        ElementType.Grass, 25,
+                    new MoveData(MoveType.LeafStorm, "Spine Storm", "A devastating barrage of razor-sharp spines tears through the enemy",
+                        ElementType.Grass, 20,
                         new Color(0.35f, 0.65f, 0.25f),// Dark green
                         new Color(0.9f, 0.85f, 0.5f),  // Pale yellow
                         VisualEffect.Crystals,
                         1.4f, 0.6f, "Draw lines from center outward",
-                        false, false, 1, DrawingShape.Star)
+                        false, false, 2, DrawingShape.Star)
                 };
 
             // VineFlower shapes: Triangle, XCross, Spiral, Zigzag
@@ -313,28 +313,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Triangle),
 
                     new MoveData(MoveType.Cut, "Cut", "A swift vine slices through the air",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.5f, 0.8f, 0.5f),   // Light green
                         new Color(0.3f, 0.6f, 0.3f),   // Medium green
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw an X shape",
                         false, false, 0, DrawingShape.XCross),
 
-                    new MoveData(MoveType.VineWhip, "Vine Lash", "A powerful whipping vine strikes with force",
-                        ElementType.Grass, 15,
+                    new MoveData(MoveType.VineWhip, "Vine Lash", "A whipping vine strikes the enemy",
+                        ElementType.Grass, 12,
                         new Color(0.25f, 0.75f, 0.3f), // Fresh green
                         new Color(0.15f, 0.5f, 0.2f),  // Dark green
                         VisualEffect.Vines,
                         1.1f, 0.5f, "Draw a spiral",
                         false, false, 0, DrawingShape.Spiral),
 
-                    new MoveData(MoveType.RootAttack, "Strangling Roots", "Massive roots bind and crush the enemy",
-                        ElementType.Grass, 25,
+                    new MoveData(MoveType.RootAttack, "Strangling Roots", "Massive roots erupt from the ground to bind and crush the enemy",
+                        ElementType.Grass, 20,
                         new Color(0.3f, 0.5f, 0.2f),   // Forest green
                         new Color(0.4f, 0.3f, 0.2f),   // Brown
                         VisualEffect.Roots,
                         1.3f, 0.7f, "Draw a zigzag",
-                        false, false, 1, DrawingShape.Zigzag)
+                        false, false, 2, DrawingShape.Zigzag)
                 };
 
             // GrassSprout shapes: Triangle, Checkmark, Star, Plus
@@ -350,7 +350,7 @@ public class MoveData
                         false, true, 0, DrawingShape.Triangle),
 
                     new MoveData(MoveType.Cut, "Cut", "A sharp leaf blade slashes the foe",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.7f, 0.9f, 0.5f),   // Yellow-green
                         new Color(0.5f, 0.7f, 0.3f),   // Olive green
                         VisualEffect.Sparks,
@@ -358,20 +358,20 @@ public class MoveData
                         false, false, 0, DrawingShape.Checkmark),
 
                     new MoveData(MoveType.LeafStorm, "Razor Leaf", "Sharp grass blades slice through the air",
-                        ElementType.Grass, 15,
+                        ElementType.Grass, 12,
                         new Color(0.5f, 0.95f, 0.4f),  // Bright grass
                         new Color(0.3f, 0.7f, 0.3f),   // Medium green
                         VisualEffect.Leaves,
                         1.0f, 0.4f, "Draw lines from center outward",
                         false, false, 0, DrawingShape.Star),
 
-                    new MoveData(MoveType.RootAttack, "Growth Surge", "Rapid growing roots assault the target",
-                        ElementType.Grass, 25,
+                    new MoveData(MoveType.RootAttack, "Growth Surge", "A massive surge of roots erupts to overwhelm the target",
+                        ElementType.Grass, 20,
                         new Color(0.45f, 0.85f, 0.35f),// Grass green
                         new Color(0.5f, 0.4f, 0.25f),  // Earth brown
                         VisualEffect.Roots,
                         1.2f, 0.5f, "Draw a plus sign",
-                        false, false, 1, DrawingShape.Plus)
+                        false, false, 2, DrawingShape.Plus)
                 };
 
             // ═══════════════════════════════════════════════════════════
@@ -391,28 +391,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Square),
 
                     new MoveData(MoveType.Bump, "Bump", "A forceful watery shove",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.6f, 0.8f, 0.9f),   // Pale blue
                         new Color(0.7f, 0.85f, 0.8f),  // Light teal
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw an arrow shape",
                         false, false, 0, DrawingShape.Arrow),
 
-                    new MoveData(MoveType.WaterSplash, "Lily Splash", "Gentle waves wash over the enemy",
-                        ElementType.Water, 15,
+                    new MoveData(MoveType.WaterSplash, "Lily Splash", "A splash of water strikes the enemy",
+                        ElementType.Water, 12,
                         new Color(0.3f, 0.6f, 0.95f),  // Clear blue
                         new Color(0.5f, 0.85f, 0.9f),  // Light cyan
                         VisualEffect.Water,
                         0.9f, 0.3f, "Draw a wavy line",
                         false, false, 0, DrawingShape.WavyLine),
 
-                    new MoveData(MoveType.HealingWave, "Tranquil Petals", "Soothing lily petals restore health",
-                        ElementType.Water, 20,
+                    new MoveData(MoveType.HealingWave, "Tranquil Petals", "Soothing lily petals gently restore health over time",
+                        ElementType.Water, 15,
                         new Color(0.5f, 0.9f, 0.95f),  // Pale cyan
                         new Color(0.7f, 0.95f, 0.7f),  // Mint
                         VisualEffect.Petals,
                         1.0f, 0.1f, "Draw a plus sign",
-                        true, false, 1, DrawingShape.Plus)
+                        true, false, 2, DrawingShape.Plus)
                 };
 
             // CoralBloom shapes: Triangle, StraightLine, Zigzag, MultipleCircles
@@ -428,28 +428,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Triangle),
 
                     new MoveData(MoveType.Bump, "Bump", "A solid coral headbutt",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.9f, 0.7f, 0.75f),  // Light coral
                         new Color(0.6f, 0.5f, 0.7f),   // Muted purple
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw a straight line",
                         false, false, 0, DrawingShape.StraightLine),
 
-                    new MoveData(MoveType.WaterSplash, "Coral Spike", "Sharp coral projectiles pierce enemies",
-                        ElementType.Water, 15,
+                    new MoveData(MoveType.WaterSplash, "Coral Spike", "Sharp coral projectiles pierce the enemy",
+                        ElementType.Water, 12,
                         new Color(1f, 0.4f, 0.5f),     // Pink coral
                         new Color(0.2f, 0.5f, 0.9f),   // Deep blue
                         VisualEffect.Crystals,
                         1.1f, 0.5f, "Draw a zigzag",
                         false, false, 0, DrawingShape.Zigzag),
 
-                    new MoveData(MoveType.Bubble, "Tidal Burst", "Explosive pressurized water bubbles",
-                        ElementType.Water, 25,
+                    new MoveData(MoveType.Bubble, "Tidal Burst", "A massive burst of pressurized water crashes into the enemy",
+                        ElementType.Water, 20,
                         new Color(0.2f, 0.6f, 1f),     // Vivid blue
                         new Color(0.8f, 0.95f, 1f),    // White foam
                         VisualEffect.Bubbles,
                         1.4f, 0.6f, "Draw 3 circles",
-                        false, false, 1, DrawingShape.MultipleCircles)
+                        false, false, 2, DrawingShape.MultipleCircles)
                 };
 
             // BubbleFlower shapes: Square, Arrow, MultipleCircles, Plus
@@ -465,28 +465,28 @@ public class MoveData
                         false, true, 0, DrawingShape.Square),
 
                     new MoveData(MoveType.Bump, "Bump", "A bubbly body slam",
-                        ElementType.Normal, 10,
+                        ElementType.Normal, 8,
                         new Color(0.7f, 0.85f, 1f),    // Soft blue
                         new Color(0.85f, 0.9f, 0.95f), // Pale silver
                         VisualEffect.Sparks,
                         0.7f, 0.2f, "Draw an arrow shape",
                         false, false, 0, DrawingShape.Arrow),
 
-                    new MoveData(MoveType.Bubble, "Bubble Barrage", "Countless bubbles bombard the target",
-                        ElementType.Water, 15,
+                    new MoveData(MoveType.Bubble, "Bubble Barrage", "A stream of bubbles pelts the target",
+                        ElementType.Water, 12,
                         new Color(0.5f, 0.75f, 0.95f), // Medium blue
                         new Color(0.85f, 0.92f, 1f),   // Pale blue
                         VisualEffect.Bubbles,
                         1.2f, 0.5f, "Draw 3 small circles",
                         false, false, 0, DrawingShape.MultipleCircles),
 
-                    new MoveData(MoveType.HealingWave, "Bubble Remedy", "Healing bubbles restore vitality",
-                        ElementType.Water, 20,
+                    new MoveData(MoveType.HealingWave, "Bubble Remedy", "Soothing healing bubbles slowly restore vitality",
+                        ElementType.Water, 15,
                         new Color(0.4f, 0.85f, 0.9f),  // Turquoise
                         new Color(0.7f, 1f, 0.8f),     // Mint green
                         VisualEffect.Bubbles,
                         1.0f, 0.1f, "Draw a plus sign",
-                        true, false, 1, DrawingShape.Plus)
+                        true, false, 2, DrawingShape.Plus)
                 };
 
             default:
@@ -516,6 +516,7 @@ public class MoveData
 
     public override string ToString()
     {
-        return $"{moveName} ({element}) - Power: {basePower}";
+        string cooldownInfo = cooldownTurns > 0 ? $", {cooldownTurns} turn cooldown" : "";
+        return $"{moveName} ({element}) - PWR {basePower}{cooldownInfo}";
     }
 }

@@ -59,6 +59,16 @@ public class HealingCenter : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Reset all healing charges to zero (called on game over / quit / new game).
+    /// </summary>
+    public static void ResetHealCharges()
+    {
+        PlayerPrefs.SetInt(HEAL_CHARGES_KEY, 0);
+        PlayerPrefs.Save();
+        Debug.Log("Healing charges reset to 0.");
+    }
+
     private void Start()
     {
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");

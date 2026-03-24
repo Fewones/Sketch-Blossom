@@ -51,13 +51,18 @@ public class MovesetDetector : MonoBehaviour
     private static readonly Dictionary<MoveData.DrawingShape, MoveData.DrawingShape[]> shapeConfusionMap =
         new Dictionary<MoveData.DrawingShape, MoveData.DrawingShape[]>
         {
-            { MoveData.DrawingShape.Circle,          new[] { MoveData.DrawingShape.Spiral } },
+            { MoveData.DrawingShape.Circle,          new[] { MoveData.DrawingShape.Spiral, MoveData.DrawingShape.Square } },
             { MoveData.DrawingShape.Spiral,          new[] { MoveData.DrawingShape.Circle } },
-            { MoveData.DrawingShape.Triangle,        new[] { MoveData.DrawingShape.Square } },
-            { MoveData.DrawingShape.Square,          new[] { MoveData.DrawingShape.Triangle } },
+            { MoveData.DrawingShape.Triangle,        new[] { MoveData.DrawingShape.Square, MoveData.DrawingShape.Circle } },
+            { MoveData.DrawingShape.Square,          new[] { MoveData.DrawingShape.Triangle, MoveData.DrawingShape.Circle } },
             { MoveData.DrawingShape.Checkmark,       new[] { MoveData.DrawingShape.Arrow } },
             { MoveData.DrawingShape.Arrow,           new[] { MoveData.DrawingShape.Checkmark } },
             { MoveData.DrawingShape.MultipleCircles, new[] { MoveData.DrawingShape.Circle } },
+            { MoveData.DrawingShape.Zigzag,          new[] { MoveData.DrawingShape.WavyLine } },
+            { MoveData.DrawingShape.WavyLine,        new[] { MoveData.DrawingShape.Zigzag } },
+            { MoveData.DrawingShape.XCross,          new[] { MoveData.DrawingShape.Plus, MoveData.DrawingShape.Star } },
+            { MoveData.DrawingShape.Plus,             new[] { MoveData.DrawingShape.XCross } },
+            { MoveData.DrawingShape.Star,             new[] { MoveData.DrawingShape.XCross, MoveData.DrawingShape.Plus } },
         };
 
     /// <summary>
@@ -277,11 +282,11 @@ public class MovesetDetector : MonoBehaviour
         return Mathf.Clamp01(score);
     }
 
-    /// <summary> Zigzag: single stroke with many sharp turns, elongated and OPEN </summary>
+    /// <summary> Zigzag: single stroke with many sharp turns, OPEN (not closed) </summary>
     private float ScoreZigzag(DrawingFeatures f)
     {
         float score = 0f;
-        if (f.spikyStrokes >= 1) score += 0.4f;
+        if (f.spikyStrokes >= 1) score += 0.45f;
         if (f.spikyStrokes >= 2) score += 0.15f;
 
         // Zigzags are OPEN (not closed) — strongly penalize closed shapes (that's a square/triangle)
@@ -291,10 +296,10 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.15f;
         else if (f.strokeCount <= 4) score += 0.05f;
 
-        // Zigzags are elongated — wider OR taller than they are round
-        // Square-ish aspect ratio (0.7-1.4) suggests a closed shape, not a zigzag
-        if (f.aspectRatio < 0.5f || f.aspectRatio > 2.0f) score += 0.2f;
+        // Slightly prefer elongated shapes, but zigzags can also be square-ish (W/M shape)
+        if (f.aspectRatio < 0.5f || f.aspectRatio > 2.0f) score += 0.15f;
         else if (f.aspectRatio < 0.7f || f.aspectRatio > 1.4f) score += 0.1f;
+        else score += 0.05f;  // Small baseline — don't zero out square-ish zigzags
 
         return Mathf.Clamp01(score);
     }
@@ -352,22 +357,23 @@ public class MovesetDetector : MonoBehaviour
     {
         float score = 0f;
 
-        // Must be exactly 2 strokes
-        if (f.strokeCount == 2) score += 0.35f;
+        // Must be exactly 2 strokes — this is the strongest signal for X
+        if (f.strokeCount == 2) score += 0.4f;
         else if (f.strokeCount == 3) score += 0.1f;
         else return 0.05f;
 
-        // X strokes are diagonal - neither purely H nor purely V
-        // If both are classified as neither, that's a good sign
+        // X strokes are diagonal — neither purely horizontal nor purely vertical.
+        // Hand-drawn X may have one stroke slightly classified as H or V, so be lenient.
         bool hasDiagonal = (f.horizontalStrokes == 0 && f.verticalStrokes == 0);
-        if (hasDiagonal) score += 0.4f;
-        else if (f.horizontalStrokes + f.verticalStrokes <= 1) score += 0.2f;
+        if (hasDiagonal) score += 0.35f;
+        else if (f.horizontalStrokes + f.verticalStrokes <= 1) score += 0.25f;
+        else score += 0.1f;  // Even with H+V classification, still give some score for 2 strokes
 
-        // Roughly square proportions
+        // Roughly square proportions (X is symmetric)
         float ar = f.aspectRatio;
         if (ar > 0.5f && ar < 2.0f) score += 0.15f;
 
-        // Should NOT be circular
+        // X strokes are OPEN — should not be circular (closed)
         if (f.circularStrokes > 0) score *= 0.3f;
 
         return Mathf.Clamp01(score);
@@ -453,14 +459,17 @@ public class MovesetDetector : MonoBehaviour
     {
         float score = 0f;
 
-        // 1 stroke (continuous) or up to 4 (sides)
-        if (f.strokeCount >= 1 && f.strokeCount <= 4) score += 0.15f;
+        // 1 stroke (continuous) or up to 4 (sides) — 2 strokes is unusual for a square
+        if (f.strokeCount == 1 || f.strokeCount == 4) score += 0.2f;
+        else if (f.strokeCount == 3) score += 0.15f;
+        else if (f.strokeCount == 2) score += 0.05f;  // 2 strokes is more likely X or plus
         else return 0.05f;
 
-        // Sharp corners are the key feature — even imperfectly closed squares have corners
+        // A square must be CLOSED — open strokes are not a square
         if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;   // Perfect: closed + corners
-        else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed or open square — still recognizable
-        else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
+        else if (f.circularStrokes >= 1) score += 0.1f;  // Closed but no corners = maybe sloppy square
+        else if (f.spikyStrokes >= 1) score += 0.15f;    // Sharp corners but not closed — weak signal
+        else return 0.05f;
 
         // Squares have a near-equal aspect ratio (key differentiator from triangle)
         float ar = f.aspectRatio;
@@ -479,15 +488,17 @@ public class MovesetDetector : MonoBehaviour
     {
         float score = 0f;
 
-        // 1 stroke (continuous) or 3 (sides)
-        if (f.strokeCount >= 1 && f.strokeCount <= 3) score += 0.15f;
-        else if (f.strokeCount == 4) score += 0.05f;  // 4 strokes more likely square
+        // 1 stroke (continuous) or 3 (sides) — 2 strokes is unusual for a triangle
+        if (f.strokeCount == 1 || f.strokeCount == 3) score += 0.2f;
+        else if (f.strokeCount == 2) score += 0.05f;  // 2 strokes is more likely X or plus
+        else if (f.strokeCount == 4) score += 0.05f;   // 4 strokes more likely square
         else return 0.05f;
 
-        // Sharp corners are the key feature — even imperfectly closed triangles have corners
+        // A triangle must be CLOSED — open strokes are not a triangle
         if (f.circularStrokes >= 1 && f.spikyStrokes >= 1) score += 0.4f;   // Perfect: closed + corners
-        else if (f.spikyStrokes >= 1) score += 0.3f;   // Nearly closed — still recognizable
-        else if (f.circularStrokes >= 1) score += 0.05f;  // Closed but no corners = probably a circle
+        else if (f.circularStrokes >= 1) score += 0.1f;  // Closed but no corners = maybe a sloppy triangle
+        else if (f.spikyStrokes >= 1) score += 0.15f;    // Sharp corners but not closed — weak signal
+        else return 0.05f;
 
         // Triangles tend to be taller (pointed top) — key differentiator from square
         float ar = f.aspectRatio;
@@ -658,18 +669,40 @@ public class MovesetDetector : MonoBehaviour
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
+            // Downsample to ~20-30 evenly spaced points so that direction
+            // changes at zigzag corners aren't diluted across many tiny segments.
+            Vector3[] sampled = DownsamplePoints(positions, 25);
+
             int sharpTurns = 0;
-            for (int i = 1; i < positions.Length - 1; i++)
+            for (int i = 1; i < sampled.Length - 1; i++)
             {
-                Vector3 dir1 = (positions[i] - positions[i - 1]).normalized;
-                Vector3 dir2 = (positions[i + 1] - positions[i]).normalized;
+                Vector3 dir1 = (sampled[i] - sampled[i - 1]).normalized;
+                Vector3 dir2 = (sampled[i + 1] - sampled[i]).normalized;
                 float angle = Vector3.Angle(dir1, dir2);
-                if (angle > 60f) sharpTurns++;
+                if (angle > 45f) sharpTurns++;
             }
 
             if (sharpTurns >= 2) count++;
         }
         return count;
+    }
+
+    /// <summary>
+    /// Downsample a point array to at most maxPoints evenly spaced samples.
+    /// If the array already has fewer points, return it unchanged.
+    /// </summary>
+    private Vector3[] DownsamplePoints(Vector3[] positions, int maxPoints)
+    {
+        if (positions.Length <= maxPoints) return positions;
+
+        Vector3[] sampled = new Vector3[maxPoints];
+        for (int i = 0; i < maxPoints; i++)
+        {
+            float t = (float)i / (maxPoints - 1);
+            int idx = Mathf.RoundToInt(t * (positions.Length - 1));
+            sampled[i] = positions[idx];
+        }
+        return sampled;
     }
 
     private int CountCurvedStrokes(List<LineRenderer> strokes)

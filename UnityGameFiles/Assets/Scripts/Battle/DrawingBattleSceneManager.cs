@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using SketchBlossom.Progression;
@@ -162,6 +163,10 @@ namespace SketchBlossom.Battle
 
             // Setup attack animation system
             SetupAttackAnimationSystem();
+
+            // Set initial cooldowns so special moves must charge before first use
+            SetInitialCooldowns(playerCooldowns, playerPlantType);
+            SetInitialCooldowns(enemyCooldowns, enemyPlantType);
 
             // Start continuous visibility monitoring
             StartCoroutine(ContinuousVisibilityCheck());
@@ -772,19 +777,40 @@ namespace SketchBlossom.Battle
 
             if (result.wasRecognized)
             {
-                // Check if the detected move is on cooldown
+                // If the best match is on cooldown, try to fall back to the next best
+                // available move above the confidence threshold. This prevents the
+                // initial cooldowns on special moves from blocking similar shapes.
+                bool blocked = false;
                 if (IsOnCooldown(playerCooldowns, result.detectedMove))
                 {
-                    string moveName = result.detectedMove.ToString();
-                    // Reuse playerMoves from above to get the actual move name
-                    MoveData cooldownMove = System.Array.Find(playerMoves, m => m.moveType == result.detectedMove);
-                    if (cooldownMove != null) moveName = cooldownMove.moveName;
+                    var fallback = result.scores
+                        .Where(kvp => !IsOnCooldown(playerCooldowns, kvp.Key))
+                        .OrderByDescending(kvp => kvp.Value)
+                        .FirstOrDefault();
 
-                    UpdateActionText($"{moveName} is recharging! Draw a different move.");
-                    drawingCanvas.ClearCanvas();
-                    currentState = BattleState.PlayerDrawing;
+                    if (fallback.Value >= movesetDetector.confidenceThreshold)
+                    {
+                        // Use the fallback move instead
+                        result.detectedMove = fallback.Key;
+                        result.confidence = fallback.Value;
+                        result.quality = Mathf.InverseLerp(movesetDetector.confidenceThreshold, 1f, result.confidence);
+                        result.damageMultiplier = Mathf.Lerp(0.5f, 1.5f, result.quality);
+                        Debug.Log($"[Battle] Cooldown fallback: using {result.detectedMove} at {result.confidence:P0}");
+                    }
+                    else
+                    {
+                        string moveName = result.detectedMove.ToString();
+                        MoveData cooldownMove = System.Array.Find(playerMoves, m => m.moveType == result.detectedMove);
+                        if (cooldownMove != null) moveName = cooldownMove.moveName;
+
+                        UpdateActionText($"{moveName} is recharging! Draw a different move.");
+                        drawingCanvas.ClearCanvas();
+                        currentState = BattleState.PlayerDrawing;
+                        blocked = true;
+                    }
                 }
-                else
+
+                if (!blocked)
                 {
                     // Destroy temp LineRenderers now that CLIP capture is done.
                     // If these aren't cleaned up, the next turn's CaptureDrawing()
@@ -1264,8 +1290,8 @@ namespace SketchBlossom.Battle
             // Reset player blocking state on switch
             playerIsBlocking = false;
 
-            // Reset player cooldowns (new plant has fresh cooldowns)
-            playerCooldowns.Clear();
+            // Set initial cooldowns for new plant (special moves start on cooldown)
+            SetInitialCooldowns(playerCooldowns, playerPlantType);
 
             // Reload player unit display with new plant texture
             Texture2D newTexture = newPlant.GetDrawingTexture();
@@ -1398,6 +1424,23 @@ namespace SketchBlossom.Battle
         private bool IsOnCooldown(Dictionary<MoveData.MoveType, int> cooldowns, MoveData.MoveType moveType)
         {
             return cooldowns.ContainsKey(moveType) && cooldowns[moveType] > 0;
+        }
+
+        /// <summary>
+        /// Set initial cooldowns for moves that have cooldowns when a plant enters battle.
+        /// This means special moves start on cooldown and must charge up before first use.
+        /// </summary>
+        private void SetInitialCooldowns(Dictionary<MoveData.MoveType, int> cooldowns, PlantRecognitionSystem.PlantType plantType)
+        {
+            cooldowns.Clear();
+            MoveData[] moves = MoveData.GetMovesForPlant(plantType);
+            foreach (var move in moves)
+            {
+                if (move.cooldownTurns > 0)
+                {
+                    cooldowns[move.moveType] = move.cooldownTurns;
+                }
+            }
         }
 
         /// <summary>
@@ -1573,6 +1616,7 @@ namespace SketchBlossom.Battle
                     {
                         // GAME OVER - No usable plants remaining
                         Debug.Log("[Rogue-like] GAME OVER - All plants dead! Returning to main menu.");
+                        HealingCenter.ResetHealCharges();
                         UpdateTurnIndicator("GAME OVER");
                         UpdateActionText("All your plants have perished...");
                         yield return new WaitForSeconds(2f);
@@ -1641,7 +1685,7 @@ namespace SketchBlossom.Battle
             playerAttack = newPlant.attack;
             playerDefense = newPlant.defense;
             playerIsBlocking = false;
-            playerCooldowns.Clear();
+            SetInitialCooldowns(playerCooldowns, playerPlantType);
 
             // Reload player unit display
             Texture2D newTexture = newPlant.GetDrawingTexture();
@@ -1806,14 +1850,13 @@ namespace SketchBlossom.Battle
                 bool onCooldown = IsOnCooldown(playerCooldowns, move.moveType);
                 if (onCooldown)
                 {
-                    movesText += $"- <color=#888888>{move.moveName} (Recharging)</color>\n";
+                    int turnsLeft = playerCooldowns[move.moveType];
+                    movesText += $"- <color=#888888>{move.moveName} ({turnsLeft}t)</color>\n";
                 }
                 else
                 {
-                    string powerLabel = move.isDefensiveMove ? "DEF" :
-                                        move.isHealingMove ? $"Heal {move.basePower}" :
-                                        $"PWR {move.basePower}";
-                    movesText += $"- {move.moveName} ({powerLabel}) ✏️ {move.drawingHint}\n";
+                    string shapeName = move.drawingShape.ToString();
+                    movesText += $"- {move.moveName} ({shapeName})\n";
                 }
             }
 
