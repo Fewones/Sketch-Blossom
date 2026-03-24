@@ -98,6 +98,6 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
-/UnityGameFiles/Assets/Python/windows-latest
-/UnityGameFiles/Assets/Python/macos-latest
-/UnityGameFiles/Assets/Python/ubuntu-latest
+/UnityGameFiles/Python/windows-latest
+/UnityGameFiles/Python/macos-latest
+/UnityGameFiles/Python/ubuntu-latest

@@ -12,7 +12,7 @@ using System;
 public class PythonDownloader
 {
     private static bool downloadComplete = false;
-    static string pythonFolder = "Assets/Python/";
+    static string pythonFolder = "Python/";
 
     static PythonDownloader() {
             EditorApplication.update += CheckAndDownloadPython;
