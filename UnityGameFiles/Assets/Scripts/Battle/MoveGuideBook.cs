@@ -88,6 +88,45 @@ namespace SketchBlossom.Battle
                     vLayout.childControlWidth = true;
                     vLayout.childControlHeight = true;
                 }
+
+                // Move bottom anchor above the navigation buttons so they aren't blocked.
+                RectTransform containerRect = moveEntriesContainer as RectTransform;
+                if (containerRect == null) containerRect = moveEntriesContainer.GetComponent<RectTransform>();
+                if (containerRect != null)
+                {
+                    containerRect.anchorMin = new Vector2(containerRect.anchorMin.x, 0.22f);
+                }
+            }
+
+            // Increase font size on move entry texts so they're readable.
+            if (moveEntryTexts != null)
+            {
+                foreach (var txt in moveEntryTexts)
+                {
+                    if (txt != null)
+                    {
+                        txt.fontSize = 18f;
+                        txt.enableAutoSizing = false;
+                    }
+                }
+            }
+
+            // Prevent shape previews from being squashed by the row height.
+            // Set flexibleHeight to 0 so they keep their preferred 64x64 size
+            // and add an AspectRatioFitter to enforce a square.
+            if (moveShapePreviews != null)
+            {
+                foreach (var img in moveShapePreviews)
+                {
+                    if (img == null) continue;
+                    var le = img.GetComponent<LayoutElement>();
+                    if (le != null) le.flexibleHeight = 0f;
+
+                    var arf = img.GetComponent<AspectRatioFitter>();
+                    if (arf == null) arf = img.gameObject.AddComponent<AspectRatioFitter>();
+                    arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+                    arf.aspectRatio = 1f;
+                }
             }
 
             InitializePages();
@@ -550,8 +589,8 @@ namespace SketchBlossom.Battle
 
                     string text = $"<b><color={elementColor}>{move.moveName}</color></b>  {moveType}\n";
                     text += $"{move.description}\n";
-                    text += $"<size=11><color=#999999>{powerText}</color></size>\n";
-                    text += $"<size=11>Draw: <b>{shapeName}</b>  <i>({move.drawingHint})</i></size>";
+                    text += $"<size=80%><color=#CCCCCC>{powerText}</color></size>\n";
+                    text += $"<size=80%>Draw: <b>{shapeName}</b>  <i>({move.drawingHint})</i></size>";
 
                     moveEntryTexts[i].text = text;
                 }
