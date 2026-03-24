@@ -10,35 +10,43 @@ public class WorldMapSceneManager : MonoBehaviour
 {
     [Header("Player Setup")]
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private Vector3 playerSpawnPosition = Vector3.zero;
     [SerializeField] private PlayerController playerController;
 
     [Header("Enemy Setup")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private WorldMapEnemy[] enemies;
-    private Vector3[] enemySpawnPoints = {new Vector3(-1.6f, -0.44f, 0f), new Vector3(1.95f, -0.44f, 0f), new Vector3(6.4f, -0.44f, 0f)};
+    [SerializeField] private Vector3[] enemySpawnPoints;
 
     [Header("Healing Center")]
     [SerializeField] private GameObject healingCenterPrefab;
     [SerializeField] private HealingCenter healingCenter;
-    [SerializeField] private Vector3 healingCenterPosition = new Vector3(-5.5f, -0.44f, 0f);
+    [SerializeField] private Vector3 healingCenterPosition;
 
     [Header("UI References")]
     [SerializeField] private BattlePreviewUI battlePreviewUI;
 
+    [SerializeField] private Transform background;
+
     [Header("Scene Settings")]
     [SerializeField] private bool spawnEnemiesOnStart = true;
-    private int numberOfEnemies = 3; // One of each difficulty by default
+    [SerializeField] private int numberOfEnemies; // One of each difficulty by default
     [SerializeField] private bool isFirstEncounter = false; // Set true for tutorial/first map
 
     private void Start()
     {
         SetupPlayer();
 
+        if (playerController.movingBackground)
+        {
+            background.position = playerController.GetBackgroundPosition();
+        }
+
         if (spawnEnemiesOnStart)
         {
             SetupEnemies();
         }
+
+        healingCenterPosition += background.position;
 
         SetupHealingCenter();
 
@@ -60,28 +68,16 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         if (playerController != null)
         {
-            playerController.transform.position = playerSpawnPosition;
+            playerController.transform.position = playerController.GetSpawnPosition();
             return;
         }
+    }
 
-        playerController = FindObjectOfType<PlayerController>();
-
-        if (playerController == null && playerPrefab != null)
-        {
-            GameObject playerObj = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
-            playerObj.name = "Player";
-            playerObj.tag = "Player";
-            playerController = playerObj.GetComponent<PlayerController>();
-
-            if (playerController == null)
-            {
-                playerController = playerObj.AddComponent<PlayerController>();
-            }
-        }
-
-        if (playerController == null)
-        {
-            Debug.LogError("Failed to setup player! Make sure Player prefab is assigned or exists in scene.");
+    private void Update()
+    {
+        if (playerController.changeWorldMap){
+            playerController.changeWorldMap = false;
+            ChangeWorldMap(playerController.currentWorldMap);
         }
     }
 
@@ -108,7 +104,7 @@ public class WorldMapSceneManager : MonoBehaviour
         for (int i = 0; i < numberOfEnemies; i++)
         {
             Vector3 spawnPos = spawnPositions[i];
-            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity, parent: background);
 
             // Determine difficulty: if first encounter, all are difficulty 1
             // Otherwise, cycle through difficulties 1, 2, 3
@@ -154,12 +150,13 @@ public class WorldMapSceneManager : MonoBehaviour
         GameObject healingObj;
         if (healingCenterPrefab != null)
         {
-            healingObj = Instantiate(healingCenterPrefab, healingCenterPosition, Quaternion.identity);
+            healingObj = Instantiate(healingCenterPrefab, healingCenterPosition, Quaternion.identity, parent: background);
         }
         else
         {
             healingObj = new GameObject("HealingCenter");
             healingObj.transform.position = healingCenterPosition;
+            healingObj.transform.SetParent(background);
 
             SpriteRenderer sr = healingObj.AddComponent<SpriteRenderer>();
 
@@ -187,7 +184,7 @@ public class WorldMapSceneManager : MonoBehaviour
                     new Rect(0, 0, processedTex.width, processedTex.height),
                     new Vector2(0.5f, 0.5f), 100f);
                 // Scale down to fit world map (adjust as needed)
-                healingObj.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+                healingObj.transform.localScale = new Vector3(0.4f, 0.4f, 1f);
             }
             else
             {
@@ -232,6 +229,7 @@ public class WorldMapSceneManager : MonoBehaviour
     {
         if (enemySpawnPoints != null && enemySpawnPoints.Length >= numberOfEnemies)
         {
+            background.TransformPoints(enemySpawnPoints);
             return enemySpawnPoints;
         }
 
@@ -241,8 +239,8 @@ public class WorldMapSceneManager : MonoBehaviour
             float angle = (360f / numberOfEnemies) * i;
             float distance = Random.Range(5f, 10f);
 
-            float x = playerSpawnPosition.x + Mathf.Cos(angle * Mathf.Deg2Rad) * distance;
-            float y = playerSpawnPosition.y + Mathf.Sin(angle * Mathf.Deg2Rad) * distance;
+            float x = playerController.GetSpawnPosition().x + Mathf.Cos(angle * Mathf.Deg2Rad) * distance;
+            float y = playerController.GetSpawnPosition().y + Mathf.Sin(angle * Mathf.Deg2Rad) * distance;
 
             randomPositions[i] = new Vector3(x, y, 0);
         }
@@ -266,12 +264,24 @@ public class WorldMapSceneManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
+        playerController.ResetSpawnManager();
         SceneManager.LoadScene("IntroScene");
     }
 
     public void OpenInventory()
     {
+        playerController.SetSpawnPosition(playerController.currentWorldMap, Vector2.zero);
+        if (playerController.movingBackground)
+        {
+           playerController.SetBackgroundPosition(playerController.currentWorldMap); 
+        }
         SceneManager.LoadScene("InventoryScene");
+        
+    }
+
+    public void ChangeWorldMap(int i)
+    {
+        SceneManager.LoadScene($"WorldMapScene{i}");
     }
 
     /// <summary>

@@ -728,7 +728,9 @@ public class WildGrowthSceneManager : MonoBehaviour
             EnemyEncounterData.Instance.ClearEncounterData();
         }
 
-        SceneManager.LoadScene("WorldMapScene");
+        SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+
+        SceneManager.LoadScene($"WorldMapScene{spawnManager.currentWorldMap}");
     }
 
     /// <summary>

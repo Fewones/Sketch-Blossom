@@ -28,6 +28,7 @@ public class TameGrowthManager : MonoBehaviour
     [Header("Validation")]
     [SerializeField] private float minConfidence = 0.7f;
 
+
     [Header("Scene Names")]
     [SerializeField] private string worldMapSceneName = "WorldMapScene";
 
@@ -35,6 +36,7 @@ public class TameGrowthManager : MonoBehaviour
     [SerializeField] private int maxStrokesForTame = 15;
 
     // Runtime
+    private PlantRecognitionSystem.RecognitionResult lastResult;
     private PlantRecognitionSystem.PlantType requiredPlantType;
     private bool isSubmitting = false;
     private bool tameCompleted = false; // CRITICAL: prevents double add / re-fire
@@ -81,6 +83,11 @@ public class TameGrowthManager : MonoBehaviour
 
     private void Start()
     {
+        if (drawingCanvas != null)
+        {
+          drawingCanvas.OnStrokeFinished += getCurrentResult;
+        }
+
         if (EnemyUnitData.Instance == null || !EnemyUnitData.Instance.HasData())
         {
             Debug.LogError("[TameGrowth] EnemyUnitData missing. Returning to WorldMap.");
@@ -237,37 +244,37 @@ public class TameGrowthManager : MonoBehaviour
         float score = best.score; // How much stronger will the attribute get?
         Debug.Log($"Result: {json}");
 
-        var result = recognitionSystem.AnalyzeDrawing(label, score, strokes, dominant);
-        if (result == null)
+        lastResult = recognitionSystem.AnalyzeDrawing(label, score, strokes, dominant);
+        if (lastResult == null)
         {
             failureMessage = "Could not analyze drawing. Try again.";
             return false;
         }
 
-        if (!result.isValidPlant)
+        if (!lastResult.isValidPlant)
         {
             failureMessage = $"Drawing doesn't match {requiredPlantType}. Try again!";
             return false;
         }
 
-        if (result.confidence < minConfidence)
+        if (lastResult.confidence < minConfidence)
         {
             failureMessage = $"Not confident enough. Draw a clearer {requiredPlantType} and try again.";
             return false;
         }
 
         // Keep YOUR original line (you said this one is correct for your project)
-        PlantRecognitionSystem.PlantType detectedType = result.plantData.type;
+        PlantRecognitionSystem.PlantType detectedType = lastResult.plantData.type;
 
         if (detectedType != requiredPlantType)
         {
             failureMessage = $"Drawing doesn't match {requiredPlantType}. Try again!";
-            Debug.Log($"[TameGrowth] FAIL: required={requiredPlantType}, detected={detectedType}, conf={result.confidence:0.00}");
+            Debug.Log($"[TameGrowth] FAIL: required={requiredPlantType}, detected={detectedType}, conf={lastResult.confidence:0.00}");
             return false;
         }
 
-        Debug.Log($"[TameGrowth] VALIDATED: required={requiredPlantType}, detected={detectedType}, conf={result.confidence:0.00}");
-        recognitionResult = result;
+        Debug.Log($"[TameGrowth] VALIDATED: required={requiredPlantType}, detected={detectedType}, conf={lastResult.confidence:0.00}");
+        recognitionResult = lastResult;
         return true;
     }
 
@@ -365,7 +372,9 @@ public class TameGrowthManager : MonoBehaviour
         if (EnemyUnitData.Instance != null)
             EnemyUnitData.Instance.Clear();
 
-        SceneManager.LoadScene(worldMapSceneName);
+        SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+
+        SceneManager.LoadScene(worldMapSceneName + spawnManager.currentWorldMap);
     }
 
     private void SetFeedback(string msg)
@@ -383,5 +392,26 @@ public class TameGrowthManager : MonoBehaviour
             default:
                 return $"Guide:\n\n• Clear silhouette for {type}\n• 2–4 major parts (not a scribble)\n• Keep it inside the box\n• Draw bigger if it fails";
         }
+    }
+
+    private async void getCurrentResult(bool strokeFinished)
+        {
+            if (drawingCanvas == null)
+            {
+                return;
+            }
+            if (strokeFinished)
+            {
+                drawingCanvas.StrokeFinished = false;
+                bool _ = await ValidateDrawingAgainstEnemyType();
+                if (lastResult.isValidPlant)
+                {
+                  SetFeedback(lastResult.plantData.displayName);
+                } else {SetFeedback("Plant not recognized");}
+            }
+        }
+    private void OnDestroy()
+    {
+        drawingCanvas.OnStrokeFinished += getCurrentResult;
     }
 }

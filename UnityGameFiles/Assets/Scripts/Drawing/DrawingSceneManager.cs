@@ -292,7 +292,7 @@ namespace SketchBlossom.Drawing
             if (enableBattleTransition)
             {
                 Debug.Log("Loading WorldMapScene...");
-                SceneManager.LoadScene("WorldMapScene");
+                SceneManager.LoadScene("WorldMapScene1");
             }
             else
             {
@@ -585,6 +585,7 @@ namespace SketchBlossom.Drawing
                 uiController.OnFinishDrawing -= HandleFinishDrawing;
                 uiController.OnRedrawRequested -= HandleRedraw;
                 uiController.OnContinueRequested -= HandleContinue;
+                drawingCanvas.OnStrokeFinished += getCurrentResult;
             }
         }
 
