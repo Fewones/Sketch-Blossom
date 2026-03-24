@@ -58,6 +58,8 @@ public class MovesetDetector : MonoBehaviour
             { MoveData.DrawingShape.Checkmark,       new[] { MoveData.DrawingShape.Arrow } },
             { MoveData.DrawingShape.Arrow,           new[] { MoveData.DrawingShape.Checkmark } },
             { MoveData.DrawingShape.MultipleCircles, new[] { MoveData.DrawingShape.Circle } },
+            { MoveData.DrawingShape.Zigzag,          new[] { MoveData.DrawingShape.WavyLine } },
+            { MoveData.DrawingShape.WavyLine,        new[] { MoveData.DrawingShape.Zigzag } },
         };
 
     /// <summary>
@@ -277,11 +279,11 @@ public class MovesetDetector : MonoBehaviour
         return Mathf.Clamp01(score);
     }
 
-    /// <summary> Zigzag: single stroke with many sharp turns, elongated and OPEN </summary>
+    /// <summary> Zigzag: single stroke with many sharp turns, OPEN (not closed) </summary>
     private float ScoreZigzag(DrawingFeatures f)
     {
         float score = 0f;
-        if (f.spikyStrokes >= 1) score += 0.4f;
+        if (f.spikyStrokes >= 1) score += 0.45f;
         if (f.spikyStrokes >= 2) score += 0.15f;
 
         // Zigzags are OPEN (not closed) — strongly penalize closed shapes (that's a square/triangle)
@@ -291,10 +293,10 @@ public class MovesetDetector : MonoBehaviour
         if (f.strokeCount >= 1 && f.strokeCount <= 2) score += 0.15f;
         else if (f.strokeCount <= 4) score += 0.05f;
 
-        // Zigzags are elongated — wider OR taller than they are round
-        // Square-ish aspect ratio (0.7-1.4) suggests a closed shape, not a zigzag
-        if (f.aspectRatio < 0.5f || f.aspectRatio > 2.0f) score += 0.2f;
+        // Slightly prefer elongated shapes, but zigzags can also be square-ish (W/M shape)
+        if (f.aspectRatio < 0.5f || f.aspectRatio > 2.0f) score += 0.15f;
         else if (f.aspectRatio < 0.7f || f.aspectRatio > 1.4f) score += 0.1f;
+        else score += 0.05f;  // Small baseline — don't zero out square-ish zigzags
 
         return Mathf.Clamp01(score);
     }
@@ -658,18 +660,40 @@ public class MovesetDetector : MonoBehaviour
             Vector3[] positions = new Vector3[stroke.positionCount];
             stroke.GetPositions(positions);
 
+            // Downsample to ~20-30 evenly spaced points so that direction
+            // changes at zigzag corners aren't diluted across many tiny segments.
+            Vector3[] sampled = DownsamplePoints(positions, 25);
+
             int sharpTurns = 0;
-            for (int i = 1; i < positions.Length - 1; i++)
+            for (int i = 1; i < sampled.Length - 1; i++)
             {
-                Vector3 dir1 = (positions[i] - positions[i - 1]).normalized;
-                Vector3 dir2 = (positions[i + 1] - positions[i]).normalized;
+                Vector3 dir1 = (sampled[i] - sampled[i - 1]).normalized;
+                Vector3 dir2 = (sampled[i + 1] - sampled[i]).normalized;
                 float angle = Vector3.Angle(dir1, dir2);
-                if (angle > 60f) sharpTurns++;
+                if (angle > 45f) sharpTurns++;
             }
 
             if (sharpTurns >= 2) count++;
         }
         return count;
+    }
+
+    /// <summary>
+    /// Downsample a point array to at most maxPoints evenly spaced samples.
+    /// If the array already has fewer points, return it unchanged.
+    /// </summary>
+    private Vector3[] DownsamplePoints(Vector3[] positions, int maxPoints)
+    {
+        if (positions.Length <= maxPoints) return positions;
+
+        Vector3[] sampled = new Vector3[maxPoints];
+        for (int i = 0; i < maxPoints; i++)
+        {
+            float t = (float)i / (maxPoints - 1);
+            int idx = Mathf.RoundToInt(t * (positions.Length - 1));
+            sampled[i] = positions[idx];
+        }
+        return sampled;
     }
 
     private int CountCurvedStrokes(List<LineRenderer> strokes)
