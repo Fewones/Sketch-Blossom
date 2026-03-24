@@ -163,6 +163,10 @@ namespace SketchBlossom.Battle
             // Setup attack animation system
             SetupAttackAnimationSystem();
 
+            // Set initial cooldowns so special moves must charge before first use
+            SetInitialCooldowns(playerCooldowns, playerPlantType);
+            SetInitialCooldowns(enemyCooldowns, enemyPlantType);
+
             // Start continuous visibility monitoring
             StartCoroutine(ContinuousVisibilityCheck());
 
@@ -1264,8 +1268,8 @@ namespace SketchBlossom.Battle
             // Reset player blocking state on switch
             playerIsBlocking = false;
 
-            // Reset player cooldowns (new plant has fresh cooldowns)
-            playerCooldowns.Clear();
+            // Set initial cooldowns for new plant (special moves start on cooldown)
+            SetInitialCooldowns(playerCooldowns, playerPlantType);
 
             // Reload player unit display with new plant texture
             Texture2D newTexture = newPlant.GetDrawingTexture();
@@ -1398,6 +1402,23 @@ namespace SketchBlossom.Battle
         private bool IsOnCooldown(Dictionary<MoveData.MoveType, int> cooldowns, MoveData.MoveType moveType)
         {
             return cooldowns.ContainsKey(moveType) && cooldowns[moveType] > 0;
+        }
+
+        /// <summary>
+        /// Set initial cooldowns for moves that have cooldowns when a plant enters battle.
+        /// This means special moves start on cooldown and must charge up before first use.
+        /// </summary>
+        private void SetInitialCooldowns(Dictionary<MoveData.MoveType, int> cooldowns, PlantRecognitionSystem.PlantType plantType)
+        {
+            cooldowns.Clear();
+            MoveData[] moves = MoveData.GetMovesForPlant(plantType);
+            foreach (var move in moves)
+            {
+                if (move.cooldownTurns > 0)
+                {
+                    cooldowns[move.moveType] = move.cooldownTurns;
+                }
+            }
         }
 
         /// <summary>
@@ -1641,7 +1662,7 @@ namespace SketchBlossom.Battle
             playerAttack = newPlant.attack;
             playerDefense = newPlant.defense;
             playerIsBlocking = false;
-            playerCooldowns.Clear();
+            SetInitialCooldowns(playerCooldowns, playerPlantType);
 
             // Reload player unit display
             Texture2D newTexture = newPlant.GetDrawingTexture();
@@ -1806,15 +1827,13 @@ namespace SketchBlossom.Battle
                 bool onCooldown = IsOnCooldown(playerCooldowns, move.moveType);
                 if (onCooldown)
                 {
-                    movesText += $"- <color=#888888>{move.moveName} (Recharging)</color>\n";
+                    int turnsLeft = playerCooldowns[move.moveType];
+                    movesText += $"- <color=#888888>{move.moveName} ({turnsLeft}t)</color>\n";
                 }
                 else
                 {
-                    string powerLabel = move.isDefensiveMove ? "DEF" :
-                                        move.isHealingMove ? $"Heal {move.basePower}" :
-                                        $"PWR {move.basePower}";
-                    string cooldownLabel = move.cooldownTurns > 0 ? $" ⏳{move.cooldownTurns}t" : "";
-                    movesText += $"- {move.moveName} ({powerLabel}{cooldownLabel}) ✏️ {move.drawingHint}\n";
+                    string shapeName = move.drawingShape.ToString();
+                    movesText += $"- {move.moveName} ({shapeName})\n";
                 }
             }
 
