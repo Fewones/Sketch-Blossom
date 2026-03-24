@@ -365,7 +365,7 @@ public class BattleSceneSetupHelper : EditorWindow
             // Positioned below the header flavor text and above the nav buttons.
             // pageDescription is shrunk to y 0.78-0.85 on plant pages, so the
             // container fills from y 0.13 (above buttons) to y 0.77 (below header).
-            rect.anchorMin = new Vector2(0.03f, 0.13f);
+            rect.anchorMin = new Vector2(0.03f, 0.22f);
             rect.anchorMax = new Vector2(0.97f, 0.77f);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
@@ -423,7 +423,7 @@ public class BattleSceneSetupHelper : EditorWindow
 
             var tmp = textObj.AddComponent<TextMeshProUGUI>();
             tmp.text = "";
-            tmp.fontSize = 13;
+            tmp.fontSize = 18;
             tmp.alignment = TextAlignmentOptions.TopLeft;
             tmp.color = Color.white;
             tmp.enableWordWrapping = true;
@@ -450,6 +450,12 @@ public class BattleSceneSetupHelper : EditorWindow
             imgLayoutElem.preferredWidth = 64;
             imgLayoutElem.preferredHeight = 64;
             imgLayoutElem.flexibleWidth = 0f;  // Fixed size, no stretching
+            imgLayoutElem.flexibleHeight = 0f; // Don't stretch vertically
+
+            // Keep shape previews square regardless of row height.
+            var arf = imgObj.AddComponent<AspectRatioFitter>();
+            arf.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+            arf.aspectRatio = 1f;
         }
 
         // Wire into MoveGuideBook.
