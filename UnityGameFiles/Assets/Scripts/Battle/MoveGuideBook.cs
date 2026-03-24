@@ -46,6 +46,9 @@ namespace SketchBlossom.Battle
         // Textures created for the current page – destroyed when we move to another page.
         private Texture2D[] activePreviewTextures;
 
+        // Cached original right margin of pageDescription so we can restore it on non-plant pages.
+        private float originalDescriptionRightMargin = -1f;
+
         [System.Serializable]
         public class MoveGuidePageData
         {
@@ -488,6 +491,31 @@ namespace SketchBlossom.Battle
 
             bool isPlantPage = page.movesOnPage != null && page.movesOnPage.Length > 0;
 
+            // Cache the original right margin on first call so we can restore it.
+            if (originalDescriptionRightMargin < 0f && pageDescription != null)
+            {
+                originalDescriptionRightMargin = pageDescription.margin.z;
+            }
+
+            // Adjust the description text area so it doesn't run under the previews.
+            if (pageDescription != null)
+            {
+                Vector4 m = pageDescription.margin;
+                // On plant pages, reserve the right ~30% for shape previews.
+                // On other pages, restore full width.
+                m.z = isPlantPage ? 160f : (originalDescriptionRightMargin >= 0f ? originalDescriptionRightMargin : 0f);
+                pageDescription.margin = m;
+            }
+
+            // Show or hide the preview container parent (if it exists) so it doesn't
+            // absorb clicks or leave dead space on non-plant pages.
+            if (moveShapePreviews.Length > 0 && moveShapePreviews[0] != null)
+            {
+                Transform container = moveShapePreviews[0].transform.parent?.parent;
+                if (container != null && container.name == "ShapePreviewContainer")
+                    container.gameObject.SetActive(isPlantPage);
+            }
+
             if (!isPlantPage)
             {
                 // Hide all preview slots and labels on non-plant pages.
@@ -513,7 +541,7 @@ namespace SketchBlossom.Battle
                     Color previewColor = move.primaryColor;
                     previewColor.a = 1f;
 
-                    // Generate a larger preview so the player can clearly see the example shape.
+                    // Generate a preview for the player to reference when drawing.
                     Texture2D tex = MoveShapePreview.GeneratePreview(move.drawingShape, 120, 120, previewColor);
                     activePreviewTextures[i] = tex;
                     moveShapePreviews[i].texture = tex;

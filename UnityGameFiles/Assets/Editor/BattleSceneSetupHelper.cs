@@ -349,6 +349,8 @@ public class BattleSceneSetupHelper : EditorWindow
         }
 
         // Create a container for the shape previews inside the book panel.
+        // Positioned as a narrow column on the far right so it never overlaps
+        // the description text (which gets a right margin via code).
         Transform existingContainer = guideBook.bookPanel.transform.Find("ShapePreviewContainer");
         GameObject container;
         if (existingContainer != null)
@@ -358,6 +360,16 @@ public class BattleSceneSetupHelper : EditorWindow
             // Clear existing children
             for (int i = container.transform.childCount - 1; i >= 0; i--)
                 DestroyImmediate(container.transform.GetChild(i).gameObject);
+
+            // Also update anchors in case they were from the old layout
+            var existingRect = container.GetComponent<RectTransform>();
+            if (existingRect != null)
+            {
+                existingRect.anchorMin = new Vector2(0.72f, 0.08f);
+                existingRect.anchorMax = new Vector2(0.98f, 0.88f);
+                existingRect.offsetMin = Vector2.zero;
+                existingRect.offsetMax = Vector2.zero;
+            }
         }
         else
         {
@@ -365,18 +377,18 @@ public class BattleSceneSetupHelper : EditorWindow
             container.transform.SetParent(guideBook.bookPanel.transform, false);
 
             var rect = container.AddComponent<RectTransform>();
-            // Position along the right side of the book panel
-            rect.anchorMin = new Vector2(0.65f, 0.1f);
-            rect.anchorMax = new Vector2(0.98f, 0.9f);
+            // Narrow column on the far right – leaves ~72% width for text
+            rect.anchorMin = new Vector2(0.72f, 0.08f);
+            rect.anchorMax = new Vector2(0.98f, 0.88f);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
 
             var layout = container.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 6f;
+            layout.spacing = 4f;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
-            layout.padding = new RectOffset(4, 4, 4, 4);
+            layout.padding = new RectOffset(2, 2, 2, 2);
         }
 
         RawImage[] previews = new RawImage[4];
@@ -389,20 +401,20 @@ public class BattleSceneSetupHelper : EditorWindow
             slot.transform.SetParent(container.transform, false);
 
             var slotRect = slot.AddComponent<RectTransform>();
-            slotRect.sizeDelta = new Vector2(0, 100);
+            slotRect.sizeDelta = new Vector2(0, 80);
 
             var slotLayout = slot.AddComponent<VerticalLayoutGroup>();
-            slotLayout.spacing = 2f;
+            slotLayout.spacing = 1f;
             slotLayout.childAlignment = TextAnchor.UpperCenter;
             slotLayout.childForceExpandWidth = false;
             slotLayout.childForceExpandHeight = false;
 
-            // RawImage for the shape preview
+            // RawImage for the shape preview – compact size to fit 4 in column
             var imgObj = new GameObject($"ShapePreview_{i}");
             imgObj.transform.SetParent(slot.transform, false);
 
             var imgRect = imgObj.AddComponent<RectTransform>();
-            imgRect.sizeDelta = new Vector2(64, 64);
+            imgRect.sizeDelta = new Vector2(52, 52);
 
             var rawImage = imgObj.AddComponent<RawImage>();
             rawImage.color = Color.white;
@@ -410,26 +422,28 @@ public class BattleSceneSetupHelper : EditorWindow
 
             // Add a LayoutElement so the image keeps its preferred size
             var imgLayoutElem = imgObj.AddComponent<LayoutElement>();
-            imgLayoutElem.preferredWidth = 64;
-            imgLayoutElem.preferredHeight = 64;
+            imgLayoutElem.preferredWidth = 52;
+            imgLayoutElem.preferredHeight = 52;
 
             // Label beneath the preview
             var lblObj = new GameObject($"ShapeLabel_{i}");
             lblObj.transform.SetParent(slot.transform, false);
 
             var lblRect = lblObj.AddComponent<RectTransform>();
-            lblRect.sizeDelta = new Vector2(120, 28);
+            lblRect.sizeDelta = new Vector2(100, 22);
 
             var label = lblObj.AddComponent<TextMeshProUGUI>();
             label.text = "";
-            label.fontSize = 11;
+            label.fontSize = 9;
             label.alignment = TextAlignmentOptions.Center;
             label.color = new Color(0.2f, 0.2f, 0.2f);
+            label.enableWordWrapping = false;
+            label.overflowMode = TextOverflowModes.Ellipsis;
             labels[i] = label;
 
             var lblLayoutElem = lblObj.AddComponent<LayoutElement>();
-            lblLayoutElem.preferredWidth = 120;
-            lblLayoutElem.preferredHeight = 28;
+            lblLayoutElem.preferredWidth = 100;
+            lblLayoutElem.preferredHeight = 22;
         }
 
         // Wire into MoveGuideBook
