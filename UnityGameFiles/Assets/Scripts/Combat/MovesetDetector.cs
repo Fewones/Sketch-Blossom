@@ -51,10 +51,10 @@ public class MovesetDetector : MonoBehaviour
     private static readonly Dictionary<MoveData.DrawingShape, MoveData.DrawingShape[]> shapeConfusionMap =
         new Dictionary<MoveData.DrawingShape, MoveData.DrawingShape[]>
         {
-            { MoveData.DrawingShape.Circle,          new[] { MoveData.DrawingShape.Spiral } },
+            { MoveData.DrawingShape.Circle,          new[] { MoveData.DrawingShape.Spiral, MoveData.DrawingShape.Square } },
             { MoveData.DrawingShape.Spiral,          new[] { MoveData.DrawingShape.Circle } },
-            { MoveData.DrawingShape.Triangle,        new[] { MoveData.DrawingShape.Square } },
-            { MoveData.DrawingShape.Square,          new[] { MoveData.DrawingShape.Triangle } },
+            { MoveData.DrawingShape.Triangle,        new[] { MoveData.DrawingShape.Square, MoveData.DrawingShape.Circle } },
+            { MoveData.DrawingShape.Square,          new[] { MoveData.DrawingShape.Triangle, MoveData.DrawingShape.Circle } },
             { MoveData.DrawingShape.Checkmark,       new[] { MoveData.DrawingShape.Arrow } },
             { MoveData.DrawingShape.Arrow,           new[] { MoveData.DrawingShape.Checkmark } },
             { MoveData.DrawingShape.MultipleCircles, new[] { MoveData.DrawingShape.Circle } },
