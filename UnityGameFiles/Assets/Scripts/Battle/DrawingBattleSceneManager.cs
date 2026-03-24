@@ -1813,7 +1813,8 @@ namespace SketchBlossom.Battle
                     string powerLabel = move.isDefensiveMove ? "DEF" :
                                         move.isHealingMove ? $"Heal {move.basePower}" :
                                         $"PWR {move.basePower}";
-                    movesText += $"- {move.moveName} ({powerLabel}) ✏️ {move.drawingHint}\n";
+                    string cooldownLabel = move.cooldownTurns > 0 ? $" ⏳{move.cooldownTurns}t" : "";
+                    movesText += $"- {move.moveName} ({powerLabel}{cooldownLabel}) ✏️ {move.drawingHint}\n";
                 }
             }
 

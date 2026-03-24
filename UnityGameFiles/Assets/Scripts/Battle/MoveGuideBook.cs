@@ -584,7 +584,8 @@ namespace SketchBlossom.Battle
                     string moveType = move.isDefensiveMove ? "Defense" :
                                       move.isHealingMove ? "Healing" :
                                       "Attack";
-                    string powerText = move.basePower > 0 ? $"PWR: {move.basePower}" : "Reduces damage";
+                    string cooldownText = move.cooldownTurns > 0 ? $"  |  {move.cooldownTurns} turn cooldown" : "";
+                    string powerText = move.basePower > 0 ? $"PWR: {move.basePower}{cooldownText}" : "Reduces damage";
                     string shapeName = FormatShapeName(move.drawingShape);
 
                     string text = $"<b><color={elementColor}>{move.moveName}</color></b>  {moveType}\n";
