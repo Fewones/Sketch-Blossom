@@ -49,6 +49,11 @@ namespace SketchBlossom.Battle
         // Textures created for the current page – destroyed when we move to another page.
         private Texture2D[] activePreviewTextures;
 
+        // Cached original anchors of pageDescription so we can restore on non-plant pages.
+        private Vector2 origDescAnchorMin;
+        private Vector2 origDescAnchorMax;
+        private bool cachedDescAnchors = false;
+
         [System.Serializable]
         public class MoveGuidePageData
         {
@@ -430,6 +435,8 @@ namespace SketchBlossom.Battle
         /// <summary>
         /// On plant pages, populate each move row with text on the left and
         /// the shape preview on the right. On non-plant pages, hide the rows.
+        /// Also resizes pageDescription: on plant pages it shrinks to just
+        /// the header area; on non-plant pages it fills the full space.
         /// </summary>
         private void UpdateMoveEntries(MoveGuidePageData page)
         {
@@ -442,6 +449,40 @@ namespace SketchBlossom.Battle
             activePreviewTextures = null;
 
             bool isPlantPage = page.movesOnPage != null && page.movesOnPage.Length > 0;
+
+            // Cache the original pageDescription anchors once so we can restore them.
+            if (!cachedDescAnchors && pageDescription != null)
+            {
+                RectTransform descRect = pageDescription.GetComponent<RectTransform>();
+                if (descRect != null)
+                {
+                    origDescAnchorMin = descRect.anchorMin;
+                    origDescAnchorMax = descRect.anchorMax;
+                    cachedDescAnchors = true;
+                }
+            }
+
+            // Resize pageDescription: on plant pages, shrink to a small header strip
+            // at the top so the move entry rows can fill the space below.
+            if (pageDescription != null && cachedDescAnchors)
+            {
+                RectTransform descRect = pageDescription.GetComponent<RectTransform>();
+                if (descRect != null)
+                {
+                    if (isPlantPage)
+                    {
+                        // Thin strip at the top for the italic flavor text.
+                        descRect.anchorMin = new Vector2(origDescAnchorMin.x, 0.78f);
+                        descRect.anchorMax = origDescAnchorMax;
+                    }
+                    else
+                    {
+                        // Restore full area for welcome / tips pages.
+                        descRect.anchorMin = origDescAnchorMin;
+                        descRect.anchorMax = origDescAnchorMax;
+                    }
+                }
+            }
 
             // Show or hide the move entries container.
             if (moveEntriesContainer != null)

@@ -362,10 +362,11 @@ public class BattleSceneSetupHelper : EditorWindow
             container.transform.SetParent(guideBook.bookPanel.transform, false);
 
             var rect = container.AddComponent<RectTransform>();
-            // Positioned below the page header, above the navigation buttons.
-            // Leaves room for title at the top and buttons at the bottom.
-            rect.anchorMin = new Vector2(0.02f, 0.12f);
-            rect.anchorMax = new Vector2(0.98f, 0.82f);
+            // Positioned below the header flavor text and above the nav buttons.
+            // pageDescription is shrunk to y 0.78-0.85 on plant pages, so the
+            // container fills from y 0.13 (above buttons) to y 0.77 (below header).
+            rect.anchorMin = new Vector2(0.03f, 0.13f);
+            rect.anchorMax = new Vector2(0.97f, 0.77f);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
         }
