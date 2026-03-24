@@ -111,8 +111,8 @@ namespace SketchBlossom.Progression
                     break;
             }
 
-            // Heal to full health after upgrade
-            currentHealth = maxHealth;
+            // Preserve current HP — wild growth should not heal the plant
+            currentHealth = Mathf.Min(currentHealth, maxHealth);
 
             Debug.Log($"Wild Growth applied to {plantName}! Now level {level} with ATK:{attack} HP:{maxHealth} DEF:{defense}");
         }

@@ -147,6 +147,7 @@ namespace SketchBlossom.UI
         private void OnQuitButtonClicked()
         {
             Debug.Log("Quitting game");
+            HealingCenter.ResetHealCharges();
 
             #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
@@ -164,7 +165,8 @@ namespace SketchBlossom.UI
             if (PlayerInventory.Instance != null)
             {
                 PlayerInventory.Instance.ClearInventory();
-                Debug.Log("Game progress reset - inventory cleared");
+                HealingCenter.ResetHealCharges();
+                Debug.Log("Game progress reset - inventory and healing charges cleared");
                 UpdateUI();
             }
         }

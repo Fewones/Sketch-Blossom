@@ -589,10 +589,13 @@ public class WildGrowthSceneManager : MonoBehaviour
         int newAttack    = Mathf.RoundToInt(selectedPlant.attack    * atkMult);
         int newDefense   = Mathf.RoundToInt(selectedPlant.defense   * defMult);
 
+        int previousHealth = selectedPlant.currentHealth;
         selectedPlant.maxHealth     = newMaxHealth;
         selectedPlant.attack        = newAttack;
         selectedPlant.defense       = newDefense;
-        selectedPlant.currentHealth = newMaxHealth; // Heal to full after growth
+        // Preserve current HP — wild growth should not heal the plant.
+        // Clamp to new max in case max decreased (shouldn't normally happen).
+        selectedPlant.currentHealth = Mathf.Min(previousHealth, newMaxHealth);
 
         selectedPlant.wildGrowthCount++;
         selectedPlant.level++;
@@ -651,16 +654,18 @@ public class WildGrowthSceneManager : MonoBehaviour
                 break;
         }
 
-        selectedPlant.currentHealth = selectedPlant.maxHealth; // Heal to full after growth
+        // Preserve current HP — wild growth should not heal the plant.
+        // Clamp to new max in case max decreased (shouldn't normally happen).
+        selectedPlant.currentHealth = Mathf.Min(selectedPlant.currentHealth, selectedPlant.maxHealth);
 
         selectedPlant.wildGrowthCount++;
         selectedPlant.level++;
 
         Debug.Log(
-            $"Wild Growth (drawing-based) applied to {selectedPlant.plantName}! " +
+            $"Wild Growth (CLIP-based) applied to {selectedPlant.plantName}! " +
             $"Now level {selectedPlant.level} with " +
-            $"HP:{selectedPlant.maxHealth}" +
-            $"ATK:{selectedPlant.attack}" +
+            $"HP:{selectedPlant.currentHealth}/{selectedPlant.maxHealth} " +
+            $"ATK:{selectedPlant.attack} " +
             $"DEF:{selectedPlant.defense}"
         );
     }
