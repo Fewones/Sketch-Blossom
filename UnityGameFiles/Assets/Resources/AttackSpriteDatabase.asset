@@ -34,7 +34,7 @@ MonoBehaviour:
     - {fileID: 4952203022734778140, guid: b0a90025209869a48bc565ca692afc49, type: 3}
     - {fileID: 6892047151256956130, guid: b0a90025209869a48bc565ca692afc49, type: 3}
     - {fileID: -1580034404830379166, guid: b0a90025209869a48bc565ca692afc49, type: 3}
-    framesPerSecond: 15
+    framesPerSecond: 24
     scaleMultiplier: 1
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -65,7 +65,7 @@ MonoBehaviour:
     - {fileID: -8757599939959736079, guid: 33638716abd2ea64786c0e25856ca8f2, type: 3}
     - {fileID: -204377347997842372, guid: 33638716abd2ea64786c0e25856ca8f2, type: 3}
     - {fileID: -2283663110241815955, guid: 33638716abd2ea64786c0e25856ca8f2, type: 3}
-    framesPerSecond: 14
+    framesPerSecond: 24
     scaleMultiplier: 1.2
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -90,7 +90,7 @@ MonoBehaviour:
     - {fileID: 8514354036554241165, guid: 41baa29acb817564898ffc8061982882, type: 3}
     - {fileID: -7965250424938009764, guid: 41baa29acb817564898ffc8061982882, type: 3}
     - {fileID: 1608222090397859351, guid: 41baa29acb817564898ffc8061982882, type: 3}
-    framesPerSecond: 14
+    framesPerSecond: 24
     scaleMultiplier: 1
     rotateWhileFlying: 0
     rotationSpeed: 360
@@ -145,7 +145,18 @@ MonoBehaviour:
     loopImpact: 0
   - visualEffect: 6
     projectileFrames:
-    - {fileID: -912881395321546936, guid: f4c0305bf980089439ae0d97cf77e349, type: 3}
+    - {fileID: -6158748736603741754, guid: 285fef55bdfe9fc4486e5c23eaeedc35, type: 3}
+    - {fileID: 3487403740887640382, guid: 34d760764067fa84383c9a222413dc0f, type: 3}
+    - {fileID: 1291221160086010062, guid: bd00710c4037f34409907693090d5eb1, type: 3}
+    - {fileID: 6592018648022373823, guid: 9b2cf9b7b76aa9147a61520298e2855d, type: 3}
+    - {fileID: 9162641043917459650, guid: 716a77cee37bf0e49b072b705806828c, type: 3}
+    - {fileID: 395491297450136733, guid: 733298ded9f4a674b8176c36fbdd1d2a, type: 3}
+    - {fileID: 5434712834604597876, guid: d81f1682c844c634fb1b955faf25e549, type: 3}
+    - {fileID: -2158664982575471390, guid: 725f51c9ad8347243a2be3679e110d0c, type: 3}
+    - {fileID: -4986549252353085420, guid: 1ca50058ab8cae241800ad472373586d, type: 3}
+    - {fileID: -7778764819356127861, guid: f139e9a87d5ad7b498bc282734e168b4, type: 3}
+    - {fileID: -3354663096450596376, guid: 17000d27e2234954cae7678aaa008ff3, type: 3}
+    - {fileID: -5739904491722661559, guid: 2054e0b5845167946a44e91a6ed584d9, type: 3}
     impactFrames:
     - {fileID: 3444290732781563207, guid: 6668c7749eb12e24db1c9a1ae75fae94, type: 3}
     - {fileID: -5485978537972132158, guid: d4412ece06b2ff140a1ea0304c6b7c9a, type: 3}
@@ -153,7 +164,7 @@ MonoBehaviour:
     - {fileID: -240727738585690893, guid: 0c8430fd9aceb8d49b88e243fc059259, type: 3}
     - {fileID: 6709559458266848287, guid: 6286487ae9235d44fa57db2fcef43ca4, type: 3}
     - {fileID: 4904204966848100626, guid: c764e8945fec68142ab9443617d96ff7, type: 3}
-    framesPerSecond: 14
+    framesPerSecond: 24
     scaleMultiplier: 1
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -179,7 +190,7 @@ MonoBehaviour:
     - {fileID: -240727738585690893, guid: 0c8430fd9aceb8d49b88e243fc059259, type: 3}
     - {fileID: 6709559458266848287, guid: 6286487ae9235d44fa57db2fcef43ca4, type: 3}
     - {fileID: 4904204966848100626, guid: c764e8945fec68142ab9443617d96ff7, type: 3}
-    framesPerSecond: 14
+    framesPerSecond: 24
     scaleMultiplier: 1
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -206,7 +217,7 @@ MonoBehaviour:
     - {fileID: -8615347126414184413, guid: 31c399bf07ea04145b8ef9a18a5611f3, type: 3}
     - {fileID: -1133066862329633915, guid: 31c399bf07ea04145b8ef9a18a5611f3, type: 3}
     - {fileID: -4351452675604140124, guid: 31c399bf07ea04145b8ef9a18a5611f3, type: 3}
-    framesPerSecond: 12
+    framesPerSecond: 24
     scaleMultiplier: 1.1
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -249,23 +260,14 @@ MonoBehaviour:
     - {fileID: -1149820572282805235, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
     - {fileID: -8717531250256007996, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
     - {fileID: 2091726591070031943, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    framesPerSecond: 20
+    framesPerSecond: 24
     scaleMultiplier: 1.1
     rotateWhileFlying: 0
     rotationSpeed: 180
     loopImpact: 0
   - visualEffect: 10
     projectileFrames:
-    - {fileID: -6888873780842446244, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: -4189012210790310565, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: -3151466179052775496, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: -4457364676356269358, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: 3992615380802540035, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: -5063685897272305362, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: 1710921165083414183, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: 3502195156518720417, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: -2562012921360825738, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    - {fileID: -2968868563553636317, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
+    - {fileID: 6838949554348993737, guid: a59bfefe6d22a19408c4a05a9b3f2d51, type: 3}
     impactFrames:
     - {fileID: -1464324030745540150, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
     - {fileID: 94802241650193705, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
@@ -277,7 +279,7 @@ MonoBehaviour:
     - {fileID: 5663581341615293435, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
     - {fileID: -7382304079893354073, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
     - {fileID: 620370710687889793, guid: b3c91eb7e066788459b16a227cf9f162, type: 3}
-    framesPerSecond: 16
+    framesPerSecond: 30
     scaleMultiplier: 0.9
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -299,7 +301,7 @@ MonoBehaviour:
     - {fileID: -8396680587510599095, guid: 7544a45973215ec40b9f72af151acc57, type: 3}
     - {fileID: 8415834184982046565, guid: 7544a45973215ec40b9f72af151acc57, type: 3}
     - {fileID: 7664353832004588589, guid: 7544a45973215ec40b9f72af151acc57, type: 3}
-    framesPerSecond: 14
+    framesPerSecond: 24
     scaleMultiplier: 1
     rotateWhileFlying: 0
     rotationSpeed: 180
@@ -327,7 +329,7 @@ MonoBehaviour:
     - {fileID: -8396680587510599095, guid: 7544a45973215ec40b9f72af151acc57, type: 3}
     - {fileID: 8415834184982046565, guid: 7544a45973215ec40b9f72af151acc57, type: 3}
     - {fileID: 7664353832004588589, guid: 7544a45973215ec40b9f72af151acc57, type: 3}
-    framesPerSecond: 14
+    framesPerSecond: 24
     scaleMultiplier: 1.2
     rotateWhileFlying: 0
     rotationSpeed: 180
