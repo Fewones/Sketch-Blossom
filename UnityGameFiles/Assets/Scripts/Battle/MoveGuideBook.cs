@@ -78,6 +78,18 @@ namespace SketchBlossom.Battle
         {
             Debug.Log("[MoveGuideBook] Starting initialization...");
 
+            // Ensure the move entries container's VerticalLayoutGroup controls
+            // child sizing. Without this the rows stay at 0 height and are invisible.
+            if (moveEntriesContainer != null)
+            {
+                var vLayout = moveEntriesContainer.GetComponent<VerticalLayoutGroup>();
+                if (vLayout != null)
+                {
+                    vLayout.childControlWidth = true;
+                    vLayout.childControlHeight = true;
+                }
+            }
+
             InitializePages();
             SetupButtons();
 

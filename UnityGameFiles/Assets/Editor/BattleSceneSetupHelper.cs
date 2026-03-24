@@ -379,6 +379,8 @@ public class BattleSceneSetupHelper : EditorWindow
         vLayout.childAlignment = TextAnchor.UpperLeft;
         vLayout.childForceExpandWidth = true;
         vLayout.childForceExpandHeight = false;
+        vLayout.childControlWidth = true;
+        vLayout.childControlHeight = true;
         vLayout.padding = new RectOffset(8, 8, 4, 4);
 
         RawImage[] previews = new RawImage[4];
