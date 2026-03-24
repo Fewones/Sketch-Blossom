@@ -1,18 +1,18 @@
 {
     "move_shapes": {
-        "a single black circle drawn on white paper, one closed round loop forming a ring": "circle",
-        "a single black straight line on white paper, one stroke going in one direction": "straight_line",
-        "a black zigzag line on white paper, sharp angular back-and-forth turns like a lightning bolt": "zigzag",
-        "a black wavy curved line on white paper, smooth S-shaped curves flowing horizontally": "wavy_line",
-        "a black plus sign on white paper, two straight lines crossing at right angles forming a cross": "plus",
-        "a black X drawn on white paper, two diagonal lines crossing in the middle": "x_cross",
-        "a black arrow on white paper, a long straight line with a small pointed arrowhead at one end": "arrow",
-        "multiple separate black circles on white paper, three or more small round closed loops spread apart like bubbles": "multiple_circles",
-        "a black star shape on white paper, several lines radiating outward from a center point": "star",
-        "a black square on white paper, four straight sides meeting at four right-angle corners forming a closed box": "square",
-        "a black triangle on white paper, exactly three straight lines meeting at three sharp points forming a closed pyramid shape": "triangle",
-        "a black checkmark on white paper, a short line angled down to the left then a longer line angled up to the right forming a tick mark": "checkmark",
-        "a black spiral on white paper, a curved line winding around itself inward in a coil like a snail shell": "spiral"
+        "a single black circle on white paper, one round closed loop, no corners, no straight edges": "circle",
+        "a single black straight line on white paper, one short stroke with no turns or curves at all": "straight_line",
+        "a black zigzag on white paper, a single open line making sharp V-shaped back-and-forth turns like the letter W or M": "zigzag",
+        "a black wavy line on white paper, a single open line with smooth rounded S-curves flowing side to side": "wavy_line",
+        "a black plus sign on white paper, one vertical line and one horizontal line crossing at right angles like the symbol +": "plus",
+        "a black letter X on white paper, exactly two separate diagonal straight lines crossing each other in the center forming an X": "x_cross",
+        "a black arrow on white paper, a long straight line ending in a small pointed V-shaped arrowhead at one tip": "arrow",
+        "multiple separate black circles on white paper, three or more small round closed loops spread apart from each other": "multiple_circles",
+        "a black star on white paper, five or more straight lines all radiating outward from one center point like sun rays": "star",
+        "a black square on white paper, a closed four-sided box shape with four straight edges and four right-angle corners": "square",
+        "a black triangle on white paper, a closed three-sided shape with exactly three straight edges and three pointed corners": "triangle",
+        "a black checkmark on white paper, a single V-shaped stroke that goes down-left then sharply up-right like a tick mark": "checkmark",
+        "a black spiral on white paper, one curved line that coils around itself in a circular pattern like a snail shell": "spiral"
     },
     "plant_labels": {
         "a red tulip with orange flames and fire": "flame tulip",
