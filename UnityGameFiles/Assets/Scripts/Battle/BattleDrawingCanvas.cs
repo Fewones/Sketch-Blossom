@@ -306,7 +306,7 @@ namespace SketchBlossom.Battle
             // Convert to texture coordinates
             Vector2 texturePoint = ScreenToTexturePoint(screenPosition);
             lastDrawPoint = texturePoint;
-            currentStrokePoints.Add(texturePoint);
+            currentStrokePoints.Add(screenPosition);
 
             // Draw initial point
             DrawPoint(texturePoint);
@@ -328,7 +328,7 @@ namespace SketchBlossom.Battle
             // Draw line from last point to current point
             DrawLine(lastDrawPoint, texturePoint);
 
-            currentStrokePoints.Add(texturePoint);
+            currentStrokePoints.Add(screenPosition);
             lastDrawPoint = texturePoint;
         }
 

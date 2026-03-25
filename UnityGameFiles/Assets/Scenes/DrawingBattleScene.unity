@@ -3753,7 +3753,7 @@ GameObject:
   - component: {fileID: 341899162}
   - component: {fileID: 341899164}
   - component: {fileID: 341899163}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: DrawingDackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
