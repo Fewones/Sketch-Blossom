@@ -156,6 +156,9 @@ MonoBehaviour:
   enemyDisplayName: 
   difficulty: 1
   flavorText: 
+  worldMapIndex: {x: 0, y: 0}
+  isNPC: 0
+  enemyPlants: []
   interactionRange: 1
   interactionKey: 101
   interactionPrompt: {fileID: 6162482825631162576}
@@ -170,6 +173,10 @@ MonoBehaviour:
   - {fileID: 7873444928579934181, guid: d1f9389b5ddf2bb4d8692dbe3dac3e0e, type: 3}
   - {fileID: 7092156202973532338, guid: 723d551be4b8d134798b7d9021a312ef, type: 3}
   - {fileID: 2872516327368174005, guid: 8ed2e250c2b035c4db8364034fbc00a6, type: 3}
+  - {fileID: 8730664644966360920, guid: 64daef8cc43729f40b2fc847ab55a1e9, type: 3}
+  - {fileID: 3984586104515389779, guid: 3db3406c1120eaf419337833dcbf1db7, type: 3}
+  - {fileID: -5899927303015767666, guid: 0c53393a1986f9a4da5cb9c1f738b6dc, type: 3}
+  - {fileID: 4646649027328027380, guid: 5ed68eb9f43804f4db9e5a01d763ebf1, type: 3}
   highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &5116472309060170551
 GameObject:

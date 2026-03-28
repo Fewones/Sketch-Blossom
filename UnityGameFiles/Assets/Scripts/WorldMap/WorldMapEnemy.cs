@@ -16,8 +16,8 @@ public class WorldMapEnemy : MonoBehaviour
     [SerializeField] private string enemyDisplayName;
     [SerializeField] private int difficulty = 1; // 1-3: also determines number of plants
     [SerializeField] [TextArea(3, 5)] private string flavorText;
-
     public Vector2Int worldMapIndex;
+    public bool isNPC;
 
     [Header("Multi-Plant Encounter")]
     [SerializeField] private List<EnemyPlantEntry> enemyPlants = new List<EnemyPlantEntry>();
@@ -326,6 +326,24 @@ public class WorldMapEnemy : MonoBehaviour
             break;
             case PlantRecognitionSystem.PlantType.VineFlower: spriteNumber = 8;
             break;
+        }
+        if (isNPC)
+        {
+            switch (worldMapIndex.x)
+            {
+                case 1: spriteNumber = 9;
+                break;
+                case 2: spriteNumber = 10;
+                break;
+                case 3: spriteNumber = 11;
+                break;
+                case 4: spriteNumber = 9;
+                break;
+                case 5: spriteNumber = 10;
+                break;
+                case 6: spriteNumber = 12;
+                break;
+            }
         }
         return enemySprites[spriteNumber];
     }

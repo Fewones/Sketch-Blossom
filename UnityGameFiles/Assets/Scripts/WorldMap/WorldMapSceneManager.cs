@@ -130,10 +130,15 @@ public class WorldMapSceneManager : MonoBehaviour
                     enemy = enemyObj.AddComponent<WorldMapEnemy>();
                 }
 
+                if (i == (numberOfEnemies - 1))
+                {
+                    enemy.isNPC = true;
+                    difficulty = 3;
+                }
+                enemy.worldMapIndex = enemyIndex;
+
                 // Set difficulty which also generates appropriate number of plants
                 enemy.SetEnemyData(difficulty);
-
-                enemy.worldMapIndex = enemyIndex;
 
                 enemies[i] = enemy;
 
