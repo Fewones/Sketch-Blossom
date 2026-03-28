@@ -1620,6 +1620,8 @@ namespace SketchBlossom.Battle
                         // GAME OVER - No usable plants remaining
                         Debug.Log("[Rogue-like] GAME OVER - All plants dead! Returning to main menu.");
                         HealingCenter.ResetHealCharges();
+                        SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+                        spawnManager.ResetValues();
                         UpdateTurnIndicator("GAME OVER");
                         UpdateActionText("All your plants have perished...");
                         yield return new WaitForSeconds(2f);
