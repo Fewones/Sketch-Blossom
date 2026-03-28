@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class SpawnManager : MonoBehaviour
     public Vector2[] formerOffset;
     public Vector2[] nextOffset;
     public Vector2[] backgroundSpawnPoints;
+
+    public List<Vector2Int> defeatedEnemies;
     public int currentWorldMap;
     
     public bool facingLeft = false;
@@ -32,6 +35,8 @@ public class SpawnManager : MonoBehaviour
         backgroundSpawnPoints = new Vector2[]{new Vector3(6.48f, 0.93f), new Vector3(-0.32f, 6.48f), new Vector3(-4.07f, 8.8f)};
 
         currentWorldMap = 1;
+
+        defeatedEnemies.Clear();
     }
 
 }

@@ -155,7 +155,8 @@ public class BattlePreviewUI : MonoBehaviour
             EnemyEncounterData.Instance.SetEncounterData(
                 currentEnemy.GetEncounterPlants(),
                 currentEnemy.GetDifficulty(),
-                currentEnemy.GetFlavorText()
+                currentEnemy.GetFlavorText(),
+                currentEnemy.worldMapIndex
             );
         }
         else
@@ -166,7 +167,8 @@ public class BattlePreviewUI : MonoBehaviour
             encounterData.SetEncounterData(
                 currentEnemy.GetEncounterPlants(),
                 currentEnemy.GetDifficulty(),
-                currentEnemy.GetFlavorText()
+                currentEnemy.GetFlavorText(),
+                currentEnemy.worldMapIndex
             );
         }
 

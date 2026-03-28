@@ -1557,6 +1557,9 @@ namespace SketchBlossom.Battle
             // Grant a healing charge for the Healing Center
             HealingCenter.GrantHealCharge();
 
+            SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+            spawnManager.defeatedEnemies.Add(EnemyEncounterData.Instance.currentWorldMapIndex);
+
             yield return new WaitForSeconds(1.5f);
 
             // Load PostBattleScene to choose Wild Growth or Tame

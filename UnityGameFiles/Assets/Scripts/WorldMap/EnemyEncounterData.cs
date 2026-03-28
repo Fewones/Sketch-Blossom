@@ -43,6 +43,7 @@ public class EnemyEncounterData : MonoBehaviour
 
     [Header("Battle Context")]
     public bool isWorldMapEncounter = false;
+    public Vector2Int currentWorldMapIndex;
 
     private void Awake()
     {
@@ -63,13 +64,15 @@ public class EnemyEncounterData : MonoBehaviour
     public void SetEncounterData(
         List<EnemyPlantEntry> plants,
         int difficulty,
-        string flavorText)
+        string flavorText,
+        Vector2Int worldMapIndex)
     {
         encounterPlants = new List<EnemyPlantEntry>(plants);
         encounterDifficulty = difficulty;
         encounterFlavorText = flavorText;
         currentPlantIndex = 0;
         isWorldMapEncounter = true;
+        currentWorldMapIndex = worldMapIndex;
 
         // Set legacy fields to the first plant for backward compatibility
         if (plants.Count > 0)

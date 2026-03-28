@@ -17,6 +17,8 @@ public class WorldMapEnemy : MonoBehaviour
     [SerializeField] private int difficulty = 1; // 1-3: also determines number of plants
     [SerializeField] [TextArea(3, 5)] private string flavorText;
 
+    public Vector2Int worldMapIndex;
+
     [Header("Multi-Plant Encounter")]
     [SerializeField] private List<EnemyPlantEntry> enemyPlants = new List<EnemyPlantEntry>();
 

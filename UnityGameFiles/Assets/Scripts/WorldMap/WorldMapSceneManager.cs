@@ -102,37 +102,43 @@ public class WorldMapSceneManager : MonoBehaviour
 
         enemies = new WorldMapEnemy[numberOfEnemies];
         for (int i = 0; i < numberOfEnemies; i++)
-        {
-            Vector3 spawnPos = spawnPositions[i];
-            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity, parent: background);
-
-            // Determine difficulty: if first encounter, all are difficulty 1
-            // Otherwise, cycle through difficulties 1, 2, 3
-            int difficulty;
-            if (isFirstEncounter)
+        {   
+            Vector2Int enemyIndex = new Vector2Int(playerController.currentWorldMap, i);
+            if (!playerController.spawnManager.defeatedEnemies.Contains(enemyIndex))
             {
-                difficulty = 1;
+                Vector3 spawnPos = spawnPositions[i];
+                GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity, parent: background);
+
+                // Determine difficulty: if first encounter, all are difficulty 1
+                // Otherwise, cycle through difficulties 1, 2, 3
+                int difficulty;
+                if (isFirstEncounter)
+                {
+                    difficulty = 1;
+                }
+                else
+                {
+                    difficulty = (i % 3) + 1; // 1, 2, 3, 1, 2, 3...
+                }
+
+                string diffLabel = difficulty == 1 ? "Easy" : difficulty == 2 ? "Medium" : "Hard";
+                enemyObj.name = $"Enemy_{diffLabel}_{i + 1}";
+
+                WorldMapEnemy enemy = enemyObj.GetComponent<WorldMapEnemy>();
+                if (enemy == null)
+                {
+                    enemy = enemyObj.AddComponent<WorldMapEnemy>();
+                }
+
+                // Set difficulty which also generates appropriate number of plants
+                enemy.SetEnemyData(difficulty);
+
+                enemy.worldMapIndex = enemyIndex;
+
+                enemies[i] = enemy;
+
+                Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
             }
-            else
-            {
-                difficulty = (i % 3) + 1; // 1, 2, 3, 1, 2, 3...
-            }
-
-            string diffLabel = difficulty == 1 ? "Easy" : difficulty == 2 ? "Medium" : "Hard";
-            enemyObj.name = $"Enemy_{diffLabel}_{i + 1}";
-
-            WorldMapEnemy enemy = enemyObj.GetComponent<WorldMapEnemy>();
-            if (enemy == null)
-            {
-                enemy = enemyObj.AddComponent<WorldMapEnemy>();
-            }
-
-            // Set difficulty which also generates appropriate number of plants
-            enemy.SetEnemyData(difficulty);
-
-            enemies[i] = enemy;
-
-            Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
         }
     }
 
