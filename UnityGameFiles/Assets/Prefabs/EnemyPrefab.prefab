@@ -159,7 +159,7 @@ MonoBehaviour:
   worldMapIndex: {x: 0, y: 0}
   isNPC: 0
   enemyPlants: []
-  interactionRange: 2
+  interactionRange: 1
   interactionKey: 101
   interactionPrompt: {fileID: 6162482825631162576}
   spriteRenderer: {fileID: 0}

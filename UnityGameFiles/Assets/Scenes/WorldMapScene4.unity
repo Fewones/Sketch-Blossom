@@ -1818,7 +1818,7 @@ MonoBehaviour:
   - {x: -4.98, y: -11.1, z: 0}
   - {x: -8.51, y: 1.12, z: 0}
   - {x: 0.4, y: 0.17, z: 0}
-  - {x: 5.7, y: 6.93, z: 0}
+  - {x: 8.5, y: 9.5, z: 0}
   healingCenterPrefab: {fileID: 0}
   healingCenter: {fileID: 0}
   healingCenterPosition: {x: 7, y: 0.86, z: 0}
@@ -2344,6 +2344,7 @@ MonoBehaviour:
   encounterPlants: []
   currentPlantIndex: 0
   isWorldMapEncounter: 1
+  currentWorldMapIndex: {x: 0, y: 0}
 --- !u!4 &1624968363
 Transform:
   m_ObjectHideFlags: 0

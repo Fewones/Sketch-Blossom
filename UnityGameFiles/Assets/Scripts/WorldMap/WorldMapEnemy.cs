@@ -23,7 +23,7 @@ public class WorldMapEnemy : MonoBehaviour
     [SerializeField] private List<EnemyPlantEntry> enemyPlants = new List<EnemyPlantEntry>();
 
     [Header("Interaction Settings")]
-    [SerializeField] private float interactionRange ;
+    [SerializeField] private float interactionRange;
     [SerializeField] private KeyCode interactionKey = KeyCode.E;
 
     [Header("Visual Feedback")]
@@ -329,6 +329,7 @@ public class WorldMapEnemy : MonoBehaviour
         }
         if (isNPC)
         {
+            interactionRange = 2f;
             switch (worldMapIndex.x)
             {
                 case 1: case 4: {

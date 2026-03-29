@@ -2114,7 +2114,7 @@ MonoBehaviour:
   enemies: []
   enemySpawnPoints:
   - {x: -0.56, y: -3.5, z: 0}
-  - {x: 7.5, y: -1.66, z: 0}
+  - {x: 7.4, y: 0, z: 0}
   healingCenterPrefab: {fileID: 0}
   healingCenter: {fileID: 0}
   healingCenterPosition: {x: -100, y: -0.44, z: 0}
@@ -2394,10 +2394,12 @@ EdgeCollider2D:
   - {x: 3.1844053, y: -4.2209888}
   - {x: 1.3550005, y: -3.515976}
   - {x: 1.2020549, y: -2.7588027}
-  - {x: 3.7749867, y: -2.8318756}
+  - {x: 3.9282756, y: -3.166323}
   - {x: 4.1450706, y: -2.209729}
-  - {x: 5.8954625, y: -2.3633523}
-  - {x: 6.1084256, y: -2.1455164}
+  - {x: 5.886517, y: -2.2444198}
+  - {x: 5.686434, y: -3.0461845}
+  - {x: 5.8520026, y: -3.0932426}
+  - {x: 6.0248127, y: -1.9504213}
   - {x: 8.612157, y: -2.300882}
   - {x: 8.249525, y: -3.0094538}
   - {x: 6.527678, y: -3.754308}
@@ -2618,6 +2620,7 @@ MonoBehaviour:
   encounterPlants: []
   currentPlantIndex: 0
   isWorldMapEncounter: 1
+  currentWorldMapIndex: {x: 0, y: 0}
 --- !u!4 &1624968363
 Transform:
   m_ObjectHideFlags: 0
