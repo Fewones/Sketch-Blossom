@@ -118,7 +118,7 @@ public class WorldMapSceneManager : MonoBehaviour
                 }
                 else
                 {
-                    difficulty = (i % 3) + 1; // 1, 2, 3, 1, 2, 3...
+                    difficulty = (i % 2) + 1; // 1, 2, 3, 1, 2, 3...
                 }
 
                 string diffLabel = difficulty == 1 ? "Easy" : difficulty == 2 ? "Medium" : "Hard";
