@@ -8,6 +8,7 @@ public class SpawnManager : MonoBehaviour
     public Vector2[] formerOffset;
     public Vector2[] nextOffset;
     public Vector2[] backgroundSpawnPoints;
+    public bool[] progressionOn;
 
     public List<Vector2Int> defeatedEnemies;
     public int currentWorldMap;

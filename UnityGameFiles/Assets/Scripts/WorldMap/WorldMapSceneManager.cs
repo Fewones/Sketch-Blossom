@@ -134,6 +134,7 @@ public class WorldMapSceneManager : MonoBehaviour
                 {
                     enemy.isNPC = true;
                     difficulty = 3;
+                    playerController.spawnManager.progressionOn[playerController.currentWorldMap-1] = false;
                 }
                 enemy.worldMapIndex = enemyIndex;
 
@@ -143,7 +144,10 @@ public class WorldMapSceneManager : MonoBehaviour
                 enemies[i] = enemy;
 
                 Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
-            }
+            } else if (i == (numberOfEnemies - 1))
+                {
+                    playerController.spawnManager.progressionOn[playerController.currentWorldMap-1] = true;
+                }
         }
     }
 
