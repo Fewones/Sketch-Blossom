@@ -200,6 +200,10 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = Vector2.zero;
             movement = Vector2.zero;
+            if (movingBackground)
+            {
+                rbBackground.linearVelocity = Vector2.zero;
+            }
         }
     }
 

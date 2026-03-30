@@ -70,6 +70,12 @@ public class BattlePreviewUI : MonoBehaviour
             return;
         }
 
+        PlayerController player = FindObjectOfType<PlayerController>();
+        if (player != null)
+        {
+            player.SetMovementEnabled(false);
+        }
+
         currentEnemy = enemy;
         int difficulty = enemy.GetDifficulty();
         List<EnemyPlantEntry> plants = enemy.GetEncounterPlants();
@@ -142,12 +148,6 @@ public class BattlePreviewUI : MonoBehaviour
             {
                 popupPanel.SetActive(true);
             }
-        }
-
-        PlayerController player = FindObjectOfType<PlayerController>();
-        if (player != null)
-        {
-            player.SetMovementEnabled(false);
         }
     }
 
