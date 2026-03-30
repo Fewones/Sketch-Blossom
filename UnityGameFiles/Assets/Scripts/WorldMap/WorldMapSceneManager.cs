@@ -102,37 +102,52 @@ public class WorldMapSceneManager : MonoBehaviour
 
         enemies = new WorldMapEnemy[numberOfEnemies];
         for (int i = 0; i < numberOfEnemies; i++)
-        {
-            Vector3 spawnPos = spawnPositions[i];
-            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity, parent: background);
-
-            // Determine difficulty: if first encounter, all are difficulty 1
-            // Otherwise, cycle through difficulties 1, 2, 3
-            int difficulty;
-            if (isFirstEncounter)
+        {   
+            Vector2Int enemyIndex = new Vector2Int(playerController.currentWorldMap, i);
+            if (!playerController.spawnManager.defeatedEnemies.Contains(enemyIndex))
             {
-                difficulty = 1;
-            }
-            else
-            {
-                difficulty = (i % 3) + 1; // 1, 2, 3, 1, 2, 3...
-            }
+                Vector3 spawnPos = spawnPositions[i];
+                GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity, parent: background);
 
-            string diffLabel = difficulty == 1 ? "Easy" : difficulty == 2 ? "Medium" : "Hard";
-            enemyObj.name = $"Enemy_{diffLabel}_{i + 1}";
+                // Determine difficulty: if first encounter, all are difficulty 1
+                // Otherwise, cycle through difficulties 1, 2, 3
+                int difficulty;
+                if (isFirstEncounter)
+                {
+                    difficulty = 1;
+                }
+                else
+                {
+                    difficulty = (i % 2) + 1; // 1, 2, 3, 1, 2, 3...
+                }
 
-            WorldMapEnemy enemy = enemyObj.GetComponent<WorldMapEnemy>();
-            if (enemy == null)
-            {
-                enemy = enemyObj.AddComponent<WorldMapEnemy>();
-            }
+                string diffLabel = difficulty == 1 ? "Easy" : difficulty == 2 ? "Medium" : "Hard";
+                enemyObj.name = $"Enemy_{diffLabel}_{i + 1}";
 
-            // Set difficulty which also generates appropriate number of plants
-            enemy.SetEnemyData(difficulty);
+                WorldMapEnemy enemy = enemyObj.GetComponent<WorldMapEnemy>();
+                if (enemy == null)
+                {
+                    enemy = enemyObj.AddComponent<WorldMapEnemy>();
+                }
 
-            enemies[i] = enemy;
+                if (i == (numberOfEnemies - 1))
+                {
+                    enemy.isNPC = true;
+                    difficulty = 3;
+                    playerController.spawnManager.progressionOn[playerController.currentWorldMap-1] = false;
+                }
+                enemy.worldMapIndex = enemyIndex;
 
-            Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
+                // Set difficulty which also generates appropriate number of plants
+                enemy.SetEnemyData(difficulty);
+
+                enemies[i] = enemy;
+
+                Debug.Log($"Spawned {diffLabel} enemy (difficulty {difficulty}) at {spawnPos}");
+            } else if (i == (numberOfEnemies - 1))
+                {
+                    playerController.spawnManager.progressionOn[playerController.currentWorldMap-1] = true;
+                }
         }
     }
 

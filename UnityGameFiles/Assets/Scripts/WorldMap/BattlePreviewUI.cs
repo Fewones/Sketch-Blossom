@@ -20,6 +20,12 @@ public class BattlePreviewUI : MonoBehaviour
     [SerializeField] private Button cancelButton;
     [SerializeField] private Image enemyElementIcon;
 
+    [Header("NPCs")]
+    [SerializeField] private GameObject dialoguePanel;
+    [SerializeField] private string[] NPCDialogue;
+    [SerializeField] private TextMeshProUGUI dialogueText;
+    private int currentDialogue = 0;
+
     [Header("Visual Settings")]
     [SerializeField] private Color fireColor = new Color(1f, 0.3f, 0.3f);
     [SerializeField] private Color waterColor = new Color(0.3f, 0.5f, 1f);
@@ -46,6 +52,11 @@ public class BattlePreviewUI : MonoBehaviour
         {
             popupPanel.SetActive(false);
         }
+
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(false);
+        }
     }
 
     /// <summary>
@@ -59,69 +70,84 @@ public class BattlePreviewUI : MonoBehaviour
             return;
         }
 
-        currentEnemy = enemy;
-        int difficulty = enemy.GetDifficulty();
-        List<EnemyPlantEntry> plants = enemy.GetEncounterPlants();
-
-        // Encounter title
-        if (enemyNameText != null)
-        {
-            enemyNameText.text = enemy.GetDisplayName();
-        }
-
-        // Element text - show all elements present in the encounter
-        if (elementText != null)
-        {
-            if (plants.Count == 1)
-            {
-                PlantRecognitionSystem.ElementType element = plants[0].element;
-                string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(element));
-                elementText.text = $"Element: <color=#{colorHex}>{element}</color>";
-            }
-            else
-            {
-                string elementsStr = "";
-                for (int i = 0; i < plants.Count; i++)
-                {
-                    string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(plants[i].element));
-                    if (i > 0) elementsStr += "  ";
-                    elementsStr += $"<color=#{colorHex}>{plants[i].displayName} ({plants[i].element})</color>\n";
-                }
-                elementText.text = elementsStr;
-            }
-            elementText.color = Color.white; // Use white since we have rich text coloring
-        }
-
-        // Difficulty display with label and stars
-        if (difficultyText != null)
-        {
-            string diffLabel = GetDifficultyLabel(difficulty);
-            string stars = GetDifficultyStars(difficulty);
-            string diffColorHex = ColorUtility.ToHtmlStringRGB(GetDifficultyColor(difficulty));
-            difficultyText.text = $"Difficulty: <color=#{diffColorHex}>{diffLabel} {stars}</color>\nPlants: {plants.Count}";
-        }
-
-        // Flavor text
-        if (flavorText != null)
-        {
-            flavorText.text = enemy.GetFlavorText();
-        }
-
-        // Set element icon to difficulty color
-        if (enemyElementIcon != null)
-        {
-            enemyElementIcon.color = GetDifficultyColor(difficulty);
-        }
-
-        if (popupPanel != null)
-        {
-            popupPanel.SetActive(true);
-        }
-
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
         {
             player.SetMovementEnabled(false);
+        }
+
+        currentEnemy = enemy;
+        int difficulty = enemy.GetDifficulty();
+        List<EnemyPlantEntry> plants = enemy.GetEncounterPlants();
+
+        if (enemy.isNPC && (currentDialogue != NPCDialogue.Length))
+        {
+            if (dialoguePanel != null)
+            {
+                dialoguePanel.SetActive(true);
+            }
+
+            if (Input.GetKeyDown(KeyCode.E)){
+                dialogueText.text = NPCDialogue[currentDialogue];
+                currentDialogue += 1;
+            }
+        } else {
+            dialoguePanel.SetActive(false);
+
+            // Encounter title
+            if (enemyNameText != null)
+            {
+                enemyNameText.text = enemy.GetDisplayName();
+            }
+
+            // Element text - show all elements present in the encounter
+            if (elementText != null)
+            {
+                if (plants.Count == 1)
+                {
+                    PlantRecognitionSystem.ElementType element = plants[0].element;
+                    string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(element));
+                    elementText.text = $"Element: <color=#{colorHex}>{element}</color>";
+                }
+                else
+                {
+                    string elementsStr = "";
+                    for (int i = 0; i < plants.Count; i++)
+                    {
+                        string colorHex = ColorUtility.ToHtmlStringRGB(GetElementColor(plants[i].element));
+                        if (i > 0) elementsStr += "  ";
+                        elementsStr += $"<color=#{colorHex}>{plants[i].displayName} ({plants[i].element})</color>\n";
+                    }
+                    elementText.text = elementsStr;
+                }
+                elementText.color = Color.white; // Use white since we have rich text coloring
+            }
+
+            // Difficulty display with label and stars
+            if (difficultyText != null)
+            {
+                string diffLabel = GetDifficultyLabel(difficulty);
+                string stars = GetDifficultyStars(difficulty);
+                string diffColorHex = ColorUtility.ToHtmlStringRGB(GetDifficultyColor(difficulty));
+                difficultyText.text = $"Difficulty: <color=#{diffColorHex}>{diffLabel} {stars}</color>\nPlants: {plants.Count}";
+            }
+
+            // Flavor text
+            if (flavorText != null)
+            {
+                flavorText.text = enemy.GetFlavorText();
+            }
+
+            // Set element icon to difficulty color
+            if (enemyElementIcon != null)
+            {
+                enemyElementIcon.color = GetDifficultyColor(difficulty);
+            }
+
+            if (popupPanel != null)
+            {
+                popupPanel.SetActive(true);
+            }
         }
     }
 
@@ -139,6 +165,8 @@ public class BattlePreviewUI : MonoBehaviour
         {
             player.SetMovementEnabled(true);
         }
+
+        currentDialogue = 0;
     }
 
     private void OnGoToBattleClicked()
@@ -155,7 +183,8 @@ public class BattlePreviewUI : MonoBehaviour
             EnemyEncounterData.Instance.SetEncounterData(
                 currentEnemy.GetEncounterPlants(),
                 currentEnemy.GetDifficulty(),
-                currentEnemy.GetFlavorText()
+                currentEnemy.GetFlavorText(),
+                currentEnemy.worldMapIndex
             );
         }
         else
@@ -166,7 +195,8 @@ public class BattlePreviewUI : MonoBehaviour
             encounterData.SetEncounterData(
                 currentEnemy.GetEncounterPlants(),
                 currentEnemy.GetDifficulty(),
-                currentEnemy.GetFlavorText()
+                currentEnemy.GetFlavorText(),
+                currentEnemy.worldMapIndex
             );
         }
 

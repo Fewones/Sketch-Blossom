@@ -122,7 +122,7 @@ public class PlayerController : MonoBehaviour
 
         if (nextLoadingZone != null)
         {
-          if (checkWorldMapProgression(nextLoadingZone, changeWorldMap))
+          if (spawnManager.progressionOn[currentWorldMap-1] && checkWorldMapProgression(nextLoadingZone, changeWorldMap))
             {
                 movement = Vector2.zero;
                 SetSpawnPosition(currentWorldMap, spawnManager.nextOffset[currentWorldMap-1]);
@@ -200,6 +200,10 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = Vector2.zero;
             movement = Vector2.zero;
+            if (movingBackground)
+            {
+                rbBackground.linearVelocity = Vector2.zero;
+            }
         }
     }
 

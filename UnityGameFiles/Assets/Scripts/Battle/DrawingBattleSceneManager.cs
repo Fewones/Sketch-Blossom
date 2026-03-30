@@ -1557,6 +1557,9 @@ namespace SketchBlossom.Battle
             // Grant a healing charge for the Healing Center
             HealingCenter.GrantHealCharge();
 
+            SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+            spawnManager.defeatedEnemies.Add(EnemyEncounterData.Instance.currentWorldMapIndex);
+
             yield return new WaitForSeconds(1.5f);
 
             // Load PostBattleScene to choose Wild Growth or Tame
@@ -1617,6 +1620,8 @@ namespace SketchBlossom.Battle
                         // GAME OVER - No usable plants remaining
                         Debug.Log("[Rogue-like] GAME OVER - All plants dead! Returning to main menu.");
                         HealingCenter.ResetHealCharges();
+                        SpawnManager spawnManager = FindObjectOfType<SpawnManager>();
+                        spawnManager.ResetValues();
                         UpdateTurnIndicator("GAME OVER");
                         UpdateActionText("All your plants have perished...");
                         yield return new WaitForSeconds(2f);

@@ -59,6 +59,7 @@ public class WildGrowthSceneManager : MonoBehaviour
 
     [Tooltip("Minimum required strokes before Confirm becomes interactable. For Wild Growth we set this to 1 and enforce maxStrokes = 1 on the canvas.")]
     [SerializeField] private int minRequiredStrokes = 1;
+    [SerializeField] private TextMeshProUGUI strokeCounterText;
 
     [Header("Future: CLIP / TinyCLIP Integration")]
     [Tooltip("If true, Confirm will later use TinyCLIP-based analysis instead of local geometric rules.")]
@@ -200,6 +201,7 @@ public class WildGrowthSceneManager : MonoBehaviour
             buttonToUse.onClick.AddListener(OnConfirmClicked);
             confirmButton = buttonToUse;        // Ensure confirmButton reference is set
             confirmButton.interactable = false; // Locked until at least one stroke exists
+            strokeCounterText.text = "Strokes: 0/1";
         }
 
         Debug.Log("WildGrowthScene: Setup complete");
@@ -252,6 +254,9 @@ public class WildGrowthSceneManager : MonoBehaviour
         {
             bool shouldEnable = stats.strokeCount >= minRequiredStrokes;
             confirmButton.interactable = shouldEnable;
+            if (shouldEnable){
+                strokeCounterText.text = "Strokes: 1/1";
+            }
         }
         else
         {
@@ -286,6 +291,11 @@ public class WildGrowthSceneManager : MonoBehaviour
         {
             // Even in CLIP mode we still want at least one stroke before confirm.
             confirmButton.interactable = stats.strokeCount >= minRequiredStrokes;
+            if (confirmButton.interactable)
+            {
+                strokeCounterText.text = "Strokes: 1/1"; 
+            }
+            
         }
 
         int baseHP      = selectedPlant.maxHealth;
@@ -474,6 +484,7 @@ public class WildGrowthSceneManager : MonoBehaviour
         if (confirmButton != null)
         {
             confirmButton.interactable = false;
+            strokeCounterText.text = "Strokes: 0/1";
         }
 
         UpdatePreviewTexts();
