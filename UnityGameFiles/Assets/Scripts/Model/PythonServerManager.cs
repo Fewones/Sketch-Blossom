@@ -4,11 +4,36 @@ using UnityEngine;
 
 public class PythonServerManager: MonoBehaviour
 {
+    private static PythonServerManager _instance;
     private Process pythonProcess;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void AutoStart()
+    {
+        if (_instance != null) return;
+
+        GameObject serverObj = new GameObject("PythonServerManager");
+        _instance = serverObj.AddComponent<PythonServerManager>();
+        DontDestroyOnLoad(serverObj);
+        UnityEngine.Debug.Log("PythonServerManager: Auto-started at game launch");
+    }
+
+    public static PythonServerManager Instance => _instance;
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        _instance = this;
+    }
 
     public void Start()
     {
         string pythonPath = "";
+        string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
         #if UNITY_EDITOR_WIN
             pythonPath = "Python/windows-latest/python.exe";
         #elif UNITY_EDITOR_LINUX
@@ -22,10 +47,10 @@ public class PythonServerManager: MonoBehaviour
         #elif UNITY_STANDALONE_OSX
             pythonPath = "Python/macos-latest/bin/python3";
         #endif
-        pythonPath = Path.Combine(Application.dataPath, pythonPath);
+        pythonPath = Path.Combine(projectRoot, pythonPath);
         pythonPath = Path.GetFullPath(pythonPath);
 
-        string scriptPath = Path.Combine(Application.dataPath, "Python/shared/TinyCLIP.py");
+        string scriptPath = Path.Combine(projectRoot, "Python/shared/TinyCLIP.py");
         string workingDir = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
 
         UnityEngine.Debug.Log("Python path: " + pythonPath);
@@ -64,9 +89,11 @@ public class PythonServerManager: MonoBehaviour
 
     public void Cleanup()
     {
-        if (!pythonProcess.HasExited)
+        if (pythonProcess != null && !pythonProcess.HasExited)
+        {
             pythonProcess.Kill();
             UnityEngine.Debug.Log("Python server deactivated.");
+        }
     }
 
     public void OnDestroy()
